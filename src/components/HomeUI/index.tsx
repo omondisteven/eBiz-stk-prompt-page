@@ -317,7 +317,7 @@ const HomeUI = () => {
                 >
                   <img src="/logo.svg" className="size-8 md:size-13" />
                   <div className="flex flex-col space-y-1">
-                    <div className="font-display font-bold  text-2xl md:text-5xl items-center flex text-white">
+                    <div className="font-display font-bold  text-xl md:text-5xl items-center flex text-white">
                       <span>PESAQR.COM</span>{" "}
                     </div>
                   </div>

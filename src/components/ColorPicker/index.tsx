@@ -92,7 +92,7 @@ export function GradientPicker({
         <Button
           variant={"outline"}
           className={
-            "bg-gray-900 hover:bg-gray-700 border-gray-600 w-fit justify-start text-left font-normal"
+            "bg-gray-900 px-2 md:px-4  hover:bg-gray-700 border-gray-600 w-fit justify-start text-left font-normal"
           }
         >
           <div className="w-full flex items-center gap-2">

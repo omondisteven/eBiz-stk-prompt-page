@@ -16,9 +16,9 @@ const InstallButton = ({ handleInstall }: InstallButtonProps) => {
       <button
         onClick={handleInstall}
         type="button"
-        className="w-full flex items-center space-x-2 text-xs md:text-sm text-center border relative p-2.5 text-white rounded-md  bg-gray-900  leading-none font-semibold "
+        className="w-full flex items-center space-x-0 md:space-x-2 text-xs md:text-sm text-center border relative p-2.5 text-white rounded-md  bg-gray-900  leading-none font-semibold "
       >
-        <span>Install on {deviceType}</span>
+        <span className="hidden md:inline-block">Install on {deviceType}</span>
         {deviceType && deviceType === "Mac" && <FaApple />}
         {deviceType && deviceType === "Windows" && <SiWindows />}
         {deviceType && deviceType === "Linux" && <FaLinux />}
