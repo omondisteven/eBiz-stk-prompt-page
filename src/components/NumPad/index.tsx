@@ -41,7 +41,7 @@ const NumPad = () => {
         prefix="KES "
         allowNegative={false}
         placeholder={`Enter Amount ${
-          data.type === TRANSACTION_TYPE.AGENT ? "to withdraw" : "to pay"
+          data.type === TRANSACTION_TYPE.AGENT ? "to withdraw" : data.type === TRANSACTION_TYPE.SEND_MONEY ? "to send" : "to pay"
         } `}
         style={{ borderColor: data.color }}
         className="font-display py-7 md:py-7 border-4   shadow-inner placeholder:text-xl  placeholder:md:text-3xl  placeholder:text-gray-600 text-gray-900 text-xl md:text-4xl text-center w-full"

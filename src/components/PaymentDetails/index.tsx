@@ -23,13 +23,16 @@ const PaymentDetails = () => {
             setData({ ...data, type: value as TRANSACTION_TYPE })
           }
         >
-          <TabsList className="w-full grid  gap-2 place-content-center py-6 justify-center grid-cols-3 ">
+          <TabsList className="w-full grid  gap-2 place-content-center py-6 justify-center grid-cols-4 ">
             <TabsTrigger value={TRANSACTION_TYPE.TILL_NUMBER}>TILL</TabsTrigger>
             <TabsTrigger className="" value={TRANSACTION_TYPE.PAYBILL}>
               PAYBILL
             </TabsTrigger>
             <TabsTrigger className="" value={TRANSACTION_TYPE.AGENT}>
               AGENT NO
+            </TabsTrigger>
+            <TabsTrigger className="" value={TRANSACTION_TYPE.SEND_MONEY}>
+              SEND MONEY
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -44,6 +47,35 @@ const PaymentDetails = () => {
         />
 
         <div className="flex flex-col h-full space-y-1 border-none bg-white">
+        {data.type === TRANSACTION_TYPE.SEND_MONEY && (
+            <>
+              <p
+                style={{ color: data.color }}
+                className=" font-display text-center py-1  text-xl md:text-3xl"
+              >
+                PHONE NUMBER
+              </p>
+              <div className="flex mx-auto items-center space-x-4 flex-wrap w-full justify-center ">
+                <NumericFormat
+                  onValueChange={(value) => {
+                    if (
+                      value.floatValue != undefined &&
+                      value.floatValue.toString().length <= 12
+                    ) {
+                      setData({ ...data, phoneNumber: value.value });
+                    }
+                  }}
+                  inputMode="numeric"
+                  value={data.phoneNumber}
+                  customInput={Input}
+                  allowNegative={false}
+                  allowLeadingZeros={true}
+                  placeholder="Enter Phone Number"
+                  className=" py-2 md:py-4 tracking-widest mx-auto w-full border-none bg-transparent  text-center  font-display text-xl md:text-3xl   text-gray-900 rounded-none  "
+                />
+              </div>
+            </>
+          )}
           {data.type === TRANSACTION_TYPE.TILL_NUMBER && (
             <>
               <p

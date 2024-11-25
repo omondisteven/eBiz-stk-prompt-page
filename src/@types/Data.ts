@@ -13,8 +13,8 @@ export interface Data {
   code: string;
   bannerText: string;
   color: string;
-
-  hideAmount:boolean
+  phoneNumber:string;
+  hideAmount:boolean;
 }
 
 export type FormData = Partial<Data>;

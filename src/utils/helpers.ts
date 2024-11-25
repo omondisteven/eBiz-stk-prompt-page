@@ -9,6 +9,7 @@ export const generateQRCode = (data: FormData): string | null => {
     amount,
     accountNumber,
     paybillNumber,
+    phoneNumber
   } = data;
 
   switch (data.type) {
@@ -19,6 +20,8 @@ export const generateQRCode = (data: FormData): string | null => {
       return paybill;
     case TRANSACTION_TYPE.AGENT:
       return `WA|${agentNumber}|${amount}|${storeNumber}`;
+    case TRANSACTION_TYPE.SEND_MONEY:
+      return `SM|${phoneNumber}|${amount}`;
     default:
       return null;
   }
