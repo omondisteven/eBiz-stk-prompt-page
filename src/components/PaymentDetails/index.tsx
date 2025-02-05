@@ -21,7 +21,7 @@ const PaymentDetails = () => {
           className="w-full flex flex-col"
           onValueChange={(value) =>
             setData({ ...data, type: value as TRANSACTION_TYPE })
-          }
+          } 
         >
           <TabsList className="w-full grid h-20 md:h-10  gap-2 place-content-center py-6 justify-center grid-row-2 md:grid-row-1 grid-cols-2 md:grid-cols-4">
             <TabsTrigger value={TRANSACTION_TYPE.TILL_NUMBER}>TILL</TabsTrigger>

@@ -1,123 +1,100 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Button } from "../ui/button";
 import { AppContext, AppContextType } from "@/context/AppContext";
-import { NumericFormat } from "react-number-format";
 import { Input } from "../ui/input";
 import { FiDelete } from "react-icons/fi";
 import { TRANSACTION_TYPE } from "@/@types/TransactionType";
 
-const NumPad = () => {
+interface NumPadProps {
+  className?: string;
+}
+
+const NumPad: React.FC<NumPadProps> = ({ className }) => {
   const { data, setData } = useContext(AppContext) as AppContextType;
-  const handleClick = (value: number) => {
-    setData({ ...data, amount: `${data.amount}${value}` });
+  const [expression, setExpression] = useState<string>("");
+
+  const handleClick = (value: string) => {
+    if (/[\+\-\×\÷]$/.test(expression) && /[\+\-\×\÷]/.test(value)) {
+      return; // Prevent multiple consecutive operators
+    }
+    setExpression((prev) => prev + value);
   };
 
   const handleClear = () => {
-    setData({ ...data, amount: undefined });
+    setExpression("");
   };
+
   const handleDeleteLast = () => {
-    let amount =
-      data.amount && data.amount.length > 0
-        ? data.amount.substring(0, data.amount.length - 1)
-        : "";
-    setData({ ...data, amount: amount });
+    setExpression((prev) => prev.slice(0, -1));
+  };
+
+  const handleCalculate = () => {
+    try {
+      const sanitizedExpression = expression.replace(/×/g, "*").replace(/÷/g, "/");
+      const result = eval(sanitizedExpression); // Evaluate safely
+      setData({ ...data, amount: result.toString() });
+      setExpression(result.toString());
+    } catch (error) {
+      setExpression("Error");
+    }
   };
 
   return (
-    <div className="flex flex-col space-y-2 bg-gray-800 p-2 rounded-md border border-gray-700">
-      <NumericFormat
-        onValueChange={(value) => {
-          if (
-            value.floatValue != undefined &&
-            value.floatValue.toString().length <= 5
-          ) {
-            setData({ ...data, amount: value.value });
-          }
-        }}
-        inputMode="numeric"
-        value={data.amount ?? ""}
-        customInput={Input}
-        thousandSeparator=","
-        prefix="KES "
-        allowNegative={false}
+    <div className={`flex flex-col space-y-2 bg-gray-800 p-2 rounded-md border border-gray-700 ${className}`}>
+      {/* Use regular <input> to allow operators */}
+      <Input
+        value={expression}
+        readOnly
         placeholder={`Enter Amount ${
-          data.type === TRANSACTION_TYPE.AGENT ? "to withdraw" : data.type === TRANSACTION_TYPE.SEND_MONEY ? "to send" : "to pay"
-        } `}
-        style={{ borderColor: data.color }}
-        className="font-display py-7 md:py-7 border-4   shadow-inner placeholder:text-xl  placeholder:md:text-3xl  placeholder:text-gray-600 text-gray-900 text-xl md:text-4xl text-center w-full"
+          data.type === TRANSACTION_TYPE.AGENT ? "to withdraw" :
+          data.type === TRANSACTION_TYPE.SEND_MONEY ? "to send" : "to pay"
+        }`}
+        className="font-display py-7 md:py-7 border-4 shadow-inner text-gray-900 text-xl md:text-4xl text-center w-full"
       />
-      <div className="w-full grid grid-cols-3 gap-1">
+      <div className="w-full grid grid-cols-4 gap-1">
+        {["1", "2", "3", "+"].map((item) => (
+          <Button
+            key={item}
+            onClick={() => handleClick(item)}
+            className="py-8 text-4xl font-bold bg-white hover:bg-gray-300 text-gray-900 border border-gray-800"
+          >
+            {item}
+          </Button>
+        ))}
+        {["4", "5", "6", "-"].map((item) => (
+          <Button
+            key={item}
+            onClick={() => handleClick(item)}
+            className="py-8 text-4xl font-bold bg-white hover:bg-gray-300 text-gray-900 border border-gray-800"
+          >
+            {item}
+          </Button>
+        ))}
+        {["7", "8", "9", "×"].map((item) => (
+          <Button
+            key={item}
+            onClick={() => handleClick(item)}
+            className="py-8 text-4xl font-bold bg-white hover:bg-gray-300 text-gray-900 border border-gray-800"
+          >
+            {item}
+          </Button>
+        ))}
+        {["CLR", "0", "=", "÷"].map((item) => (
+          <Button
+            key={item}
+            onClick={() =>
+              item === "CLR" ? handleClear() : 
+              item === "=" ? handleCalculate() : 
+              handleClick(item)
+            }
+            className="py-8 text-4xl font-bold bg-white hover:bg-gray-300 text-gray-900 border border-gray-800"
+          >
+            {item}
+          </Button>
+        ))}
         <Button
-          onClick={() => handleClick(1)}
-          className="text-gray-800 py-8 text-4xl font-bold bg-white hover:bg-gray-200 border border-gray-800 border-y"
-        >
-          1
-        </Button>
-        <Button
-          onClick={() => handleClick(2)}
-          className="text-gray-800 py-8 text-4xl font-bold bg-white hover:bg-gray-200 border border-gray-800 border-y"
-        >
-          2
-        </Button>
-        <Button
-          onClick={() => handleClick(3)}
-          className="text-gray-800 py-8 text-4xl font-bold bg-white hover:bg-gray-200 border border-gray-800 border-y"
-        >
-          3
-        </Button>
-        <Button
-          onClick={() => handleClick(4)}
-          className="text-gray-800 py-8 text-4xl font-bold bg-white hover:bg-gray-200 border border-gray-800 border-y"
-        >
-          4
-        </Button>
-        <Button
-          onClick={() => handleClick(5)}
-          className="text-gray-800 py-8 text-4xl font-bold bg-white hover:bg-gray-200 border border-gray-800 border-y"
-        >
-          5
-        </Button>
-        <Button
-          onClick={() => handleClick(6)}
-          className="text-gray-800 py-8 text-4xl font-bold bg-white hover:bg-gray-200 border border-gray-800 border-y"
-        >
-          6
-        </Button>
-        <Button
-          onClick={() => handleClick(7)}
-          className="text-gray-800 py-8 text-4xl font-bold bg-white hover:bg-gray-200 border border-gray-800 border-y"
-        >
-          7
-        </Button>
-        <Button
-          onClick={() => handleClick(8)}
-          className="text-gray-800 py-8 text-4xl font-bold bg-white hover:bg-gray-200 border border-gray-800 border-y"
-        >
-          8
-        </Button>
-        <Button
-          onClick={() => handleClick(9)}
-          className="text-gray-800 py-8 text-4xl font-bold bg-white hover:bg-gray-200 border border-gray-800 border-y"
-        >
-          9
-        </Button>
-
-        <Button
-          onClick={() => handleClear()}
-          className="text-gray-800 py-8 text-4xl font-bold bg-white hover:bg-gray-200 border border-gray-800 border-y"
-        >
-          CLR
-        </Button>
-        <Button
-          onClick={() => handleClick(0)}
-          className="text-gray-800 py-8 text-4xl font-bold bg-white hover:bg-gray-200 border border-gray-800 border-y"
-        >
-          0
-        </Button>
-
-        <Button
-          onClick={() => handleDeleteLast()}
-          className="text-gray-800 font-bold py-8 text-4xl bg-white border border-gray-800 hover:bg-gray-200 border-y"
+          onClick={handleDeleteLast}
+          className="col-span-4 py-8 text-4xl font-bold bg-white hover:bg-gray-300 text-gray-900 border border-gray-800"
         >
           <FiDelete />
         </Button>

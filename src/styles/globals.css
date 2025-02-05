@@ -38,3 +38,15 @@ body {
     text-wrap: balance;
   }
 }
+
+button {
+  transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+button:hover {
+  transform: scale(1.05);
+}
+input:focus {
+  outline: none;
+  border-color: #10b981;
+}
+
