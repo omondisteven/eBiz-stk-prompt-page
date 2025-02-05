@@ -35,12 +35,22 @@ Install dependencies
   npm install
 ```
 
+Start the back-end (to run on LocalHost port 8000)
+
+```bash
+  php -S localhost:8000 -t Back_end
+```
+Amend the backend API calls to point to LocalHost:8000
+
+Go to pages folder and edit the following files; *Agent.tsx*, *PayBill.tsx*, *SendMoney.tsx*, *Till.tsx* by replacing *https://ebiz-mpesa-stk-api-backend.onrender.com/* with *http://localhost:8000/*
+
 Start the project
 
 ```bash
   npm run dev
 ```
 
+Your App will be running on http://Localhost:3000
 ## Tech Stack
 
 React,TailwindCSS
