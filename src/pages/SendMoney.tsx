@@ -99,7 +99,7 @@ const SendMoneyPage = () => {
         params.append("accountnumber", data.accountNumber);
       }
   
-      const response = await fetch("http://localhost:8000/sendmoney_stk_api.php", {
+      const response = await fetch("https://ebiz-mpesa-stk-api-backend.onrender.com/sendmoney_stk_api.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: params,

@@ -96,7 +96,7 @@ const TillPage = () => {
         submit: "submit"
       });
   
-      const response = await fetch("http://localhost:8000/till_stk_api.php", {
+      const response = await fetch("https://ebiz-mpesa-stk-api-backend.onrender.com/till_stk_api.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: formData

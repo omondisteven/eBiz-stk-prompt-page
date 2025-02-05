@@ -87,7 +87,7 @@ const AgentPage = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/agent_stk_api.php", {
+      const response = await fetch("https://ebiz-mpesa-stk-api-backend.onrender.com/agent_stk_api.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
@@ -166,18 +166,7 @@ const AgentPage = () => {
             {showQRCode ? <HiOutlineEyeOff /> : <HiOutlineEye />}
             <span>{showQRCode ? "Hide QR Code" : "Show QR Code"}</span>
           </Button>
-
-          {/* Color Picker */}
-          {/* <div className="flex items-center space-x-2">
-            <input
-              id="colorPicker"
-              type="color"
-              value={qrColor}
-              onChange={(e) => setQrColor(e.target.value)}
-              className="w-16 h-10 border rounded-md cursor-pointer"
-            />
-            <label htmlFor="colorPicker" className="text-sm font-small">Change QR Color</label>
-          </div> */}            
+       
           {/* QR Code Display */}
           {showQRCode && (
             <div className="p-3 border-4 border-black bg-white rounded-md">

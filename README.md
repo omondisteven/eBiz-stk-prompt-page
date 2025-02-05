@@ -3,15 +3,15 @@
 <h1>PESAQR</h1>
 </div>
 
-This is a Customer Panel to generate M-PESA Payment QR Codes for any Till/Paybill.
+This is a Business MPESA Payment app thet is meant to: 
+- Generate M-PESA Payment QR Codes for any Till, Paybill, Send Money and Withraw cash.
+- Allow for push STK payments
+- Generate non-MPESA Qr code generation for internal payment
+- Allow for push STK Payments through non-MPESA Qr codes generated internally
 
-I built this to help individuals/businesses opt consider providing customer payment terminals. Currently the [M-PESA app](https://play.google.com/store/apps/details?id=com.safaricom.mpesa.lifestyle&hl=en) is the most used finance app in the Android/iOS appstores.
+I improved this app from the initial repo by David Munga (https://github.com/DavidAmunga/pesaqr). Currently the [M-PESA app](https://play.google.com/store/apps/details?id=com.safaricom.mpesa.lifestyle&hl=en) is the most used finance app in the Android/iOS appstores.
 
-The 'Scan QR to Pay' feature exists but isn't widely used. I discovered this while shopping in a supermarket and found it faster than keying in the store details or waiting for a payment prompt from the teller.
-
-Discovered it was a simple sequence , built a v1 and now anyone can use this in their business that makes paying for things 3s faster !
-
-Its free , offline and will stay that way.
+The 'Scan QR to Pay' feature exists but isn't widely used. While shopping in a supermarket it is faster than keying in the store details or waiting for a payment prompt from the teller.
 
 ---
 
@@ -20,13 +20,13 @@ Its free , offline and will stay that way.
 Clone the project
 
 ```bash
-  git clone https://github.com/DavidAmunga/pesaqr
+  git clone https://github.com/omondisteven/eBiz_mpesa_payment_app.git
 ```
 
 Go to the project directory
 
 ```bash
-  cd pesaqr
+  cd ebiz_payment
 ```
 
 Install dependencies
@@ -52,8 +52,8 @@ React,TailwindCSS
 
 ## Roadmap
 
-- Better Responsiveness on Android Tablets
-- Add Withdraw Cash QR
+- Better Responsiveness on Android Tablets - Done
+- Add Withdraw Cash QR - Done
 - Add Deploy to own hosting platform
 
 ## Lessons Learned
@@ -63,18 +63,13 @@ React,TailwindCSS
 
 ## Demo
 
-→ [pesaqr.com](pesaqr.com)
+→ [eBiz hosted on vercel.com](https://e-biz-mpesa-payment-app.vercel.app/)
 
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
 
-## 🔗 Links
-
-[![portfolio](https://img.shields.io/badge/my_personal_website-000?style=for-the-badge&logo=ko-fi&logoColor=white)](https://davidamunga.com)
-[![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/david-amunga)
-[![twitter](https://img.shields.io/badge/twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/davidamunga_)
 
 ## Feedback
 
-If you have any feedback, please shoot a [DM me](https://twitter.com/davidamunga_) directly via X
+If you have any feedback, please shoot a [DM me](https://web.facebook.com/steve.omondi.587) directly via X
