@@ -59,6 +59,8 @@ React,TailwindCSS
 
 ![Screenshot One](screenshots/screenshot1.png)
 ![Screenshot Two](screenshots/screenshot2.png)
+![Screenshot Three](screenshots/screenshot3.png)
+![Screenshot Four](screenshots/screenshot4.png)
 
 ## Roadmap
 
@@ -73,7 +75,7 @@ React,TailwindCSS
 
 ## Demo
 
-→ [eBiz hosted on vercel.com](https://e-biz-mpesa-payment-app.vercel.app/)
+→ [Click here for Live Demo...](https://e-biz-mpesa-payment-app.vercel.app/)
 
 ## License
 
