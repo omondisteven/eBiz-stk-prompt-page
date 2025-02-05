@@ -84,4 +84,4 @@ React,TailwindCSS
 
 ## Feedback
 
-If you have any feedback, please shoot a [DM me](https://web.facebook.com/steve.omondi.587) directly via X
+If you have any feedback, please shoot a [DM me](https://web.facebook.com/steve.omondi.587) directly via messenger

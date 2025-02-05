@@ -42,7 +42,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed top-0 left-0 w-3/4 md:w-1/4 bg-gray-900 text-white flex flex-col p-4 space-y-4 shadow-lg h-full z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:relative ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed top-0 left-0 w-4/5 md:w-1/5 bg-gray-900 text-white flex flex-col p-4 space-y-4 shadow-lg h-full z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:relative ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
         id="sidebar"
       >
         {/* Close Button (Mobile Only) */}
@@ -84,7 +84,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
 
       {/* Main Content */}
       <div
-        className="flex-1 md:ml-1/4"
+        className="flex-1 md:ml-1/5"
         ref={mainContentRef}
         onClick={(e) => {
           if (isSidebarOpen) {
@@ -105,7 +105,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
         {/* Footer */}
         <footer className="text-center py-2 text-white bg-gray-500">
           Built in 🇰🇪 by
-          <Link href="https://twitter.com/davidamunga_" target="_blank" className="font-bold underline ml-1">
+          <Link href="https://web.facebook.com/steve.omondi.587" target="_blank" className="font-bold underline ml-1">
             Steve Omondi
           </Link>
         </footer>
