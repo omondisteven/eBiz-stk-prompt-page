@@ -82,40 +82,39 @@ const SendMoneyPage = () => {
   };
 
   const handlePay = async () => {
-    if (!senderPhoneNumber || !data.amount) {
+    if (
+      !senderPhoneNumber.trim() ||
+      !data.paybillNumber?.trim() ||
+      !data.tillNumber?.trim() ||
+      !data.amount ||
+      isNaN(Number(data.amount)) || Number(data.amount) <= 0 ||
+      !data.accountNumber?.trim() // Ensure accountNumber is defined and not empty
+    ) {
       toast.error("Please fill in all the fields.");
       return;
     }
   
     try {
-      const params = new URLSearchParams({
-        phone: senderPhoneNumber,
-        amount: data.amount.toString(),
-        submit: "submit"
-      });
-  
-      // Only add `accountnumber` if it exists
-      if (data.accountNumber) {
-        params.append("accountnumber", data.accountNumber);
-      }
-  
-      const response = await fetch("https://ebiz-mpesa-stk-api-backend.onrender.com/sendmoney_stk_api.php", {
+      const response = await fetch("/api/stk_api/sendmoney_stk_api", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: senderPhoneNumber.trim(),
+          amount: data.amount.toString(),
+          accountnumber: data.accountNumber.trim(), // Safe to use trim() now
+        }),
       });
   
       const result = await response.json();
       if (response.ok) {
-        toast.success("Payment initiated successfully!");
+        toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
     } catch (error) {
-      // toast.error("Network error: Unable to initiate payment.");
+      toast.error("Network error: Unable to initiate payment.");
     }
-  };
-  
+  };  
 
   // *******NEW LOOK COMPONENT******
     return (
@@ -157,18 +156,7 @@ const SendMoneyPage = () => {
               {showQRCode ? <HiOutlineEyeOff /> : <HiOutlineEye />}
               <span>{showQRCode ? "Hide QR Code" : "Show QR Code"}</span>
             </Button>
-
-            {/* Color Picker */}
-            {/* <div className="flex items-center space-x-2">
-              <input
-                id="colorPicker"
-                type="color"
-                value={qrColor}
-                onChange={(e) => setQrColor(e.target.value)}
-                className="w-16 h-10 border rounded-md cursor-pointer"
-              />
-              <label htmlFor="colorPicker" className="text-sm font-small">Change QR Color</label>
-            </div> */}            
+       
             {/* QR Code Display */}
             {showQRCode && (
               <div className="p-3 border-4 border-black bg-white rounded-md">

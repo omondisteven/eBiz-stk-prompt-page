@@ -81,35 +81,38 @@ const AgentPage = () => {
   };
 
   const handlePay = async () => {
-    if (!phoneNumber || !data.agentNumber || !data.storeNumber || !data.amount) {
+    if (
+      !phoneNumber.trim() ||
+      !data.agentNumber?.trim() ||
+      !data.storeNumber?.trim() ||
+      !data.amount ||
+      isNaN(Number(data.amount)) || Number(data.amount) <= 0
+    ) {
       toast.error("Please fill in all the fields.");
       return;
     }
-
+  
     try {
-      const response = await fetch("https://ebiz-mpesa-stk-api-backend.onrender.com/agent_stk_api.php", {
+      const response = await fetch("/api/stk_api/agent_stk_api", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          phone: phoneNumber,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phoneNumber.trim(),
           amount: data.amount.toString(),
-          storenumber: data.storeNumber,
-          // agentnumber: data.agentNumber,  //to activate when going live
-          submit: "submit"
-        })
+          accountnumber: data.storeNumber.trim(),
+        }),
       });
-
+  
       const result = await response.json();
       if (response.ok) {
-        toast.success("Payment initiated successfully!");
+        toast.success("Payment initiated successfully! Please emter your M-pesa PIN on your phone when prompted shortly");
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
     } catch (error) {
-      // toast.error("Network error: Unable to initiate payment.");
+      toast.error("Network error: Unable to initiate payment.");
     }
   };
-
   // *********NEW LOOK COMPONENT*******
   return (
     <Layout>
