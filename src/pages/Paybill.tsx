@@ -1,3 +1,4 @@
+// src/Pages/PayBill.tsx
 import Layout from "@/components/Layout";
 import { useContext, useEffect, useState } from "react";
 import { AppContext, AppContextType } from "@/context/AppContext";
@@ -59,7 +60,6 @@ const PaybillPage = () => {
   };
 
   const handlePay = async () => {
-    // Trim and check if any field is empty or undefined
     if (
       !phoneNumber.trim() ||
       !data.paybillNumber?.trim() ||
@@ -72,15 +72,14 @@ const PaybillPage = () => {
     }
   
     try {
-      const response = await fetch("https://ebiz-mpesa-stk-api-backend.onrender.com/paybill_stk_api.php", {
+      const response = await fetch("/api/stk_api/paybill_stk_api", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           phone: phoneNumber.trim(),
           amount: data.amount.toString(),
           accountnumber: data.accountNumber.trim(),
-          submit: "submit"
-        })
+        }),
       });
   
       const result = await response.json();
@@ -90,10 +89,9 @@ const PaybillPage = () => {
         toast.error(result?.message || "Something went wrong.");
       }
     } catch (error) {
-      // toast.error("Network error: Unable to initiate payment.");
+      toast.error("Network error: Unable to initiate payment.");
     }
   };
-  
 
   return (
     <Layout>
@@ -141,17 +139,6 @@ const PaybillPage = () => {
             <span>{showQRCode ? "Hide QR Code" : "Show QR Code"}</span>
           </Button>
 
-          {/* Color Picker */}
-          {/* <div className="flex items-center space-x-2">
-            <input
-              id="colorPicker"
-              type="color"
-              value={qrColor}
-              onChange={(e) => setQrColor(e.target.value)}
-              className="w-16 h-10 border rounded-md cursor-pointer"
-            />
-            <label htmlFor="colorPicker" className="text-sm font-small">Change QR Color</label>
-          </div> */}            
           {/* QR Code Display */}
           {showQRCode && (
             <div className="p-3 border-4 border-black bg-white rounded-md">
