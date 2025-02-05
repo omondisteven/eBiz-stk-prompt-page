@@ -1,6 +1,6 @@
 <div align="center">
 <img src="public/logo.svg" width="200"/>
-<h1>PESAQR</h1>
+<h1>eBiz</h1>
 </div>
 
 This is a Business MPESA Payment app thet is meant to: 
