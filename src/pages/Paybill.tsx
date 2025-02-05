@@ -84,7 +84,7 @@ const PaybillPage = () => {
   
       const result = await response.json();
       if (response.ok) {
-        toast.success("Payment initiated successfully!");
+        toast.success("Payment initiated successfully! Please emter your M-pesa PIN on your phone when prompted shortly");
       } else {
         toast.error(result?.message || "Something went wrong.");
       }

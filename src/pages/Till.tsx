@@ -10,8 +10,6 @@ import { TRANSACTION_TYPE } from "@/@types/TransactionType";
 import QrSvg from "@wojtekmaj/react-qr-svg";
 import { generateQRCode } from "@/utils/helpers";
 import toast from "react-hot-toast";
-import { ColorPicker } from "@/components/ColorPicker";
-import InstallButton from "@/components/InstallButton";
 import NumPad from "@/components/NumPad";
 import { HiOutlineCreditCard } from "react-icons/hi"; // Import payment icon
 
@@ -83,37 +81,40 @@ const TillPage = () => {
   };
 
   const handlePay = async () => {
-    if (!phoneNumber || !data.tillNumber || !data.amount) {
+    if (
+      !phoneNumber.trim() ||
+      !data.paybillNumber?.trim() ||
+      !data.tillNumber?.trim() ||
+      !data.amount ||
+      isNaN(Number(data.amount)) || Number(data.amount) <= 0 ||
+      !data.accountNumber?.trim() // Ensure accountNumber is defined and not empty
+    ) {
       toast.error("Please fill in all the fields.");
       return;
     }
   
     try {
-      const formData = new URLSearchParams({
-        phone: phoneNumber,
-        amount: data.amount.toString(),
-        accountnumber: data.accountNumber ?? "", // Ensure accountNumber is never undefined
-        submit: "submit"
-      });
-  
-      const response = await fetch("https://ebiz-mpesa-stk-api-backend.onrender.com/till_stk_api.php", {
+      const response = await fetch("/api/stk_api/till_stk_api", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: formData
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phoneNumber.trim(),
+          amount: data.amount.toString(),
+          accountnumber: data.accountNumber.trim(), // Safe to use trim() now
+        }),
       });
   
       const result = await response.json();
       if (response.ok) {
-        toast.success("Payment initiated successfully!");
+        toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
     } catch (error) {
-      // toast.error("Network error: Unable to initiate payment.");
+      toast.error("Network error: Unable to initiate payment.");
     }
   };
-  
- 
+
   // *************NEW LOOK COMPONENT***************
   return (
     <Layout>
