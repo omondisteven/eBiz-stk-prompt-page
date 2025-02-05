@@ -109,7 +109,7 @@ const TillPage = () => {
         toast.error(result?.message || "Something went wrong.");
       }
     } catch (error) {
-      toast.error("Network error: Unable to initiate payment.");
+      // toast.error("Network error: Unable to initiate payment.");
     }
   };
   
