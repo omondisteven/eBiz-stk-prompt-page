@@ -17,9 +17,11 @@ const QrScanner = () => {
   const [storeNumber, setStoreNumber] = useState("");
   const [recepientPhoneNumber, setRecepientPhoneNumber] = useState("");
   const [transactionType, setTransactionType] = useState("");
-  const [stream, setStream] = useState<MediaStream | null>(null); // Store the stream in state
+  const [stream, setStream] = useState<MediaStream | null>(null);
+
   const [showScanner, setShowScanner] = useState(false);
   const [selectedCamera, setSelectedCamera] = useState("environment");
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { data } = useContext(AppContext) as AppContextType;
@@ -31,22 +33,51 @@ const QrScanner = () => {
       try {
         const constraints = { video: { facingMode: selectedCamera } };
         const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+    
         if (isMounted && videoRef.current) {
-          setStream(newStream); // Store the stream in state
+          setStream(newStream);
           videoRef.current.srcObject = newStream;
+    
+          // Initialize the QR code scanner once the camera stream starts
+          const codeReader = new BrowserMultiFormatReader();
+    
+          const decodeFromVideo = async () => {
+            if (videoRef.current) {
+              try {
+                // Provide the deviceId (null here for auto selection) and the video element
+                codeReader.decodeFromVideoDevice(
+                  null, // Device ID, null for default camera
+                  videoRef.current, // Video element where the camera feed is shown
+                  (result, error) => {
+                    if (result) {
+                      handleScanSuccess(result.getText());
+                    } else if (error) {
+                      console.error('Error decoding QR code:', error);
+                    }
+                  }
+                );
+              } catch (error) {
+                console.error('Error scanning QR code from video:', error);
+              }
+            }
+          };
+    
+          // Start continuous decoding from the video stream
+          decodeFromVideo();
         }
       } catch (error) {
-        console.error("Error accessing camera:", error);
-        toast.error("Error accessing camera. Please check permissions.");
+        console.error('Error accessing camera:', error);
+        toast.error('Error accessing camera. Please check permissions.');
       }
     };
+    
 
     const stopCamera = () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
-        setStream(null);  // Clear the stream from state
+        setStream(null);
         if (videoRef.current) {
-          videoRef.current.srcObject = null; // Release the MediaStream object
+          videoRef.current.srcObject = null;
         }
       }
     };
@@ -59,7 +90,7 @@ const QrScanner = () => {
 
     return () => {
       isMounted = false;
-      stopCamera(); // Stop on unmount
+      stopCamera();
     };
   }, [showScanner, selectedCamera]);
 
@@ -134,50 +165,12 @@ const QrScanner = () => {
     setStoreNumber("");
     setRecepientPhoneNumber("");
     setTransactionType("");
-    setShowScanner(true); // Show the scanner after reset
+    setShowScanner(true);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Clear the file input
+      fileInputRef.current.value = "";
     }
     toast.success("Form reset successfully!");
   };
-
-  // ******QR CODE SCANNING FUNCTIONALITY FOR CAMERA******
-
-  useEffect(() => {
-  const codeReader = new BrowserMultiFormatReader();
-  let scanInterval: NodeJS.Timeout;
-
-  const startScanning = () => {
-    if (videoRef.current) {
-      scanInterval = setInterval(async () => {
-        try {
-          // Properly handle the callback function for decoding
-          await codeReader.decodeFromVideoDevice(
-            selectedCamera,
-            videoRef.current,
-            (result: any, error) => {
-              if (error) {
-                console.error("Error decoding QR code:", error);
-                return;
-              }
-              if (result && result.getText) {
-                handleScanSuccess(result.getText());
-              }
-            }
-          );
-        } catch (error) {
-          console.error("Error scanning QR code:", error);
-        }
-      }, 200); // Scan every 200ms
-    }
-  };
-  
-
-  startScanning(); // Initiate scanning process
-
-  return () => clearInterval(scanInterval); // Clean up interval on component unmount
-}, [showScanner, selectedCamera]);  // Add selectedCamera dependency to restart scanning if the camera changes
-
 
   // ******PAYMENT METHODS******
   const handlePayBill = async () => {
