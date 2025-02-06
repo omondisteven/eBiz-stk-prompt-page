@@ -17,6 +17,7 @@ const QrScanner = () => {
   const [storeNumber, setStoreNumber] = useState("");
   const [recepientPhoneNumber, setRecepientPhoneNumber] = useState("");
   const [transactionType, setTransactionType] = useState("");
+  const [stream, setStream] = useState<MediaStream | null>(null); // Store the stream in state
 
   const [showScanner, setShowScanner] = useState(false);
   const [selectedCamera, setSelectedCamera] = useState("environment");
@@ -26,35 +27,44 @@ const QrScanner = () => {
   const { data } = useContext(AppContext) as AppContextType;
 
   useEffect(() => {
+    let isMounted = true;
+
+    const startCamera = async () => {
+      try {
+        const constraints = { video: { facingMode: selectedCamera } };
+        const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        if (isMounted && videoRef.current) {
+          setStream(newStream); // Store the stream in state
+          videoRef.current.srcObject = newStream;
+        }
+      } catch (error) {
+        console.error("Error accessing camera:", error);
+        toast.error("Error accessing camera. Please check permissions.");
+      }
+    };
+
+    const stopCamera = () => {
+      if (stream) { // Check if a stream exists
+        stream.getTracks().forEach(track => track.stop());
+        setStream(null);  // Clear the stream from state
+        if (videoRef.current) {
+          videoRef.current.srcObject = null; // Release the MediaStream object
+        }
+      }
+    };
+
     if (showScanner) {
       startCamera();
     } else {
       stopCamera();
     }
+
+    return () => {
+      isMounted = false;
+      stopCamera(); // Stop on unmount
+    };
   }, [showScanner, selectedCamera]);
-
-  const startCamera = async () => {
-    try {
-      const constraints = {
-        video: { facingMode: selectedCamera },
-      };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (error) {
-      console.error("Error accessing camera:", error);
-      toast.error("Error accessing camera. Please check permissions.");
-    }
-  };
-
-  const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      (videoRef.current.srcObject as MediaStream)
-        .getTracks()
-        .forEach((track) => track.stop());
-    }
-  };
 
   const handleScanSuccess = (scannedData: string) => {
     try {
