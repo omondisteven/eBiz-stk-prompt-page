@@ -76,6 +76,11 @@ const Layout = ({ children }: { children: ReactNode }) => {
           <Link href="/QrGenerator" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrGenerator") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
             <FaQrcode className="mr-2" /> Generate non Mpesa Qr
           </Link>
+            {/* Generator to tiny URL */}
+          <Link href="/QrToURLGenerator" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrToURLGenerator") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
+            <FaQrcode className="mr-2" /> Generate Qr with tiny URL (WIP)
+          </Link>
+
           <Link href="/QrScanner" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrScanner") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
             <FaCreditCard className="mr-2" /> Non-Mpesa QR Scanner
           </Link>
@@ -105,8 +110,8 @@ const Layout = ({ children }: { children: ReactNode }) => {
         {/* Footer */}
         <footer className="text-center py-2 text-white bg-gray-500">
           Built in 🇰🇪 by
-          <Link href="https://web.facebook.com/steve.omondi.587" target="_blank" className="font-bold underline ml-1">
-            Steve Omondi
+          <Link href="https://bltasolutions.co.ke/" target="_blank" className="font-bold underline ml-1">
+            BLTA Solutions (K) Limited
           </Link>
         </footer>
       </div>
