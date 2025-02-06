@@ -1,12 +1,11 @@
 import Layout from "@/components/Layout";
 import { useContext, useState, useEffect, useRef } from "react";
-import { Html5Qrcode, Html5QrcodeScanner } from "html5-qrcode";
+import { BrowserMultiFormatReader, Result } from "@zxing/library";
+import { HiOutlineCreditCard } from "react-icons/hi";
 import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
-import { HiOutlineCreditCard } from "react-icons/hi"; // Import payment icon
-import { AppContext, AppContextType } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
-
+import { AppContext, AppContextType } from "@/context/AppContext";
 
 const QrScanner = () => {
   const [paybillNumber, setPaybillNumber] = useState("");
@@ -18,40 +17,50 @@ const QrScanner = () => {
   const [storeNumber, setStoreNumber] = useState("");
   const [recepientPhoneNumber, setRecepientPhoneNumber] = useState("");
   const [transactionType, setTransactionType] = useState("");
-  const [showScanner, setShowScanner] = useState(true); // Control visibility of the scanner
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+
+  const [showScanner, setShowScanner] = useState(false);
+  const [selectedCamera, setSelectedCamera] = useState("environment");
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const { data, setData } = useContext(AppContext) as AppContextType;
+  const { data } = useContext(AppContext) as AppContextType;
 
   useEffect(() => {
-    // Initialize the scanner
-    scannerRef.current = new Html5QrcodeScanner("reader", {
-      fps: 10,
-      qrbox: 250,
-    }, false);
+    if (showScanner) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+  }, [showScanner, selectedCamera]);
 
-    scannerRef.current.render(
-      (decodedText) => {
-        handleScanSuccess(decodedText);
-      },
-      (errorMessage) => {
-        console.log("QR Scan Error:", errorMessage);
+  const startCamera = async () => {
+    try {
+      const constraints = {
+        video: { facingMode: selectedCamera },
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
       }
-    );
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      toast.error("Error accessing camera. Please check permissions.");
+    }
+  };
 
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear(); // Stop scanning and clean up
-      }
-    };
-  }, []);
+  const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      (videoRef.current.srcObject as MediaStream)
+        .getTracks()
+        .forEach((track) => track.stop());
+    }
+  };
 
   const handleScanSuccess = (scannedData: string) => {
     try {
       const parsedData = JSON.parse(scannedData);
       setTransactionType(parsedData.TransactionType);
 
-      // Set data based on TransactionType
       switch (parsedData.TransactionType) {
         case "PayBill":
           setPaybillNumber(parsedData.PaybillNumber || "");
@@ -74,7 +83,9 @@ const QrScanner = () => {
         default:
           break;
       }
+
       toast.success("QR Code scanned successfully!");
+      setShowScanner(false);
     } catch (error) {
       toast.error("Invalid QR Code format.");
     }
@@ -85,11 +96,24 @@ const QrScanner = () => {
     if (!file) return;
 
     try {
-      const html5Qrcode = new Html5Qrcode("reader");
-      const result = await html5Qrcode.scanFile(file, false);
-      handleScanSuccess(result);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const tempImage = document.createElement("img");
+        tempImage.src = reader.result as string;
+
+        tempImage.onload = async () => {
+          try {
+            const codeReader = new BrowserMultiFormatReader();
+            const result: Result = await codeReader.decodeFromImageElement(tempImage);
+            handleScanSuccess(result.getText());
+          } catch (scanError) {
+            toast.error("Failed to scan QR code from image.");
+          }
+        };
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
-      toast.error("Failed to scan QR code from image.");
+      toast.error("Error loading image for QR scan.");
     }
   };
 
@@ -247,106 +271,82 @@ const QrScanner = () => {
       toast.error("Network error: Unable to initiate payment.");
     }
   };
+
   return (
     <Layout>
-      <p className="text-xl text-center">Scan non Mpesa Qr Code to make Payment</p>
-      <div className="w-full border-t-2 border-gray-300 my-4"></div>  {/* Added Divider */}
-      <div className="mt-6 flex flex-col items-center space-y-4">      
+      <p className="text-xl text-center">Scan non-Mpesa QR Code to make Payment</p>
+      <div className="w-full border-t-2 border-gray-300 my-4"></div>
+
+      <div className="mt-6 flex flex-col items-center space-y-4">
+        {/* Controls Section */}
         <div className="flex items-center space-x-4">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileUpload}
+          {/* Start/Stop Scanner Button */}
+          {!showScanner ? (
+            <Button onClick={() => setShowScanner(true)} className="bg-green-500 text-white">
+              Start Scanning
+            </Button>
+          ) : (
+            <Button onClick={() => setShowScanner(false)} className="bg-red-500 text-white">
+              Stop Scanning
+            </Button>
+          )}
+
+          {/* Camera Selection (Always Visible) */}
+          <select
+            value={selectedCamera}
+            onChange={(e) => setSelectedCamera(e.target.value)}
             className="border p-2 rounded"
-            ref={fileInputRef}
-          />
-          <button
-            onClick={resetForm}
-            className="bg-blue-500 text-white p-2 rounded"
           >
-            Reset
-          </button>
+            <option value="user">Front Camera</option>
+            <option value="environment">Back Camera</option>
+          </select>
         </div>
 
-        {/* Show the scanner container only when 'showScanner' is true */}
-        {showScanner && <div id="reader" className="w-full max-w-md mt-4"></div>}
+        {/* Scanner */}
+        {showScanner && <video ref={videoRef} className="w-full max-w-md mt-4" autoPlay playsInline muted></video>}
 
-        <div className="w-full max-w-md p-4 border rounded shadow-md bg-white">
-          <p className="text-lg font-semibold">Scanned Details:</p>
-          
-          {transactionType === "PayBill" && (
-            <>
-              <div>
-                <label className="block text-sm font-medium">Paybill Number</label>
+        {/* Scan result UI + Payment Button */}
+        {!showScanner && transactionType && (
+          <div className="w-full max-w-md p-4 border rounded shadow-md bg-white">
+            <p className="text-lg font-semibold">Scanned Details:</p>
+            {transactionType === "PayBill" && (
+              <>
+                <label>Paybill Number</label>
                 <Input value={paybillNumber} readOnly />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Account Number</label>
+                <label>Account Number</label>
                 <Input value={accountNumber} readOnly />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Amount</label>
+                <label>Amount</label>
                 <Input value={amount} readOnly />
-              </div>
-            </>
-          )}
-          
-          {transactionType === "BuyGoods" && (
-            <>
-              <div>
-                <label className="block text-sm font-medium">Till Number</label>
+              </>
+            )}
+            {transactionType === "BuyGoods" && (
+              <>
+                <label>Till Number</label>
                 <Input value={tillNumber} readOnly />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Amount</label>
+                <label>Amount</label>
                 <Input value={amount} readOnly />
-              </div>
-            </>
-          )}
-
-          {transactionType === "SendMoney" && (
-            <>
-            <div>
-              <label className="block text-sm font-medium">Recipient Phone Number</label>
-              <Input value={recepientPhoneNumber} readOnly />
-            </div>
-            <div>
-                <label className="block text-sm font-medium">Amount</label>
+              </>
+            )}
+            {transactionType === "SendMoney" && (
+              <>
+                <label>Recipient Phone</label>
+                <Input value={recepientPhoneNumber} readOnly />
+                <label>Amount</label>
                 <Input value={amount} readOnly />
-              </div>
-            </>
-            
-            
-            
-          )}
-
-          {transactionType === "WithdrawMoney" && (
-            <>
-              <div>
-                <label className="block text-sm font-medium">Agent ID</label>
+              </>
+            )}
+            {transactionType === "WithdrawMoney" && (
+              <>
+                <label>Agent ID</label>
                 <Input value={agentId} readOnly />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Store Number</label>
+                <label>Store Number</label>
                 <Input value={storeNumber} readOnly />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Amount</label>
+                <label>Amount</label>
                 <Input value={amount} readOnly />
-              </div>
-            </>
-          )}
-          
-          {/* Show PhoneNumber input only after successful scan */}
-          {transactionType && (
-            <div>
-              <label className="block text-sm font-medium">Phone Number</label>
-              <Input
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="Enter Phone Number"
-              />
-              <br />
+              </>
+            )}
+            {/* PAY Buttons */}
+            <br />
               {transactionType === "PayBill" && (
                 <Button
                   className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
@@ -386,10 +386,11 @@ const QrScanner = () => {
                   <span>Withdraw Now</span>
                 </Button>
               )}
+          </div>
+        )}
 
-            </div>
-          )}
-        </div>
+        {/* File Upload */}
+        <input type="file" accept="image/*" onChange={handleFileUpload} className="border p-2 rounded" ref={fileInputRef} />
       </div>
     </Layout>
   );
