@@ -179,10 +179,10 @@ const QrScanner = () => {
   const handlePayBill = async () => {
     if (
       !phoneNumber.trim() ||
-      !data.paybillNumber?.trim() ||
-      !data.accountNumber?.trim() ||
-      !data.amount ||
-      isNaN(Number(data.amount)) || Number(data.amount) <= 0
+      !paybillNumber.trim() ||
+      !accountNumber.trim() ||
+      !amount ||
+      isNaN(Number(amount)) || Number(amount) <= 0
     ) {
       toast.error("Please fill in all the fields.");
       return;
@@ -194,14 +194,14 @@ const QrScanner = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: phoneNumber.trim(),
-          amount: data.amount.toString(),
-          accountnumber: data.accountNumber.trim(),
+          amount: amount.toString(),
+          accountnumber: accountNumber.trim(),
         }),
       });
   
       const result = await response.json();
       if (response.ok) {
-        toast.success("Payment initiated successfully! Please emter your M-pesa PIN on your phone when prompted shortly");
+        toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -213,11 +213,10 @@ const QrScanner = () => {
   const handlePayTill = async () => {
     if (
       !phoneNumber.trim() ||
-      !data.paybillNumber?.trim() ||
-      !data.tillNumber?.trim() ||
-      !data.amount ||
-      isNaN(Number(data.amount)) || Number(data.amount) <= 0 ||
-      !data.accountNumber?.trim() // Ensure accountNumber is defined and not empty
+      !paybillNumber.trim() ||
+      !tillNumber.trim() ||
+      !amount ||
+      isNaN(Number(amount)) || Number(amount) <= 0
     ) {
       toast.error("Please fill in all the fields.");
       return;
@@ -229,8 +228,8 @@ const QrScanner = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: phoneNumber.trim(),
-          amount: data.amount.toString(),
-          accountnumber: data.accountNumber.trim(), // Safe to use trim() now
+          amount: amount.toString(),
+          accountnumber: tillNumber.trim(),
         }),
       });
   
@@ -247,11 +246,9 @@ const QrScanner = () => {
   const handleSendMoney = async () => {
     if (
       !recepientPhoneNumber.trim() ||
-      !data.phoneNumber?.trim() ||
-      !data.tillNumber?.trim() ||
-      !data.amount ||
-      isNaN(Number(data.amount)) || Number(data.amount) <= 0 ||
-      !data.accountNumber?.trim() // Ensure accountNumber is defined and not empty
+      !phoneNumber.trim() ||
+      !amount ||
+      isNaN(Number(amount)) || Number(amount) <= 0
     ) {
       toast.error("Please fill in all the fields.");
       return;
@@ -263,8 +260,8 @@ const QrScanner = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: phoneNumber.trim(),
-          amount: data.amount.toString(),
-          accountnumber: data.accountNumber.trim(), // Safe to use trim() now
+          amount: amount.toString(),
+          recepientPhoneNumber: recepientPhoneNumber.trim(),
         }),
       });
   
@@ -277,15 +274,15 @@ const QrScanner = () => {
     } catch (error) {
       toast.error("Network error: Unable to initiate payment.");
     }
-  };  
+  };
 
   const handleWithdraw = async () => {
     if (
       !phoneNumber.trim() ||
-      !data.agentNumber?.trim() ||
-      !data.storeNumber?.trim() ||
-      !data.amount ||
-      isNaN(Number(data.amount)) || Number(data.amount) <= 0
+      !agentId.trim() ||
+      !storeNumber.trim() ||
+      !amount ||
+      isNaN(Number(amount)) || Number(amount) <= 0
     ) {
       toast.error("Please fill in all the fields.");
       return;
@@ -297,14 +294,14 @@ const QrScanner = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: phoneNumber.trim(),
-          amount: data.amount.toString(),
-          accountnumber: data.storeNumber.trim(),
+          amount: amount.toString(),
+          accountnumber: storeNumber.trim(),
         }),
       });
   
       const result = await response.json();
       if (response.ok) {
-        toast.success("Payment initiated successfully! Please emter your M-pesa PIN on your phone when prompted shortly");
+        toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -321,6 +318,15 @@ const QrScanner = () => {
       <div className="mt-6 flex flex-col items-center space-y-4">
         {/* Controls Section */}
         <div className="flex items-center space-x-4">
+          {/* Camera Selection (Always Visible) */}
+          <select
+            value={selectedCamera}
+            onChange={(e) => setSelectedCamera(e.target.value)}
+            className="border p-2 rounded"
+          >
+            <option value="user">Front Camera</option>
+            <option value="environment">Back Camera</option>
+          </select>
           {/* Start/Stop Scanner Button */}
           {!showScanner ? (
             <Button onClick={() => setShowScanner(true)} className="bg-green-500 text-white">
@@ -331,16 +337,7 @@ const QrScanner = () => {
               Stop Scanning
             </Button>
           )}
-
-          {/* Camera Selection (Always Visible) */}
-          <select
-            value={selectedCamera}
-            onChange={(e) => setSelectedCamera(e.target.value)}
-            className="border p-2 rounded"
-          >
-            <option value="user">Front Camera</option>
-            <option value="environment">Back Camera</option>
-          </select>
+          
         </div>
 
         {/* Scanner */}
@@ -386,8 +383,17 @@ const QrScanner = () => {
                 <Input value={amount} readOnly />
               </>
             )}
-            {/* PAY Buttons */}
-            <br />
+            
+            {/* Show PhoneNumber input only after successful scan */}
+          {transactionType && (
+            <div>
+              <label className="block text-sm font-medium">Phone Number</label>
+              <Input
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="Enter Phone Number"
+              />
+              <br />
               {transactionType === "PayBill" && (
                 <Button
                   className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
@@ -427,12 +433,30 @@ const QrScanner = () => {
                   <span>Withdraw Now</span>
                 </Button>
               )}
+
+            </div>
+          )}
           </div>
         )}
 
-        {/* File Upload */}
-        <input type="file" accept="image/*" onChange={handleFileUpload} className="border p-2 rounded" ref={fileInputRef} />
+        {/* File Upload & Reset */}
+        <div className="flex items-center space-x-2"> {/* Container for side-by-side placement */}
+          <input 
+            type="file" 
+            accept="image/*" 
+            onChange={handleFileUpload} 
+            className="border p-2 rounded" 
+            ref={fileInputRef} 
+          />
+          <button
+            onClick={resetForm}
+            className="bg-blue-500 text-white p-2 rounded"
+          >
+            Reset
+          </button>
+        </div>
       </div>
+       
     </Layout>
   );
 };

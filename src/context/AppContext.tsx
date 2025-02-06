@@ -9,6 +9,7 @@ import colors from "tailwindcss/colors";
 const defaultData: FormData = {
   paybillNumber: "",
   accountNumber: "",
+  
   // amount: 0,
   color: colors.green[600], // Ensuring consistency with previous color setting
   hideAmount: false,
