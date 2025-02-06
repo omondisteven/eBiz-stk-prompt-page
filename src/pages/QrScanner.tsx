@@ -112,58 +112,66 @@ const QrScanner = () => {
 
   // ******PAYMENT METHODS******
   const handlePayBill = async () => {
-    // Validate fields from local state instead of data context
-    if (!phoneNumber || !paybillNumber || !accountNumber || !amount) {
+    if (
+      !phoneNumber.trim() ||
+      !data.paybillNumber?.trim() ||
+      !data.accountNumber?.trim() ||
+      !data.amount ||
+      isNaN(Number(data.amount)) || Number(data.amount) <= 0
+    ) {
       toast.error("Please fill in all the fields.");
       return;
     }
   
     try {
-      const response = await fetch("http://localhost:8000/paybill_stk_api.php", {
+      const response = await fetch("/api/stk_api/paybill_stk_api", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          phone: phoneNumber,
-          amount: amount.toString(),
-          accountnumber: accountNumber,
-          submit: "submit"
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phoneNumber.trim(),
+          amount: data.amount.toString(),
+          accountnumber: data.accountNumber.trim(),
+        }),
       });
   
       const result = await response.json();
       if (response.ok) {
-        toast.success("Payment initiated successfully!");
+        toast.success("Payment initiated successfully! Please emter your M-pesa PIN on your phone when prompted shortly");
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
     } catch (error) {
-      // toast.error("Network error: Unable to initiate payment.");
+      toast.error("Network error: Unable to initiate payment.");
     }
   };
   
   const handlePayTill = async () => {
-    if (!phoneNumber || !tillNumber || !amount) {
+    if (
+      !phoneNumber.trim() ||
+      !data.paybillNumber?.trim() ||
+      !data.tillNumber?.trim() ||
+      !data.amount ||
+      isNaN(Number(data.amount)) || Number(data.amount) <= 0 ||
+      !data.accountNumber?.trim() // Ensure accountNumber is defined and not empty
+    ) {
       toast.error("Please fill in all the fields.");
       return;
     }
   
     try {
-      const formData = new URLSearchParams({
-        phone: phoneNumber,
-        amount: amount.toString(),
-        accountnumber: data.accountNumber ?? "", // Ensure accountNumber is never undefined
-        submit: "submit"
-      });
-  
-      const response = await fetch("http://localhost:8000/till_stk_api.php", {
+      const response = await fetch("/api/stk_api/till_stk_api", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: formData
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phoneNumber.trim(),
+          amount: data.amount.toString(),
+          accountnumber: data.accountNumber.trim(), // Safe to use trim() now
+        }),
       });
   
       const result = await response.json();
       if (response.ok) {
-        toast.success("Payment initiated successfully!");
+        toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -171,69 +179,72 @@ const QrScanner = () => {
       toast.error("Network error: Unable to initiate payment.");
     }
   };
-
   const handleSendMoney = async () => {
-    if (!phoneNumber || !data.amount) {
+    if (
+      !recepientPhoneNumber.trim() ||
+      !data.phoneNumber?.trim() ||
+      !data.tillNumber?.trim() ||
+      !data.amount ||
+      isNaN(Number(data.amount)) || Number(data.amount) <= 0 ||
+      !data.accountNumber?.trim() // Ensure accountNumber is defined and not empty
+    ) {
       toast.error("Please fill in all the fields.");
       return;
     }
   
     try {
-      const params = new URLSearchParams({
-        phone: phoneNumber,
-        amount: data.amount.toString(),
-        submit: "submit"
-      });
-  
-      // Only add `accountnumber` if it exists
-      if (data.accountNumber) {
-        params.append("accountnumber", data.accountNumber);
-      }
-  
-      const response = await fetch("http://localhost:8000/sendmoney_stk_api.php", {
+      const response = await fetch("/api/stk_api/sendmoney_stk_api", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phoneNumber.trim(),
+          amount: data.amount.toString(),
+          accountnumber: data.accountNumber.trim(), // Safe to use trim() now
+        }),
       });
   
       const result = await response.json();
       if (response.ok) {
-        toast.success("Payment initiated successfully!");
+        toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
     } catch (error) {
       toast.error("Network error: Unable to initiate payment.");
     }
-  };
+  };  
 
   const handleWithdraw = async () => {
-    if (!phoneNumber || !data.agentNumber || !data.storeNumber || !data.amount) {
+    if (
+      !phoneNumber.trim() ||
+      !data.agentNumber?.trim() ||
+      !data.storeNumber?.trim() ||
+      !data.amount ||
+      isNaN(Number(data.amount)) || Number(data.amount) <= 0
+    ) {
       toast.error("Please fill in all the fields.");
       return;
     }
-
+  
     try {
-      const response = await fetch("http://localhost:8000/agent_stk_api.php", {
+      const response = await fetch("/api/stk_api/agent_stk_api", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          phone: phoneNumber,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phoneNumber.trim(),
           amount: data.amount.toString(),
-          storenumber: data.storeNumber,
-          // agentnumber: data.agentNumber,  //to activate when going live
-          submit: "submit"
-        })
+          accountnumber: data.storeNumber.trim(),
+        }),
       });
-
+  
       const result = await response.json();
       if (response.ok) {
-        toast.success("Payment initiated successfully!");
+        toast.success("Payment initiated successfully! Please emter your M-pesa PIN on your phone when prompted shortly");
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
     } catch (error) {
-      // toast.error("Network error: Unable to initiate payment.");
+      toast.error("Network error: Unable to initiate payment.");
     }
   };
   return (
