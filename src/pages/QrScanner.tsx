@@ -28,24 +28,23 @@ const QrScanner = () => {
 
   useEffect(() => {
     let isMounted = true;
-
+    const codeReader = new BrowserMultiFormatReader();  // Initialize the code reader here
+  
     const startCamera = async () => {
       try {
         const constraints = { video: { facingMode: selectedCamera } };
         const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-    
+  
         if (isMounted && videoRef.current) {
           setStream(newStream);
           videoRef.current.srcObject = newStream;
-    
-          // Initialize the QR code scanner once the camera stream starts
-          const codeReader = new BrowserMultiFormatReader();
-    
+  
+          // Start continuous decoding from the video stream
           const decodeFromVideo = async () => {
             if (videoRef.current) {
               try {
                 // Provide the deviceId (null here for auto selection) and the video element
-                codeReader.decodeFromVideoDevice(
+                await codeReader.decodeFromVideoDevice(
                   null, // Device ID, null for default camera
                   videoRef.current, // Video element where the camera feed is shown
                   (result, error) => {
@@ -61,8 +60,8 @@ const QrScanner = () => {
               }
             }
           };
-    
-          // Start continuous decoding from the video stream
+  
+          // Start scanning
           decodeFromVideo();
         }
       } catch (error) {
@@ -70,8 +69,7 @@ const QrScanner = () => {
         toast.error('Error accessing camera. Please check permissions.');
       }
     };
-    
-
+  
     const stopCamera = () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -80,19 +78,24 @@ const QrScanner = () => {
           videoRef.current.srcObject = null;
         }
       }
+  
+      // Stop the QR code scanner by resetting the codeReader
+      codeReader.reset();  // This will stop the ongoing QR code scanning
     };
-
+  
     if (showScanner) {
       startCamera();
     } else {
       stopCamera();
     }
-
+  
     return () => {
       isMounted = false;
       stopCamera();
+      codeReader.reset();  // Ensure that the QR code reader is reset when the component unmounts
     };
   }, [showScanner, selectedCamera]);
+  
 
   const handleScanSuccess = (scannedData: string) => {
     try {
