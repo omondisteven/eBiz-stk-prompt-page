@@ -12,6 +12,7 @@ const QrGenerator = () => {
     StoreNumber: "",
     RecepientPhoneNumber: "",
     Amount: "",
+    PhoneNumber: "",
 
     // Contact Details
     Title: "",
@@ -38,23 +39,29 @@ const QrGenerator = () => {
           PaybillNumber: formData.PaybillNumber,
           AccountNumber: formData.AccountNumber,
           Amount: formData.Amount,
+          PhoneNumber: formData.PhoneNumber,
         });
       case "BuyGoods":
         return JSON.stringify({
           TransactionType: "BuyGoods",
           TillNumber: formData.TillNumber,
           Amount: formData.Amount,
+          PhoneNumber: formData.PhoneNumber,
         });
       case "SendMoney":
         return JSON.stringify({
           TransactionType: "SendMoney",
           RecepientPhoneNumber: formData.RecepientPhoneNumber,
+          Amount: formData.Amount,
+          PhoneNumber: formData.PhoneNumber,
         });
       case "WithdrawMoney":
         return JSON.stringify({
           TransactionType: "WithdrawMoney",
           AgentId: formData.AgentId,
           StoreNumber: formData.StoreNumber,
+          Amount: formData.Amount,
+          PhoneNumber: formData.PhoneNumber,
         });
         case "Contact":
         return JSON.stringify({
@@ -69,6 +76,7 @@ const QrGenerator = () => {
           PostCode: formData.PostCode,
           City: formData.City,
           Country: formData.Country,
+          PhoneNumber: formData.PhoneNumber,
         });
       default:
         return "";
@@ -113,6 +121,7 @@ const QrGenerator = () => {
             <input type="text" name="PaybillNumber" placeholder="Paybill Number" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="text" name="AccountNumber" placeholder="Account Number" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="number" name="Amount" placeholder="Amount" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+            <input type="text" name="PhoneNumber" placeholder="PhoneNumber" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
           </>
         )}
 
@@ -120,17 +129,24 @@ const QrGenerator = () => {
           <>
             <input type="text" name="TillNumber" placeholder="Till Number" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="number" name="Amount" placeholder="Amount" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+            <input type="text" name="PhoneNumber" placeholder="PhoneNumber" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
           </>
         )}
 
         {transactionType === "SendMoney" && (
+          <>
           <input type="text" name="RecepientPhoneNumber" placeholder="Recepient Phone Number" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+          <input type="number" name="Amount" placeholder="Amount" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+          <input type="text" name="PhoneNumber" placeholder="PhoneNumber" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+          </>
         )}
 
         {transactionType === "WithdrawMoney" && (
           <>
             <input type="text" name="AgentId" placeholder="Agent ID" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="text" name="StoreNumber" placeholder="Store Number" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+            <input type="number" name="Amount" placeholder="Amount" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+            <input type="text" name="PhoneNumber" placeholder="PhoneNumber" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
           </>
         )}
 
@@ -146,6 +162,7 @@ const QrGenerator = () => {
           <input type="text" name="PostCode" placeholder="Postal Code" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
           <input type="text" name="City" placeholder="City of Residence" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
           <input type="text" name="Country" placeholder="Country of Residence" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+          <input type="text" name="PhoneNumber" placeholder="PhoneNumber" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
           </>
         )}
 

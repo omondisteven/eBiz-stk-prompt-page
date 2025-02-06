@@ -107,19 +107,23 @@ const QrScanner = () => {
           setPaybillNumber(parsedData.PaybillNumber || "");
           setAccountNumber(parsedData.AccountNumber || "");
           setAmount(parsedData.Amount || "");
+          setPhoneNumber(parsedData.PhoneNumber || "");
           break;
         case "BuyGoods":
           setTillNumber(parsedData.TillNumber || "");
           setAmount(parsedData.Amount || "");
+          setPhoneNumber(parsedData.PhoneNumber || "");
           break;
         case "SendMoney":
           setRecepientPhoneNumber(parsedData.RecepientPhoneNumber || "");
           setAmount(parsedData.Amount || "");
+          setPhoneNumber(parsedData.PhoneNumber || "");
           break;
         case "WithdrawMoney":
           setAgentId(parsedData.AgentId || "");
           setStoreNumber(parsedData.StoreNumber || "");
           setAmount(parsedData.Amount || "");
+          setPhoneNumber(parsedData.PhoneNumber || "");
           break;
         default:
           break;
@@ -355,6 +359,8 @@ const QrScanner = () => {
                 <Input value={accountNumber} readOnly />
                 <label>Amount</label>
                 <Input value={amount} readOnly />
+                {/* <label>Payer Phone No.</label>
+                <Input value={phoneNumber} /> */}
               </>
             )}
             {transactionType === "BuyGoods" && (
@@ -363,6 +369,8 @@ const QrScanner = () => {
                 <Input value={tillNumber} readOnly />
                 <label>Amount</label>
                 <Input value={amount} readOnly />
+                {/* <label>Payer Phone No.</label>
+                <Input value={phoneNumber} /> */}
               </>
             )}
             {transactionType === "SendMoney" && (
@@ -371,6 +379,8 @@ const QrScanner = () => {
                 <Input value={recepientPhoneNumber} readOnly />
                 <label>Amount</label>
                 <Input value={amount} readOnly />
+                {/* <label>Payer Phone No.</label>
+                <Input value={phoneNumber} /> */}
               </>
             )}
             {transactionType === "WithdrawMoney" && (
@@ -381,18 +391,20 @@ const QrScanner = () => {
                 <Input value={storeNumber} readOnly />
                 <label>Amount</label>
                 <Input value={amount} readOnly />
+                {/* <label>Payer Phone No.</label>
+                <Input value={phoneNumber} /> */}
               </>
             )}
             
             {/* Show PhoneNumber input only after successful scan */}
           {transactionType && (
             <div>
-              <label className="block text-sm font-medium">Phone Number</label>
-              <Input
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="Enter Phone Number"
-              />
+                <label className="block text-sm font-medium">Phone Number</label>
+                <Input
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="Enter Phone Number"
+                />
               <br />
               {transactionType === "PayBill" && (
                 <Button
