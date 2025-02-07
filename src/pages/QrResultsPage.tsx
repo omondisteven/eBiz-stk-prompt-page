@@ -158,46 +158,37 @@ const QrResultsPage = () => {
   // Save Contact Functionality
   const handleSaveContact = () => {
     if (transactionType !== "Contact") return;
-  
-    const vCard = `BEGIN:VCARD\nVERSION:3.0\nFN:${data.FirstName} ${data.LastName}\nORG:${data.CompanyName}\nTITLE:${data.Position}\nEMAIL:${data.Email}\nTEL:${data.PhoneNumber}\nADR:${data.Address}, ${data.City}, ${data.PostCode}, ${data.Country}\nEND:VCARD`;
-  
-    const blob = new Blob([vCard], { type: "text/vcard" });
-    const url = URL.createObjectURL(blob);
-  
+
+    const contactData = [
+      ["Title", "First Name", "Last Name", "Company Name", "Position", "Email", "Address", "Post Code", "City", "Country", "Phone Number"],
+      [data.Title, data.FirstName, data.LastName, data.CompanyName, data.Position, data.Email, data.Address, data.PostCode, data.City, data.Country, data.PhoneNumber],
+    ];
+
+    const csvContent = contactData.map((row) => row.join(",")).join("\n");
+
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      // Try to use the Web Share API on supported devices
-      if (navigator.share) {
-        navigator.share({
-          title: "Save Contact",
-          text: `Save contact for ${data.FirstName} ${data.LastName}`,
-          url,
-        })
-        .then(() => toast.success("Contact shared successfully!"))
-        .catch((error) => toast.error("Error sharing contact: " + error));
-      } else {
-        // Fallback: Download the vCard file
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${data.FirstName}_${data.LastName}.vcf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        toast.success("vCard downloaded!");
-      }
-    } else {
-      // Desktop: Save as VCF file
+      // Mobile: Save as vCard
+      const vCard = `BEGIN:VCARD\nVERSION:3.0\nFN:${data.FirstName} ${data.LastName}\nORG:${data.CompanyName}\nTITLE:${data.Position}\nEMAIL:${data.Email}\nTEL:${data.PhoneNumber}\nADR:${data.Address}, ${data.City}, ${data.PostCode}, ${data.Country}\nEND:VCARD`;
+      const blob = new Blob([vCard], { type: "text/vcard" });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = `${data.FirstName}_${data.LastName}.vcf`;
-      document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      toast.success("vCard saved!");
+      toast.success("Contact saved to phonebook!");
+    } else {
+      // Desktop: Save as CSV
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${data.FirstName}_${data.LastName}_contact.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success("Contact saved as CSV!");
     }
   };
-  
   return (
     <Layout>
       <h2 className="text-2xl font-bold text-center mb-4 flex items-center justify-center">
