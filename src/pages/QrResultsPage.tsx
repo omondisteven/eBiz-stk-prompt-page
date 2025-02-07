@@ -199,9 +199,13 @@ const QrResultsPage = () => {
       <div className="w-full border-t-2 border-gray-300 my-4"></div>
 
       <div className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-lg mt-8">
-        <p className="text-xl text-center">
-          You are about to perform a <strong>{transactionType}</strong> transaction. Please confirm or cancel.
-        </p>
+      <p className="text-xl text-center">
+        {transactionType === 'Contact' ? (
+          <>You are viewing the Contact Details for <strong>{data.FirstName}</strong>.</>
+        ) : (
+          <>You are about to perform a <strong>{transactionType}</strong> transaction. Please confirm or cancel.</>
+        )}
+      </p>
 
         <br />
         {transactionType === "PayBill" && (
@@ -253,12 +257,17 @@ const QrResultsPage = () => {
         {/* Phone Number Input and Payment Button */}
         {transactionType && (
           <div className="mt-4">
-            <label className="block text-sm font-medium">Payers Phone Number</label>
-            <Input
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="Enter Phone Number"
-            />
+            {transactionType !== "Contact" && (
+              <>
+              <label className="block text-sm font-medium">Payers Phone Number</label>
+              <Input
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="Enter Phone Number"
+              />
+              </>              
+            )}
+            
             <br />
 
             <div className="flex justify-between items-center mt-4 space-x-4">
