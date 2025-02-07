@@ -155,6 +155,41 @@ const QrResultsPage = () => {
     }
   };
 
+  // Save Contact Functionality
+  const handleSaveContact = () => {
+    if (transactionType !== "Contact") return;
+
+    const contactData = [
+      ["Title", "First Name", "Last Name", "Company Name", "Position", "Email", "Address", "Post Code", "City", "Country", "Phone Number"],
+      [data.Title, data.FirstName, data.LastName, data.CompanyName, data.Position, data.Email, data.Address, data.PostCode, data.City, data.Country, data.PhoneNumber],
+    ];
+
+    const csvContent = contactData.map((row) => row.join(",")).join("\n");
+
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      // Mobile: Save as vCard
+      const vCard = `BEGIN:VCARD\nVERSION:3.0\nFN:${data.FirstName} ${data.LastName}\nORG:${data.CompanyName}\nTITLE:${data.Position}\nEMAIL:${data.Email}\nTEL:${data.PhoneNumber}\nADR:${data.Address}, ${data.City}, ${data.PostCode}, ${data.Country}\nEND:VCARD`;
+      const blob = new Blob([vCard], { type: "text/vcard" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${data.FirstName}_${data.LastName}.vcf`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success("Contact saved to phonebook!");
+    } else {
+      // Desktop: Save as CSV
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${data.FirstName}_${data.LastName}_contact.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success("Contact saved as CSV!");
+    }
+  };
+
   return (
     <Layout>
       <h2 className="text-2xl font-bold text-center mb-4 flex items-center justify-center">
@@ -164,9 +199,9 @@ const QrResultsPage = () => {
       <div className="w-full border-t-2 border-gray-300 my-4"></div>
 
       <div className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-lg mt-8">
-      <p className="text-xl text-center">
-        You are about to perform a <strong>{transactionType}</strong> transaction. Please confirm or cancel.
-      </p>
+        <p className="text-xl text-center">
+          You are about to perform a <strong>{transactionType}</strong> transaction. Please confirm or cancel.
+        </p>
 
         <br />
         {transactionType === "PayBill" && (
@@ -220,60 +255,73 @@ const QrResultsPage = () => {
           <div className="mt-4">
             <label className="block text-sm font-medium">Payers Phone Number</label>
             <Input
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="Enter Phone Number"
-                />
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="Enter Phone Number"
+            />
             <br />
-            {transactionType === "PayBill" && (
-              <Button
-                className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
-                onClick={handlePayBill}
-              >
-                <HiOutlineCreditCard className="text-xl" />
-                <span>Pay Now</span>
-              </Button>
-            )}
 
-            {transactionType === "BuyGoods" && (
-              <Button
-                className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
-                onClick={handlePayTill}
-              >
-                <HiOutlineCreditCard className="text-xl" />
-                <span>Pay Now</span>
-              </Button>
-            )}
+            <div className="flex justify-between items-center mt-4 space-x-4">
+              <div>
+                {transactionType === "PayBill" && (
+                  <Button
+                    className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
+                    onClick={handlePayBill}
+                  >
+                    <HiOutlineCreditCard className="text-xl" />
+                    <span>Pay Now</span>
+                  </Button>
+                )}
 
-            {transactionType === "SendMoney" && (
-              <Button
-                className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
-                onClick={handleSendMoney}
-              >
-                <HiOutlineCreditCard className="text-xl" />
-                <span>Send Now</span>
-              </Button>
-            )}
+                {transactionType === "BuyGoods" && (
+                  <Button
+                    className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
+                    onClick={handlePayTill}
+                  >
+                    <HiOutlineCreditCard className="text-xl" />
+                    <span>Pay Now</span>
+                  </Button>
+                )}
 
-            {transactionType === "WithdrawMoney" && (
-              <Button
-                className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
-                onClick={handleWithdraw}
-              >
-                <HiOutlineCreditCard className="text-xl" />
-                <span>Withdraw Now</span>
-              </Button>
-            )}
+                {transactionType === "SendMoney" && (
+                  <Button
+                    className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
+                    onClick={handleSendMoney}
+                  >
+                    <HiOutlineCreditCard className="text-xl" />
+                    <span>Send Now</span>
+                  </Button>
+                )}
 
-            {/* CANCEL <BUTTON> */}
-            <div className="flex justify-between items-center mt-6 space-x-4">
-          <button
-            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-700"
-            onClick={() => router.push("./")}
-          >
-            CANCEL
-          </button>
-        </div>
+                {transactionType === "WithdrawMoney" && (
+                  <Button
+                    className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
+                    onClick={handleWithdraw}
+                  >
+                    <HiOutlineCreditCard className="text-xl" />
+                    <span>Withdraw Now</span>
+                  </Button>
+                )}
+              </div>
+
+              {/* CANCEL BUTTON */}
+              {/* <button
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-700"
+                onClick={() => router.push("./")}
+              >
+                CANCEL
+              </button> */}
+
+              {/* SAVE CONTACT BUTTON */}
+              {transactionType === "Contact" && (
+                <button
+                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-700"
+                  onClick={handleSaveContact}
+                >
+                  Save Contact
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
