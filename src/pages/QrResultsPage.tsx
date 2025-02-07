@@ -218,12 +218,12 @@ const QrResultsPage = () => {
         {/* Phone Number Input and Payment Button */}
         {transactionType && (
           <div className="mt-4">
-            <label className="block text-sm font-medium">Phone Number</label>
+            <label className="block text-sm font-medium">Payers Phone Number</label>
             <Input
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="Enter Phone Number"
-            />
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="Enter Phone Number"
+                />
             <br />
             {transactionType === "PayBill" && (
               <Button
