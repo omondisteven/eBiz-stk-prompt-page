@@ -305,12 +305,12 @@ const QrResultsPage = () => {
               </div>
 
               {/* CANCEL BUTTON */}
-              {/* <button
+              <button
                 className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-700"
                 onClick={() => router.push("./")}
               >
                 CANCEL
-              </button> */}
+              </button>
 
               {/* SAVE CONTACT BUTTON */}
               {transactionType === "Contact" && (
