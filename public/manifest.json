@@ -1,6 +1,6 @@
 {
-  "name": "PesaQR - Generate Payment QR Codes",
-  "short_name": "PesaQR",
+  "name": "eBiz - Generate M-Pesa Payment QR Codes and short URLs, Push STK payments",
+  "short_name": "eBiz",
   "description": "Generate Payment QR Codes",
   "scope": "/",
   "start_url": "/",

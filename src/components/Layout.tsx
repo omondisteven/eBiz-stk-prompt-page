@@ -80,6 +80,9 @@ const Layout = ({ children }: { children: ReactNode }) => {
           <Link href="/QrToURLGenerator" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrToURLGenerator") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
             <FaQrcode className="mr-2" /> Generate Qr with tiny URL (WIP)
           </Link>
+          <Link href="/QrScannerNormal" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrScannerNormal") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
+            <FaCreditCard className="mr-2" /> Normal QR Scanner
+          </Link>
 
           <Link href="/QrScanner" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrScanner") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
             <FaCreditCard className="mr-2" /> Non-Mpesa QR Scanner
