@@ -158,45 +158,46 @@ const QrResultsPage = () => {
   // Save Contact Functionality
   const handleSaveContact = () => {
     if (transactionType !== "Contact") return;
-
+  
     const vCard = `BEGIN:VCARD\nVERSION:3.0\nFN:${data.FirstName} ${data.LastName}\nORG:${data.CompanyName}\nTITLE:${data.Position}\nEMAIL:${data.Email}\nTEL:${data.PhoneNumber}\nADR:${data.Address}, ${data.City}, ${data.PostCode}, ${data.Country}\nEND:VCARD`;
+  
     const blob = new Blob([vCard], { type: "text/vcard" });
     const url = URL.createObjectURL(blob);
-    
+  
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        // Open "Add New Contact" on mobile
-        const contact = {
-            name: `${data.FirstName} ${data.LastName}`,
-            email: data.Email,
-            phoneNumbers: [{ number: data.PhoneNumber, label: "mobile" }],
-            addresses: [{ street: data.Address, city: data.City, country: data.Country }],
-            company: data.CompanyName,
-            jobTitle: data.Position
-        };
-        try {
-            if (navigator.contacts && navigator.contacts.create) {
-                navigator.contacts.create(contact).then(() => {
-                    toast.success("Contact saved to phonebook!");
-                }).catch(() => {
-                    toast.error("Failed to save contact.");
-                });
-            } else {
-                window.location.href = url;
-            }
-        } catch (error) {
-            window.location.href = url;
-        }
-    } else {
-        // Desktop: Save as VCF file
+      // Try to use the Web Share API on supported devices
+      if (navigator.share) {
+        navigator.share({
+          title: "Save Contact",
+          text: `Save contact for ${data.FirstName} ${data.LastName}`,
+          url,
+        })
+        .then(() => toast.success("Contact shared successfully!"))
+        .catch((error) => toast.error("Error sharing contact: " + error));
+      } else {
+        // Fallback: Download the vCard file
         const link = document.createElement("a");
         link.href = url;
         link.download = `${data.FirstName}_${data.LastName}.vcf`;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        toast.success("Contact saved as VCF file!");
+        toast.success("vCard downloaded!");
+      }
+    } else {
+      // Desktop: Save as VCF file
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${data.FirstName}_${data.LastName}.vcf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("vCard saved!");
     }
-};
-
+  };
+  
   return (
     <Layout>
       <h2 className="text-2xl font-bold text-center mb-4 flex items-center justify-center">
