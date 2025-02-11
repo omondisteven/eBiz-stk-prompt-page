@@ -46,40 +46,43 @@ const QrToURLGenerator = () => {
         img.onload = () => {
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
-          const maxWidth = 200; // Reduce size
-          const maxHeight = 200;
+          const maxSize = 100; // Reduce image size
+  
           let width = img.width;
           let height = img.height;
-  
           if (width > height) {
-            if (width > maxWidth) {
-              height *= maxWidth / width;
-              width = maxWidth;
+            if (width > maxSize) {
+              height *= maxSize / width;
+              width = maxSize;
             }
           } else {
-            if (height > maxHeight) {
-              width *= maxHeight / height;
-              height = maxHeight;
+            if (height > maxSize) {
+              width *= maxSize / height;
+              height = maxSize;
             }
           }
   
           canvas.width = width;
           canvas.height = height;
           ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL("image/jpeg", 0.7)); // Compress with quality 0.7
+          resolve(canvas.toDataURL("image/jpeg", 0.5)); // Lower quality to reduce size
         };
       };
     });
   };
   
+  
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const compressedBase64 = await compressImage(file);
+      const base64String = compressedBase64.replace(/^data:image\/(png|jpeg);base64,/, ""); // Remove prefix
+  
       setPhotoPreview(compressedBase64);
-      setFormData((prev) => ({ ...prev, Photo: compressedBase64 }));
+      setFormData((prev) => ({ ...prev, Photo: base64String })); // Store Base64 WITHOUT prefix
     }
   };
+  
   
 
   const getQrData = async () => {

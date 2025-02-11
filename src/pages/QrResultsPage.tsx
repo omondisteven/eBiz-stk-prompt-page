@@ -261,12 +261,14 @@ const QrResultsPage = () => {
             <div className="mt-4">
               <p>Profile Picture:</p>
               <img
-                src={`data:image/png;base64,${data.Photo}`}
+                src={`data:image/png;base64,${data.Photo}`} // Add the prefix when displaying
                 alt="Scanned Contact"
                 className="mt-2 w-32 h-32 object-cover rounded-full shadow-md border border-gray-300"
+                onError={(e) => console.error("Image Load Error:", e)}
               />
             </div>
           )}
+
           </>
         )}
 
