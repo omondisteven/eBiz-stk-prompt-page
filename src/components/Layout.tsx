@@ -49,6 +49,13 @@ const Layout = ({ children }: { children: ReactNode }) => {
           <Link href="/" className={`flex items-center p-3 rounded-md transition-all ${isActive("/") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
             <FaHome className="mr-2" /> Home
           </Link>
+
+          {/* Divider with centered label */}
+          <div className="flex items-center my-2">
+            <div className="flex-grow border-t border-gray-100"></div>
+            <h3 className="text-sm font-bold text-gray-400 px-3 whitespace-nowrap">M-PESA TRANSACTIONS</h3>
+            <div className="flex-grow border-t border-gray-100"></div>
+          </div>
           <Link href="/Paybill" className={`flex items-center p-3 rounded-md transition-all ${isActive("/Paybill") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
             <FaBuilding className="mr-2" /> Pay Bill
           </Link>
