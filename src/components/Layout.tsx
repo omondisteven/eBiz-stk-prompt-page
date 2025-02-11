@@ -10,6 +10,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNonMpesaQrOpen, setIsNonMpesaQrOpen] = useState(false); // Toggle state for Non-Mpesa Qr menu
+  const [isNormalQrOpen, setIsNormalQrOpen] = useState(false); // Toggle state for Normal Qr menu
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   const isActive = (path: string) => router.pathname === path;
@@ -48,18 +49,18 @@ const Layout = ({ children }: { children: ReactNode }) => {
           <Link href="/" className={`flex items-center p-3 rounded-md transition-all ${isActive("/") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
             <FaHome className="mr-2" /> Home
           </Link>
-          <Link href="/Till" className={`flex items-center p-3 rounded-md transition-all ${isActive("/Till") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaMoneyBill className="mr-2" /> Buy Goods
-          </Link>
           <Link href="/Paybill" className={`flex items-center p-3 rounded-md transition-all ${isActive("/Paybill") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
             <FaBuilding className="mr-2" /> Pay Bill
           </Link>
-          <Link href="/Agent" className={`flex items-center p-3 rounded-md transition-all ${isActive("/Agent") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaUsers className="mr-2" /> Withdraw Money
-          </Link>
+          <Link href="/Till" className={`flex items-center p-3 rounded-md transition-all ${isActive("/Till") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
+            <FaMoneyBill className="mr-2" /> Buy Goods
+          </Link>          
           <Link href="/SendMoney" className={`flex items-center p-3 rounded-md transition-all ${isActive("/SendMoney") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
             <FaExchangeAlt className="mr-2" /> Send Money
           </Link>
+          <Link href="/Agent" className={`flex items-center p-3 rounded-md transition-all ${isActive("/Agent") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
+            <FaUsers className="mr-2" /> Withdraw Money
+          </Link>         
 
           {/* Collapsible "Non-Mpesa Qr" Section */}
           <button
@@ -74,21 +75,33 @@ const Layout = ({ children }: { children: ReactNode }) => {
           {isNonMpesaQrOpen && (
             <div className="ml-6 space-y-2 transition-all">
               <Link href="/QrGenerator" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrGenerator") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-                <FaQrcode className="mr-2" /> Generate non Mpesa Qr
+                <FaQrcode className="mr-2" /> Generate Qr
               </Link>
               <Link href="/QrScanner" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrScanner") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-                <FaCreditCard className="mr-2" /> Non-Mpesa QR Scanner
+                <FaCreditCard className="mr-2" /> Scan Qr
               </Link>
             </div>
           )}
-
-          {/* Other Menu Options */}
-          <Link href="/QrToURLGenerator" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrToURLGenerator") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaQrcode className="mr-2" /> Generate Qr with tiny URL (WIP)
-          </Link>
-          <Link href="/QrScannerNormal" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrScannerNormal") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaCreditCard className="mr-2" /> Normal QR Scanner
-          </Link>
+          {/* Collapsible "Normal Qr" Section */}
+          <button
+            className="flex items-center w-full p-3 rounded-md transition-all hover:bg-gray-700 focus:outline-none"
+            onClick={() => setIsNormalQrOpen(!isNormalQrOpen)}
+          >
+            <FaQrcode className="mr-2" />
+            Normal Qr (with short URL)
+            <span className="ml-auto">{isNonMpesaQrOpen ? <FaChevronDown /> : <FaChevronRight />}</span>
+          </button>
+          {isNormalQrOpen && (
+            <div className="ml-6 space-y-2 transition-all">
+              <Link href="/QrToURLGenerator" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrToURLGenerator") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
+                <FaQrcode className="mr-2" /> Generate Qr
+              </Link>
+              <Link href="/QrScannerNormal" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrScannerNormal") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
+                <FaCreditCard className="mr-2" /> Scan QR
+              </Link>
+            </div>
+          )}
+          
         </nav>
       </aside>
 
