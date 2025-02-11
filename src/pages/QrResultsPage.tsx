@@ -243,23 +243,11 @@ const QrResultsPage = () => {
           </>
         )}
 
-        {transactionType === "Contact" && (
-          <>
-            <p>Title: {data.Title}</p>
-            <p>First Name: {data.FirstName}</p>
-            <p>Last Name: {data.LastName}</p>
-            <p>Company Name: {data.CompanyName}</p>
-            <p>Position: {data.Position}</p>
-            <p>Email: {data.Email}</p>
-            <p>Address: {data.Address}</p>
-            <p>Post Code: {data.PostCode}</p>
-            <p>City: {data.City}</p>
-            <p>Country: {data.Country}</p>
-            <p>Phone Number: {data.PhoneNumber}</p>
-
-            {data.Photo && (
-            <div className="mt-4">
-              <p>Profile Picture:</p>
+      {transactionType === "Contact" && (
+        <>
+          {data.Photo && (
+            <div className="mt-4 flex flex-col items-center">
+              <p className="text-center">Profile Picture:</p>
               <img
                 src={`data:image/png;base64,${data.Photo}`} // Add the prefix when displaying
                 alt="Scanned Contact"
@@ -268,9 +256,20 @@ const QrResultsPage = () => {
               />
             </div>
           )}
+          <p>Title: {data.Title}</p>
+          <p>First Name: {data.FirstName}</p>
+          <p>Last Name: {data.LastName}</p>
+          <p>Company Name: {data.CompanyName}</p>
+          <p>Position: {data.Position}</p>
+          <p>Email: {data.Email}</p>
+          <p>Address: {data.Address}</p>
+          <p>Post Code: {data.PostCode}</p>
+          <p>City: {data.City}</p>
+          <p>Country: {data.Country}</p>
+          <p>Phone Number: {data.PhoneNumber}</p>
+        </>
+      )}
 
-          </>
-        )}
 
         {/* Phone Number Input and Payment Button */}
         {transactionType && (
