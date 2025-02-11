@@ -62,6 +62,10 @@ const Layout = ({ children }: { children: ReactNode }) => {
             <FaUsers className="mr-2" /> Withdraw Money
           </Link>         
 
+          {/* Divider for QR Codes Section */}
+          <div className="border-t border-gray-600 my-2"></div>
+          <h3 className="text-sm font-bold text-gray-400 px-3">QR CODES</h3>
+
           {/* Collapsible "Non-Mpesa Qr" Section */}
           <button
             className="flex items-center w-full p-3 rounded-md transition-all hover:bg-gray-700 focus:outline-none"
