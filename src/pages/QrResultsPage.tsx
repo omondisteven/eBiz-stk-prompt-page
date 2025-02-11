@@ -259,7 +259,12 @@ const QrResultsPage = () => {
   return (
     <Layout>
       <h2 className="text-2xl font-bold text-center mb-4 flex items-center justify-center">
-        M-PESA TRANSACTION DETAILS
+      {transactionType === 'Contact' ? (
+          <>E-BUSINESS CARD SCAN DETAILS</>
+        ) : (
+          <>M-PESA TRANSACTION SCAN DETAILS</>
+        )}
+        
       </h2>
 
       <div className="w-full border-t-2 border-gray-300 my-4"></div>
