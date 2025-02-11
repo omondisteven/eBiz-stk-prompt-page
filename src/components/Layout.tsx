@@ -77,7 +77,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
           </div>
 
           {/* Collapsible "Non-Mpesa Qr" Section */}
-          <button
+          {/* <button
             className="flex items-center w-full p-3 rounded-md transition-all hover:bg-gray-700 focus:outline-none"
             onClick={() => setIsNonMpesaQrOpen(!isNonMpesaQrOpen)}
           >
@@ -95,7 +95,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
                 <FaCreditCard className="mr-2" /> Scan Qr
               </Link>
             </div>
-          )}
+          )} */}
           {/* Collapsible "Normal Qr" Section */}
           <button
             className="flex items-center w-full p-3 rounded-md transition-all hover:bg-gray-700 focus:outline-none"
