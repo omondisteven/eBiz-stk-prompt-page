@@ -1,29 +1,19 @@
-import { ReactNode, useState, useRef, useEffect } from "react";
+import { ReactNode, useState, useRef, useEffect } from "react"; 
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { FaBars, FaTimes, FaHome, FaMoneyBill, FaBuilding, FaUsers, FaExchangeAlt, FaCreditCard, FaQrcode, FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { 
+  FaBars, FaTimes, FaHome, FaMoneyBill, FaBuilding, FaUsers, 
+  FaExchangeAlt, FaCreditCard, FaQrcode, FaChevronDown, FaChevronRight 
+} from "react-icons/fa";
 
 const Layout = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isQrMenuOpen, setIsQrMenuOpen] = useState(false); // State for QR menu expansion
+  const [isNonMpesaQrOpen, setIsNonMpesaQrOpen] = useState(false); // Toggle state for Non-Mpesa Qr menu
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   const isActive = (path: string) => router.pathname === path;
-
   const closeSidebar = () => setIsSidebarOpen(false);
-
-  useEffect(() => {
-    const menuButton = document.querySelector("header button");
-
-    if (menuButton) {
-      menuButton.addEventListener("click", () => setIsSidebarOpen(true));
-
-      return () => {
-        menuButton.removeEventListener("click", () => setIsSidebarOpen(true));
-      };
-    }
-  }, []);
 
   return (
     <div className="h-screen flex flex-col md:flex-row">
@@ -32,7 +22,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
         <button
           onClick={() => setIsSidebarOpen(true)}
           className="text-white text-3xl cursor-pointer"
-          aria-label={isSidebarOpen ? "Close Menu" : "Open Menu"}
+          aria-label="Open Menu"
         >
           <FaBars />
         </button>
@@ -41,16 +31,14 @@ const Layout = ({ children }: { children: ReactNode }) => {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed top-0 left-0 w-4/5 md:w-1/5 bg-gray-900 text-white flex flex-col p-4 space-y-4 shadow-lg h-full z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:relative ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed top-0 left-0 w-4/5 md:w-1/5 bg-gray-900 text-white flex flex-col p-4 space-y-4 shadow-lg h-full z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:relative ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
         id="sidebar"
       >
         {/* Close Button (Mobile Only) */}
         <div className="flex justify-end items-center md:hidden">
-          <button
-            onClick={closeSidebar}
-            className="text-white text-3xl cursor-pointer"
-            aria-label="Close Menu"
-          >
+          <button onClick={closeSidebar} className="text-white text-3xl cursor-pointer">
             <FaTimes />
           </button>
         </div>
@@ -73,32 +61,28 @@ const Layout = ({ children }: { children: ReactNode }) => {
             <FaExchangeAlt className="mr-2" /> Send Money
           </Link>
 
-          {/* Collapsible QR Menu */}
-          <div>
-            <button
-              onClick={() => setIsQrMenuOpen(!isQrMenuOpen)}
-              className="flex items-center justify-between w-full p-3 rounded-md hover:bg-gray-700 transition-all"
-            >
-              <div className="flex items-center">
-                <FaQrcode className="mr-2" /> Non-Mpesa QR
-              </div>
-              {isQrMenuOpen ? <FaChevronUp /> : <FaChevronDown />}
-            </button>
+          {/* Collapsible "Non-Mpesa Qr" Section */}
+          <button
+            className="flex items-center w-full p-3 rounded-md transition-all hover:bg-gray-700 focus:outline-none"
+            onClick={() => setIsNonMpesaQrOpen(!isNonMpesaQrOpen)}
+          >
+            <FaQrcode className="mr-2" />
+            Non-Mpesa Qr
+            <span className="ml-auto">{isNonMpesaQrOpen ? <FaChevronDown /> : <FaChevronRight />}</span>
+          </button>
 
-            {/* Nested QR Options */}
-            {isQrMenuOpen && (
-              <div className="pl-6 space-y-2">
-                <Link href="/QrGenerator" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrGenerator") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-                  <FaQrcode className="mr-2" /> Generate
-                </Link>
-                <Link href="/QrScanner" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrScanner") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-                  <FaCreditCard className="mr-2" /> Scan
-                </Link>
-              </div>
-            )}
-          </div>
+          {isNonMpesaQrOpen && (
+            <div className="ml-6 space-y-2 transition-all">
+              <Link href="/QrGenerator" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrGenerator") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
+                <FaQrcode className="mr-2" /> Generate non Mpesa Qr
+              </Link>
+              <Link href="/QrScanner" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrScanner") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
+                <FaCreditCard className="mr-2" /> Non-Mpesa QR Scanner
+              </Link>
+            </div>
+          )}
 
-          {/* Other Links */}
+          {/* Other Menu Options */}
           <Link href="/QrToURLGenerator" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrToURLGenerator") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
             <FaQrcode className="mr-2" /> Generate Qr with tiny URL (WIP)
           </Link>
@@ -109,16 +93,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
       </aside>
 
       {/* Main Content */}
-      <div
-        className="flex-1 md:ml-1/5"
-        ref={mainContentRef}
-        onClick={(e) => {
-          if (isSidebarOpen) {
-            e.stopPropagation();
-            closeSidebar();
-          }
-        }}>
-        {/* Desktop Header */}
+      <div className="flex-1 md:ml-1/5" ref={mainContentRef} onClick={() => isSidebarOpen && closeSidebar()}>
         <header className="hidden md:flex bg-blue-700 text-white p-4 items-center shadow-md">
           <FaCreditCard className="text-3xl mr-2" />
           <h1 className="text-2xl font-bold">Welcome to eBiz Business Payment Platform</h1>
@@ -138,12 +113,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
       </div>
 
       {/* Overlay for Mobile */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={closeSidebar}
-        ></div>
-      )}
+      {isSidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={closeSidebar}></div>}
     </div>
   );
 };
