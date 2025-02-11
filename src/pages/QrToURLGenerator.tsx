@@ -25,14 +25,62 @@ const QrToURLGenerator = () => {
     PostCode: "",
     City: "",
     Country: "",
+    Photo: "", // Store the photo URL or base64
   });
 
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [qrData, setQrData] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false); // Add a loading state
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const compressImage = (file: File) => {
+    return new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          const maxWidth = 200; // Reduce size
+          const maxHeight = 200;
+          let width = img.width;
+          let height = img.height;
+  
+          if (width > height) {
+            if (width > maxWidth) {
+              height *= maxWidth / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width *= maxHeight / height;
+              height = maxHeight;
+            }
+          }
+  
+          canvas.width = width;
+          canvas.height = height;
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", 0.7)); // Compress with quality 0.7
+        };
+      };
+    });
+  };
+  
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const compressedBase64 = await compressImage(file);
+      setPhotoPreview(compressedBase64);
+      setFormData((prev) => ({ ...prev, Photo: compressedBase64 }));
+    }
+  };
+  
 
   const getQrData = async () => {
     setIsLoading(true); // Set loading to true before fetching
@@ -86,6 +134,7 @@ const QrToURLGenerator = () => {
           City: formData.City,
           Country: formData.Country,
           PhoneNumber: formData.PhoneNumber,
+          Photo: formData.Photo, // Include photo
         };
         break;
       default:
@@ -213,6 +262,16 @@ const QrToURLGenerator = () => {
             <input type="text" name="City" placeholder="City of Residence" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="text" name="Country" placeholder="Country of Residence" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="text" name="PhoneNumber" placeholder="PhoneNumber" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+             {/* Photo Upload */}
+             <label className="block text-sm font-medium text-gray-700 mb-2">Upload Photo</label>
+            <input type="file" accept="image/*" onChange={handlePhotoUpload} className="w-full p-2 border rounded-lg mb-2" />
+
+            {photoPreview && (
+              <div className="mt-2">
+                <p className="text-sm text-gray-600">Preview:</p>
+                <img src={photoPreview} alt="Uploaded" className="w-32 h-32 object-cover rounded-md mt-1" />
+              </div>
+            )}
           </>
         )}
 

@@ -156,73 +156,7 @@ const QrResultsPage = () => {
     }
   };
 
-  // Save Contact Functionality
-  // const handleSaveContact = async () => {
-  //   if (transactionType !== "Contact") return;
-  
-  //   // Check if the Contact Picker API is supported
-  //   if (navigator.contacts && 'ContactsManager' in window) {
-  //     try {
-  //       // Request permission to access contacts
-  //       const contacts = await navigator.contacts.select(['name', 'email', 'tel', 'address'], { multiple: false });
-  
-  //       if (contacts && contacts.length > 0) {
-  //         // If the user selects a contact, you can handle it here
-  //         console.log("Selected contact:", contacts[0]);
-  //         toast.success("Contact selected successfully!");
-  //       } else {
-  //         toast("No contact selected."); // Use toast.info
-  //       }
-  //     } catch (error) {
-  //       console.error("Error accessing contacts:", error);
-  //       toast.error("Failed to access contacts.");
-  //     }
-  //   } else if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-  //     // Mobile: Save as vCard and prompt user to save
-  //     const vCard = `BEGIN:VCARD\nVERSION:3.0\nFN:${data.FirstName} ${data.LastName}\nORG:${data.CompanyName}\nTITLE:${data.Position}\nEMAIL:${data.Email}\nTEL:${data.PhoneNumber}\nADR:${data.Address}, ${data.City}, ${data.PostCode}, ${data.Country}\nEND:VCARD`;
-  //     const blob = new Blob([vCard], { type: "text/vcard" });
-  //     const url = URL.createObjectURL(blob);
-  
-  //     // Use the Web Share API to prompt the user to save the contact
-  //     if (navigator.share) {
-  //       try {
-  //         await navigator.share({
-  //           title: "Save Contact",
-  //           files: [new File([blob], `${data.FirstName}_${data.LastName}.vcf`, { type: "text/vcard" })],
-  //         });
-  //         toast.success("Contact saved to phonebook!");
-  //       } catch (error) {
-  //         console.error("Error sharing contact:", error);
-  //         toast.error("Failed to save contact.");
-  //       }
-  //     } else {
-  //       // Fallback for browsers that don't support the Web Share API
-  //       const link = document.createElement("a");
-  //       link.href = url;
-  //       link.download = `${data.FirstName}_${data.LastName}.vcf`;
-  //       link.click();
-  //       URL.revokeObjectURL(url);
-  //       toast.success("Contact saved to phonebook!");
-  //     }
-  //   } else {
-  //     // Desktop: Save as CSV
-  //     const contactData = [
-  //       ["Title", "First Name", "Last Name", "Company Name", "Position", "Email", "Address", "Post Code", "City", "Country", "Phone Number"],
-  //       [data.Title, data.FirstName, data.LastName, data.CompanyName, data.Position, data.Email, data.Address, data.PostCode, data.City, data.Country, data.PhoneNumber],
-  //     ];
-  //     const csvContent = contactData.map((row) => row.join(",")).join("\n");
-  //     const blob = new Blob([csvContent], { type: "text/csv" });
-  //     const url = URL.createObjectURL(blob);
-  //     const link = document.createElement("a");
-  //     link.href = url;
-  //     link.download = `${data.FirstName}_${data.LastName}_contact.csv`;
-  //     link.click();
-  //     URL.revokeObjectURL(url);
-  //     toast.success("Contact saved as CSV!");
-  //   }
-  // };
-
-  //OLD METHOD
+  // Save Contact Functionality 
   const handleSaveContact = () => {
     if (transactionType !== "Contact") return;
 
@@ -322,6 +256,17 @@ const QrResultsPage = () => {
             <p>City: {data.City}</p>
             <p>Country: {data.Country}</p>
             <p>Phone Number: {data.PhoneNumber}</p>
+
+            {data.Photo && (
+            <div className="mt-4">
+              <p>Profile Picture:</p>
+              <img
+                src={`data:image/png;base64,${data.Photo}`}
+                alt="Scanned Contact"
+                className="mt-2 w-32 h-32 object-cover rounded-full shadow-md border border-gray-300"
+              />
+            </div>
+          )}
           </>
         )}
 
