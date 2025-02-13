@@ -59,6 +59,11 @@ const QrScannerNormal = () => {
         if (result) {
           setScanResult(result.getText());
           stopScan(); // Stop after successful scan
+
+          // Automatically open the link if it's a valid URL
+          if (result.getText().startsWith("http")) {
+            window.open(result.getText(), "_blank");
+          }
         }
         if (err && !(err instanceof NotFoundException)) {
           console.error(err);
@@ -98,6 +103,11 @@ const QrScannerNormal = () => {
       const imageUrl = URL.createObjectURL(file);
       codeReader.decodeFromImageUrl(imageUrl).then((result) => {
         setScanResult(result.getText());
+
+        // Automatically open the link if it's a valid URL
+        if (result.getText().startsWith("http")) {
+          window.open(result.getText(), "_blank");
+        }
       }).catch(console.error);
     }
   };
@@ -107,13 +117,6 @@ const QrScannerNormal = () => {
     if (scanResult) {
       navigator.clipboard.writeText(scanResult);
       alert("Copied to clipboard!");
-    }
-  };
-
-  // Open URL if result is a link
-  const openLink = () => {
-    if (scanResult && scanResult.startsWith("http")) {
-      window.open(scanResult, "_blank");
     }
   };
 
@@ -167,11 +170,6 @@ const QrScannerNormal = () => {
               <button onClick={copyResult} className="px-4 py-2 bg-blue-500 text-white rounded">
                 Copy
               </button>
-              {scanResult.startsWith("http") && (
-                <button onClick={openLink} className="px-4 py-2 bg-green-500 text-white rounded">
-                  Open Link
-                </button>
-              )}
             </div>
           </div>
         )}
