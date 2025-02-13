@@ -5,11 +5,13 @@ import { BrowserMultiFormatReader, Result, NotFoundException } from "@zxing/libr
 const QrScannerNormal = () => {
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
-  const [currentCamera, setCurrentCamera] = useState<MediaDeviceInfo | null>(null); // Store the current camera object
+  const [currentCamera, setCurrentCamera] = useState<MediaDeviceInfo | null>(null);
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const openLinkButtonRef = useRef<HTMLButtonElement>(null); // Ref for the "Open Link" button
   const codeReader = new BrowserMultiFormatReader();
-  const [isFrontCamera, setIsFrontCamera] = useState(false); // New state for front/back toggle
+  const [isFrontCamera, setIsFrontCamera] = useState(false);
+  const [autoOpenLinks, setAutoOpenLinks] = useState(true); // State for auto-opening links
 
   // Fetch available cameras
   useEffect(() => {
@@ -17,37 +19,35 @@ const QrScannerNormal = () => {
       .listVideoInputDevices()
       .then((devices) => {
         setCameraDevices(devices);
-        updateCameraSelection(devices); // Select initial camera
+        updateCameraSelection(devices);
       })
       .catch(console.error);
 
     return () => {
-      stopScan(); // Cleanup on unmount
-    };
-  }, []); // Empty dependency array for initial camera fetch
-
-  useEffect(() => {
-    startScan(); // Start/restart scan whenever currentCamera changes
-    return () => {
-      // Clean up the previous scan when the effect runs again (camera changed)
       stopScan();
     };
-  }, [currentCamera]); // currentCamera is the dependency
+  }, []);
 
   useEffect(() => {
-    // This effect handles the front/back camera toggle
-    updateCameraSelection(cameraDevices); // Update camera based on isFrontCamera
+    startScan();
     return () => {
       stopScan();
     };
-  }, [isFrontCamera, cameraDevices]); // isFrontCamera and cameraDevices are the dependencies
+  }, [currentCamera]);
+
+  useEffect(() => {
+    updateCameraSelection(cameraDevices);
+    return () => {
+      stopScan();
+    };
+  }, [isFrontCamera, cameraDevices]);
 
   const updateCameraSelection = (devices: MediaDeviceInfo[]) => {
     const selectedCamera = isFrontCamera
       ? devices.find(device => device.label.toLowerCase().includes("front"))
       : devices.find(device => device.label.toLowerCase().includes("back")) ||
-        devices.find(device => device.kind === 'videoinput') || // Find any video input device if back is not available.
-        devices[0]; //Fallback to the first device
+        devices.find(device => device.kind === 'videoinput') ||
+        devices[0];
 
     setCurrentCamera(selectedCamera || null);
   };
@@ -58,11 +58,13 @@ const QrScannerNormal = () => {
       codeReader.decodeFromVideoDevice(currentCamera.deviceId, videoRef.current, (result: Result | null, err: any) => {
         if (result) {
           setScanResult(result.getText());
-          stopScan(); // Stop after successful scan
+          stopScan();
 
-          // Automatically open the link if it's a valid URL
-          if (result.getText().startsWith("http")) {
-            window.open(result.getText(), "_blank");
+          // Automatically trigger the "Open Link" button if the result is a URL and autoOpenLinks is true
+          if (result.getText().startsWith("http") && autoOpenLinks) {
+            setTimeout(() => {
+              openLinkButtonRef.current?.click(); // Trigger the button click
+            }, 100); // Small delay to ensure the button is rendered
           }
         }
         if (err && !(err instanceof NotFoundException)) {
@@ -70,7 +72,7 @@ const QrScannerNormal = () => {
         }
       });
     } else if (videoRef.current) {
-      videoRef.current.srcObject = null; // Clear if no camera available
+      videoRef.current.srcObject = null;
     }
   };
 
@@ -93,7 +95,7 @@ const QrScannerNormal = () => {
   const handleCameraChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedDeviceId = event.target.value;
     const selectedCamera = cameraDevices.find(device => device.deviceId === selectedDeviceId);
-    setCurrentCamera(selectedCamera || null); // Update the current camera
+    setCurrentCamera(selectedCamera || null);
   };
 
   // Handle file upload
@@ -104,9 +106,11 @@ const QrScannerNormal = () => {
       codeReader.decodeFromImageUrl(imageUrl).then((result) => {
         setScanResult(result.getText());
 
-        // Automatically open the link if it's a valid URL
-        if (result.getText().startsWith("http")) {
-          window.open(result.getText(), "_blank");
+        // Automatically trigger the "Open Link" button if the result is a URL and autoOpenLinks is true
+        if (result.getText().startsWith("http") && autoOpenLinks) {
+          setTimeout(() => {
+            openLinkButtonRef.current?.click(); // Trigger the button click
+          }, 100); // Small delay to ensure the button is rendered
         }
       }).catch(console.error);
     }
@@ -120,16 +124,41 @@ const QrScannerNormal = () => {
     }
   };
 
+  // Open URL in a new tab
+  const openLink = () => {
+    if (scanResult && scanResult.startsWith("http")) {
+      window.open(scanResult, "_blank");
+    }
+  };
+
+  // Toggle auto-open links setting
+  const toggleAutoOpenLinks = () => {
+    setAutoOpenLinks((prev) => !prev);
+  };
+
   return (
     <Layout>
       <div className="flex flex-col items-center justify-center p-4">
         <h1 className="text-2xl font-bold mb-4">QR Code Scanner</h1>
 
+        {/* Settings Toggle */}
+        <div className="mb-4">
+          <label className="flex items-center space-x-2">
+            <span>Auto-Open Links:</span>
+            <button
+              onClick={toggleAutoOpenLinks}
+              className={`px-4 py-2 rounded ${autoOpenLinks ? "bg-green-500" : "bg-red-500"} text-white`}
+            >
+              {autoOpenLinks ? "ON" : "OFF"}
+            </button>
+          </label>
+        </div>
+
         {/* Camera Selection */}
         <div className="mb-4">
-            <button onClick={toggleCamera} className="p-2 border rounded bg-yellow-500 text-blue font-bold">
+          <button onClick={toggleCamera} className="p-2 border rounded bg-yellow-500 text-blue font-bold">
             {isFrontCamera ? "Switch to Back Camera" : "Switch to Front Camera"}
-            </button>
+          </button>
         </div>
 
         {/* Video Preview */}
@@ -153,11 +182,11 @@ const QrScannerNormal = () => {
         </div>
 
         {/* Divider */}
-        <div className="w-full h-1 bg-blue-500 mb-4"></div> {/* Blue divider */}
+        <div className="w-full h-1 bg-blue-500 mb-4"></div>
 
         {/* File Upload */}
         <div className="mb-4">
-            <p>Decode from File</p>
+          <p>Decode from File</p>
           <input type="file" accept="image/*" onChange={handleFileUpload} className="p-2 border rounded" />
         </div>
 
@@ -170,6 +199,15 @@ const QrScannerNormal = () => {
               <button onClick={copyResult} className="px-4 py-2 bg-blue-500 text-white rounded">
                 Copy
               </button>
+              {scanResult.startsWith("http") && (
+                <button
+                  ref={openLinkButtonRef}
+                  onClick={openLink}
+                  className="px-4 py-2 bg-green-500 text-white rounded"
+                >
+                  Open Link
+                </button>
+              )}
             </div>
           </div>
         )}

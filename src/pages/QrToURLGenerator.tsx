@@ -370,7 +370,7 @@ const QrToURLGenerator = () => {
           </>
         )}
 
-        {/* Scan QR Code Button */}
+        {/* Generate QR Code Button */}
         <button
           onClick={handleScanQRCode}
           disabled={!isFormValid() || isLoading}
