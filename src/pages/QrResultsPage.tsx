@@ -11,7 +11,9 @@ const QrResultsPage = () => {
   const router = useRouter();
   const [transactionType, setTransactionType] = useState("");
   const [data, setData] = useState<any>({});
-  const [phoneNumber, setPhoneNumber] = useState(""); // State for phone number input
+  const [phoneNumber, setPhoneNumber] = useState("254"); // State for phone number input
+  const [warning, setWarning] = useState<string | null>(null); // Warning message
+  const [error, setError] = useState<string | null>(null); // Error message
 
   useEffect(() => {
     if (router.query.data) {
@@ -20,6 +22,42 @@ const QrResultsPage = () => {
       setData(parsedData);
     }
   }, [router.query]);
+
+  // Handle phone number input change
+  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+
+    // Ensure the number starts with "254"
+    if (!value.startsWith("254")) {
+      value = "254";
+      setWarning("Phone number must start with '254'.");
+    } else {
+      setWarning(null);
+    }
+
+    // Validate the number after "254"
+    if (value.length > 3) {
+      const afterPrefix = value.slice(3);
+      if (/^0/.test(afterPrefix)) {
+        setError("The digit after '254' cannot be zero.");
+      } else {
+        setError(null);
+      }
+    } else {
+      setError(null);
+    }
+
+    setPhoneNumber(value);
+  };
+
+  // Validate phone number length on blur
+  const handlePhoneNumberBlur = () => {
+    if (phoneNumber.length !== 12) {
+      setError("Phone number must be exactly 12 digits.");
+    } else {
+      setError(null);
+    }
+  };
 
   // ******PAYMENT METHODS******
   const handlePayBill = async () => {
@@ -190,27 +228,27 @@ const QrResultsPage = () => {
       toast.success("Contact saved as CSV!");
     }
   };
+
   return (
     <Layout>
       <h2 className="text-2xl font-bold text-center mb-4 flex items-center justify-center">
-      {transactionType === 'Contact' ? (
+        {transactionType === 'Contact' ? (
           <>E-BUSINESS CARD SCAN DETAILS</>
         ) : (
           <>M-PESA TRANSACTION SCAN DETAILS</>
         )}
-        
       </h2>
 
       <div className="w-full border-t-2 border-gray-300 my-4"></div>
 
       <div className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-lg mt-8">
-      <p className="text-xl text-center">
-        {transactionType === 'Contact' ? (
-          <>You are viewing the Contact Details for <strong>{data.FirstName}</strong>.</>
-        ) : (
-          <>You are about to perform a <strong>{transactionType}</strong> transaction. Please confirm or cancel.</>
-        )}
-      </p>
+        <p className="text-xl text-center">
+          {transactionType === 'Contact' ? (
+            <>You are viewing the Contact Details for <strong>{data.FirstName}</strong>.</>
+          ) : (
+            <>You are about to perform a <strong>{transactionType}</strong> transaction. Please confirm or cancel.</>
+          )}
+        </p>
 
         <br />
         {transactionType === "PayBill" && (
@@ -243,48 +281,50 @@ const QrResultsPage = () => {
           </>
         )}
 
-      {transactionType === "Contact" && (
-        <>
-          {data.Photo && (
-            <div className="mt-4 flex flex-col items-center">
-              <p className="text-center">Profile Picture:</p>
-              <img
-                src={`data:image/png;base64,${data.Photo}`} // Add the prefix when displaying
-                alt="Scanned Contact"
-                className="mt-2 w-32 h-32 object-cover rounded-full shadow-md border border-gray-300"
-                onError={(e) => console.error("Image Load Error:", e)}
-              />
-            </div>
-          )}
-          <p>Title: {data.Title}</p>
-          <p>First Name: {data.FirstName}</p>
-          <p>Last Name: {data.LastName}</p>
-          <p>Company Name: {data.CompanyName}</p>
-          <p>Position: {data.Position}</p>
-          <p>Email: {data.Email}</p>
-          <p>Address: {data.Address}</p>
-          <p>Post Code: {data.PostCode}</p>
-          <p>City: {data.City}</p>
-          <p>Country: {data.Country}</p>
-          <p>Phone Number: {data.PhoneNumber}</p>
-        </>
-      )}
-
+        {transactionType === "Contact" && (
+          <>
+            {data.Photo && (
+              <div className="mt-4 flex flex-col items-center">
+                <p className="text-center">Profile Picture:</p>
+                <img
+                  src={`data:image/png;base64,${data.Photo}`}
+                  alt="Scanned Contact"
+                  className="mt-2 w-32 h-32 object-cover rounded-full shadow-md border border-gray-300"
+                  onError={(e) => console.error("Image Load Error:", e)}
+                />
+              </div>
+            )}
+            <p>Title: {data.Title}</p>
+            <p>First Name: {data.FirstName}</p>
+            <p>Last Name: {data.LastName}</p>
+            <p>Company Name: {data.CompanyName}</p>
+            <p>Position: {data.Position}</p>
+            <p>Email: {data.Email}</p>
+            <p>Address: {data.Address}</p>
+            <p>Post Code: {data.PostCode}</p>
+            <p>City: {data.City}</p>
+            <p>Country: {data.Country}</p>
+            <p>Phone Number: {data.PhoneNumber}</p>
+          </>
+        )}
 
         {/* Phone Number Input and Payment Button */}
         {transactionType && (
           <div className="mt-4">
             {transactionType !== "Contact" && (
               <>
-              <label className="block text-sm font-medium">Payers Phone Number</label>
-              <Input
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="Enter Phone Number"
-              />
-              </>              
+                <label className="block text-sm font-medium">Payers Phone Number</label>
+                <Input
+                  value={phoneNumber}
+                  onChange={handlePhoneNumberChange}
+                  onBlur={handlePhoneNumberBlur}
+                  placeholder="Enter Phone Number"
+                />
+                {warning && <p className="text-yellow-600">{warning}</p>}
+                {error && <p className="text-red-600">{error}</p>}
+              </>
             )}
-            
+
             <br />
 
             <div className="flex justify-between items-center mt-4 space-x-4">
@@ -293,6 +333,7 @@ const QrResultsPage = () => {
                   <Button
                     className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
                     onClick={handlePayBill}
+                    disabled={!!error || !!warning || phoneNumber.length !== 12}
                   >
                     <HiOutlineCreditCard className="text-xl" />
                     <span>Pay Now</span>
@@ -303,6 +344,7 @@ const QrResultsPage = () => {
                   <Button
                     className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
                     onClick={handlePayTill}
+                    disabled={!!error || !!warning || phoneNumber.length !== 12}
                   >
                     <HiOutlineCreditCard className="text-xl" />
                     <span>Pay Now</span>
@@ -313,6 +355,7 @@ const QrResultsPage = () => {
                   <Button
                     className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
                     onClick={handleSendMoney}
+                    disabled={!!error || !!warning || phoneNumber.length !== 12}
                   >
                     <HiOutlineCreditCard className="text-xl" />
                     <span>Send Now</span>
@@ -323,6 +366,7 @@ const QrResultsPage = () => {
                   <Button
                     className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
                     onClick={handleWithdraw}
+                    disabled={!!error || !!warning || phoneNumber.length !== 12}
                   >
                     <HiOutlineCreditCard className="text-xl" />
                     <span>Withdraw Now</span>

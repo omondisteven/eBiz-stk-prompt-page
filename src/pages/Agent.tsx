@@ -21,7 +21,10 @@ const AgentPage = () => {
   const [showInstallBtn, setShowInstallBtn] = useState(false);
   const [showQRCode, setShowQRCode] = useState(true);
   const [qrColor, setQrColor] = useState("#000000");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("254");
+  const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
+  const [isPayEnabled, setIsPayEnabled] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -79,6 +82,36 @@ const AgentPage = () => {
     };
     img.src = url;
   };
+
+  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    
+    // Ensure the number starts with "254"
+    if (!value.startsWith("254")) {
+      value = "254";
+    }
+
+    // Validate the number after "254"
+    if (value.length > 3) {
+      const afterPrefix = value.slice(3);
+      if (/^0/.test(afterPrefix)) {
+        setError("Phone number cannot start with '0' after '254'.");
+      } else {
+        setError(null);
+      }
+    } else {
+      setError(null);
+    }
+
+    setPhoneNumber(value);
+  };
+
+  useEffect(() => {
+    const isPhoneNumberValid = !!(phoneNumber && phoneNumber.startsWith("254") && !/^2540/.test(phoneNumber) && phoneNumber.length == 12);
+    const isFormComplete = !!(data.agentNumber?.trim() && data.storeNumber?.trim() && data.amount && !isNaN(Number(data.amount)) && Number(data.amount) > 0);
+    
+    setIsPayEnabled(isPhoneNumberValid && isFormComplete && !error);
+  }, [phoneNumber, data, error]);
 
   const handlePay = async () => {
     if (
@@ -191,20 +224,25 @@ const AgentPage = () => {
           </Button>
           
           <div className="w-full border-t-2 border-gray-300 my-4"></div>  {/* Added Divider */}
+
           {/* Phone Number Input */}
           <div className="bg-gray-700"></div>
           <p className="text-xl text-center">Enter Phone Number to withdraw</p>
           <Input
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            onChange={handlePhoneNumberChange}
             value={phoneNumber ?? ""}
             placeholder="Enter Phone Number"
             className="w-full text-center text-xl py-2 border rounded-lg"
           />
+          {/* Display validation messages */}
+          {warning && <p className="text-yellow-600">{warning}</p>}
+          {error && <p className="text-red-600">{error}</p>}
 
           {/* Pay Button */}
           <Button
             className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
             onClick={handlePay}
+            disabled={!isPayEnabled}
           >
             <HiOutlineCreditCard className="text-xl" /> {/* Payment Icon */}
             <span>Withdraw</span>

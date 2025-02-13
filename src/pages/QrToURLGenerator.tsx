@@ -1,10 +1,11 @@
 import Layout from "@/components/Layout";
-import { useState, useEffect } from "react";
-import { QRCodeCanvas } from "qrcode.react";
+import { useState, useRef } from "react";
+import QRCode from "react-qr-code";
 
 const QrToURLGenerator = () => {
   const [transactionType, setTransactionType] = useState("PayBill");
   const [formData, setFormData] = useState({
+    TransactionType: "",
     PaybillNumber: "",
     AccountNumber: "",
     TillNumber: "",
@@ -12,9 +13,7 @@ const QrToURLGenerator = () => {
     StoreNumber: "",
     RecepientPhoneNumber: "",
     Amount: "",
-    PhoneNumber: "",
-
-    // Contact Details
+    PhoneNumber: "254",
     Title: "",
     FirstName: "",
     LastName: "",
@@ -25,12 +24,13 @@ const QrToURLGenerator = () => {
     PostCode: "",
     City: "",
     Country: "",
-    Photo: "", // Store the photo URL or base64
+    Photo: "",
   });
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [qrData, setQrData] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Add a loading state
+  const [isLoading, setIsLoading] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false); // State to control QR code visibility
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -46,8 +46,8 @@ const QrToURLGenerator = () => {
         img.onload = () => {
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
-          const maxSize = 100; // Reduce image size
-  
+          const maxSize = 100;
+
           let width = img.width;
           let height = img.height;
           if (width > height) {
@@ -61,32 +61,57 @@ const QrToURLGenerator = () => {
               height = maxSize;
             }
           }
-  
+
           canvas.width = width;
           canvas.height = height;
           ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL("image/jpeg", 0.5)); // Lower quality to reduce size
+          resolve(canvas.toDataURL("image/jpeg", 0.5));
         };
       };
     });
   };
+
+  const handlePhoneNumberChange = (e: { target: { value: string; }; }) => {
+    let value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
+    
+    if (!value.startsWith("254")) {
+      value = "254" + value;
+    }
+    
+    setFormData({ ...formData, PhoneNumber: value });
+  };
   
-  
+  const handlePhoneNumberBlur = () => {
+    const { PhoneNumber } = formData;
+    
+    if (!PhoneNumber.startsWith("254")) {
+      alert("Warning: Phone number should start with 254");
+      return;
+    }
+    
+    if (PhoneNumber.length !== 12) {
+      alert("Error: Phone number must be exactly 12 digits");
+      return;
+    }
+    
+    if (PhoneNumber.charAt(3) === "0") {
+      alert("Error: The next digit after '254' should not be zero");
+    }
+  };
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const compressedBase64 = await compressImage(file);
-      const base64String = compressedBase64.replace(/^data:image\/(png|jpeg);base64,/, ""); // Remove prefix
-  
+      const base64String = compressedBase64.replace(/^data:image\/(png|jpeg);base64,/, "");
+
       setPhotoPreview(compressedBase64);
-      setFormData((prev) => ({ ...prev, Photo: base64String })); // Store Base64 WITHOUT prefix
+      setFormData((prev) => ({ ...prev, Photo: base64String }));
     }
   };
-  
-  
 
   const getQrData = async () => {
-    setIsLoading(true); // Set loading to true before fetching
+    setIsLoading(true);
     let qrData = {};
     switch (transactionType) {
       case "PayBill":
@@ -137,7 +162,7 @@ const QrToURLGenerator = () => {
           City: formData.City,
           Country: formData.Country,
           PhoneNumber: formData.PhoneNumber,
-          Photo: formData.Photo, // Include photo
+          Photo: formData.Photo,
         };
         break;
       default:
@@ -147,17 +172,16 @@ const QrToURLGenerator = () => {
     const encodedData = encodeURIComponent(JSON.stringify(qrData));
     const originalUrl = `http://e-biz-mpesa-payment-app.vercel.app/QrResultsPage?data=${encodedData}`;
 
-    // Fetch the shortened URL from TinyURL API
     try {
       const response = await fetch(`https://api.tinyurl.com/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer QeiZ8ZP85UdMKoZxaDDo2k8xuquZNXT6vys45A1JImuP4emSxSi2Zz655QDJ',  // Replace with your actual TinyURL API key
+          'Authorization': 'Bearer QeiZ8ZP85UdMKoZxaDDo2k8xuquZNXT6vys45A1JImuP4emSxSi2Zz655QDJ',
         },
         body: JSON.stringify({
           url: originalUrl,
-          domain: "tiny.one", // Specify the domain if needed
+          domain: "tiny.one",
         }),
       });
 
@@ -167,33 +191,102 @@ const QrToURLGenerator = () => {
         throw new Error("Invalid TinyURL API response");
       }
 
-      const shortUrl = data.data.tiny_url; // Access the short URL correctly
+      const shortUrl = data.data.tiny_url;
       return shortUrl;
     } catch (error) {
       console.error("Error creating TinyURL:", error);
-      alert("Error shortening URL. Please check the console for details."); // Alert the user.
-      return originalUrl; // Fallback to original URL on error
+      alert("Error shortening URL. Please check the console for details.");
+      return originalUrl;
     } finally {
-      setIsLoading(false); // Set loading to false after fetch, regardless of success/failure
+      setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const shortUrl = await getQrData();
-      setQrData(shortUrl);
-    };
+  const getRequiredFields = () => {
+    switch (transactionType) {
+      case "PayBill":
+        return ["PaybillNumber", "AccountNumber", "Amount"];
+      case "BuyGoods":
+        return ["TillNumber", "Amount", "PhoneNumber"];
+      case "SendMoney":
+        return ["RecepientPhoneNumber", "Amount"];
+      case "WithdrawMoney":
+        return ["AgentId", "StoreNumber", "Amount"];  
+            
+      default:
+        return [];
+    }
+  };
+  
+  const isFormValid = () => {
+    if (formData.TransactionType === "Contact") {
+      return true; // Always valid when TransactionType is 'Contact'
+    }
+  
+    const requiredFields = getRequiredFields() as (keyof typeof formData)[];
+    return requiredFields.every(field => formData[field].trim() !== "");
+  };
+    
 
-    fetchData();
-  }, [transactionType, formData]); // Corrected dependency array
+  const handleScanQRCode = async () => {
+    const shortUrl = await getQrData();
+    setQrData(shortUrl);
+    setShowQRCode(true); // Show QR code after generation
+  };
+
+  const qrRef = useRef<HTMLDivElement>(null);
 
   const downloadQrCode = () => {
-    const canvas = document.querySelector("canvas") as HTMLCanvasElement;
-    if (canvas) {
-      const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/png");
-      link.download = "QrCode.png";
-      link.click();
+    if (qrRef.current) {
+      const svg = qrRef.current.querySelector("svg");
+
+      if (svg) {
+        const width = svg.clientWidth;
+        const height = svg.clientHeight;
+
+        if (!width || !height) {
+          console.error("SVG dimensions not available. Using fallback.");
+          return alert("Error downloading QR Code. Please try again.");
+        }
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = width;
+        canvas.height = height;
+
+        ctx?.fillStyle && (ctx.fillStyle = "white");
+        ctx?.fillRect(0, 0, canvas.width, canvas.height);
+
+        const img = new Image();
+        const svgString = new XMLSerializer().serializeToString(svg);
+        const svgBase64 = btoa(unescape(encodeURIComponent(svgString)));
+        const imgSrc = `data:image/svg+xml;base64,${svgBase64}`;
+
+        img.onload = () => {
+          ctx?.drawImage(img, 0, 0);
+          const pngUrl = canvas.toDataURL("image/png");
+          const link = document.createElement("a");
+          link.href = pngUrl;
+          link.download = "QrCode.png";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
+
+        img.onerror = () => {
+          console.error("Error loading SVG image.");
+          alert("Error downloading QR Code. Please try again.");
+        };
+
+        img.src = imgSrc;
+      } else {
+        console.error("SVG element not found.");
+        alert("Error downloading QR Code. Please try again.");
+      }
+    } else {
+      console.error("QR Code container ref not attached.");
+      alert("Error downloading QR Code. Please try again.");
     }
   };
 
@@ -223,7 +316,7 @@ const QrToURLGenerator = () => {
             <input type="text" name="PaybillNumber" placeholder="Paybill Number" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="text" name="AccountNumber" placeholder="Account Number" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="number" name="Amount" placeholder="Amount" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
-            <input type="text" name="PhoneNumber" placeholder="PhoneNumber" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+            <input type="text" name="PhoneNumber" placeholder="Phone Number" value={formData.PhoneNumber} onChange={handlePhoneNumberChange} onBlur={handlePhoneNumberBlur} className="w-full p-2 border rounded-lg mb-2" />
           </>
         )}
 
@@ -231,7 +324,7 @@ const QrToURLGenerator = () => {
           <>
             <input type="text" name="TillNumber" placeholder="Till Number" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="number" name="Amount" placeholder="Amount" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
-            <input type="text" name="PhoneNumber" placeholder="PhoneNumber" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+            <input type="text" name="PhoneNumber" placeholder="Phone Number" value={formData.PhoneNumber} onChange={handlePhoneNumberChange} onBlur={handlePhoneNumberBlur} className="w-full p-2 border rounded-lg mb-2" />
           </>
         )}
 
@@ -239,7 +332,7 @@ const QrToURLGenerator = () => {
           <>
             <input type="text" name="RecepientPhoneNumber" placeholder="Recepient Phone Number" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="number" name="Amount" placeholder="Amount" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
-            <input type="text" name="PhoneNumber" placeholder="PhoneNumber" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+            <input type="text" name="PhoneNumber" placeholder="Phone Number" value={formData.PhoneNumber} onChange={handlePhoneNumberChange} onBlur={handlePhoneNumberBlur} className="w-full p-2 border rounded-lg mb-2" />
           </>
         )}
 
@@ -248,7 +341,7 @@ const QrToURLGenerator = () => {
             <input type="text" name="AgentId" placeholder="Agent ID" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="text" name="StoreNumber" placeholder="Store Number" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="number" name="Amount" placeholder="Amount" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
-            <input type="text" name="PhoneNumber" placeholder="PhoneNumber" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
+            <input type="text" name="PhoneNumber" placeholder="Phone Number" value={formData.PhoneNumber} onChange={handlePhoneNumberChange} onBlur={handlePhoneNumberBlur} className="w-full p-2 border rounded-lg mb-2" />
           </>
         )}
 
@@ -265,8 +358,7 @@ const QrToURLGenerator = () => {
             <input type="text" name="City" placeholder="City of Residence" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="text" name="Country" placeholder="Country of Residence" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
             <input type="text" name="PhoneNumber" placeholder="PhoneNumber" onChange={handleChange} className="w-full p-2 border rounded-lg mb-2" />
-             {/* Photo Upload */}
-             <label className="block text-sm font-medium text-gray-700 mb-2">Upload Photo</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Upload Photo</label>
             <input type="file" accept="image/*" onChange={handlePhotoUpload} className="w-full p-2 border rounded-lg mb-2" />
 
             {photoPreview && (
@@ -278,18 +370,27 @@ const QrToURLGenerator = () => {
           </>
         )}
 
-        <div className="flex flex-col items-center mt-4">
-          {isLoading ? ( // Show loading indicator while fetching
-            <p>Loading QR Code...</p>
-          ) : qrData ? (
-            <QRCodeCanvas value={qrData} size={180} />
-          ) : (
-            <p>No QR Code to display.</p> // Display a message if qrData is null
-          )}
+        {/* Scan QR Code Button */}
+        <button
+          onClick={handleScanQRCode}
+          disabled={!isFormValid() || isLoading}
+          className={`w-full mt-4 px-4 py-2 rounded-lg 
+            ${isFormValid() ? "bg-green-500 hover:bg-green-600 text-white" : "bg-gray-300 text-gray-600 cursor-not-allowed"}`}
+        >
+          {isLoading ? "Generating..." : "Scan QR Code"}
+        </button>;
 
-          <button onClick={downloadQrCode} disabled={isLoading} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg"> {/* Disable the button while loading */}
-            {isLoading ? "Generating..." : "Download QR Code"} {/* Change button text while loading */}
-          </button>
+        {/* QR Code Display */}
+        <div className="flex flex-col items-center mt-4" ref={qrRef}>
+          {showQRCode && qrData && <QRCode value={qrData} size={180} level="H" />}
+          {showQRCode && qrData && (
+            <button
+              onClick={downloadQrCode}
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+            >
+              Download QR Code
+            </button>
+          )}
         </div>
       </div>
     </Layout>
