@@ -6,17 +6,21 @@ import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
-import { AppContext, AppContextType, useAppContext } from "@/context/AppContext";
+import { useAppContext } from "@/context/AppContext"; // Import useAppContext
 
 const QrResultsPage = () => {
   const router = useRouter();
   const [transactionType, setTransactionType] = useState("");
   const [data, setData] = useState<any>({});
-  const [phoneNumber, setPhoneNumber] = useState("254"); // State for phone number input
+  const { data: appData } = useAppContext(); // Use the context
+  const [phoneNumber, setPhoneNumber] = useState(appData.defaultPhoneNumber || "254"); // Initialize with defaultPhoneNumber
   const [warning, setWarning] = useState<string | null>(null); // Warning message
   const [error, setError] = useState<string | null>(null); // Error message
-  
-  const { defaultPhoneNumber, defaultPaybillNumber, defaultAccountNumber } = data;
+
+  // Update phoneNumber when defaultPhoneNumber changes in the context
+  useEffect(() => {
+    setPhoneNumber(appData.defaultPhoneNumber || "254");
+  }, [appData.defaultPhoneNumber]);
 
   useEffect(() => {
     if (router.query.data) {
@@ -318,7 +322,7 @@ const QrResultsPage = () => {
               <>
                 <label className="block text-sm font-medium">Payers Phone Number</label>
                 <Input
-                  value={defaultPhoneNumber}
+                  value={phoneNumber}
                   onChange={handlePhoneNumberChange}
                   onBlur={handlePhoneNumberBlur}
                   placeholder="Enter Phone Number"
