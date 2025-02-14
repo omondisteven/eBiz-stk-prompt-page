@@ -143,7 +143,7 @@ const QrScannerNormal = () => {
         <h1 className="text-2xl font-bold mb-4">QR Code Scanner</h1>
 
         {/* Settings Toggle */}
-        <div className="mb-4">
+        {/* <div className="mb-4">
           <label className="flex items-center space-x-2">
             <span>Auto-Open Links:</span>
             <button
@@ -153,7 +153,7 @@ const QrScannerNormal = () => {
               {autoOpenLinks ? "ON" : "OFF"}
             </button>
           </label>
-        </div>
+        </div> */}
 
         {/* Camera Selection */}
         <div className="mb-4">
