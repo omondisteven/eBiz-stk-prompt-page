@@ -97,6 +97,13 @@ const Layout = ({ children }: { children: ReactNode }) => {
             </div>
           )}
 
+          {/* Divider with centered label */}
+          <div className="flex items-center my-2">
+            <div className="flex-grow border-t border-gray-100"></div>
+            <h3 className="text-sm font-bold text-gray-400 px-3 whitespace-nowrap">ADVANCED</h3>
+            <div className="flex-grow border-t border-gray-100"></div>
+          </div>
+
           {/* Settings Link */}
           <Link href="/Settings" className={`flex items-center p-3 rounded-md transition-all ${isActive("/Settings") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
             <FaCog className="mr-2" /> Settings
