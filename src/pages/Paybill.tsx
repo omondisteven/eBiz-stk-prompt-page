@@ -1,7 +1,7 @@
 // src/Pages/PayBill.tsx
 import Layout from "@/components/Layout";
 import { useContext, useEffect, useState } from "react";
-import { AppContext, AppContextType } from "@/context/AppContext";
+import { AppContext, AppContextType, useAppContext } from "@/context/AppContext";
 import { Input } from "@/components/ui/input";
 import { NumericFormat } from "react-number-format";
 import { Button } from "@/components/ui/button";
@@ -14,13 +14,16 @@ import NumPad from "@/components/NumPad";
 import { HiOutlineCreditCard } from "react-icons/hi"; // Import payment icon
 
 const PaybillPage = () => {
-  const { data, setData } = useContext(AppContext) as AppContextType;
+  // const { data, setData } = useContext(AppContext) as AppContextType;
   const [showQRCode, setShowQRCode] = useState(true);
   const [qrColor, setQrColor] = useState("#000000");
   const [phoneNumber, setPhoneNumber] = useState("254");
   const [warning, setWarning] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPayEnabled, setIsPayEnabled] = useState(false);
+
+  const { data, setData } = useAppContext();
+  const { defaultPhoneNumber, defaultPaybillNumber, defaultAccountNumber } = data;
 
   const handleQRCodeDownload = () => {
     const svgElement = document.querySelector(".qr-code-svg");
@@ -141,7 +144,7 @@ const PaybillPage = () => {
               }
             }}
             inputMode="numeric"
-            value={data.paybillNumber ?? ""}
+            value={data.defaultPaybillNumber ?? ""}
             customInput={Input}
             allowNegative={false}
             allowLeadingZeros={true}
@@ -152,7 +155,7 @@ const PaybillPage = () => {
           <p className="text-xl text-center text-green-600">ACCOUNT NUMBER</p>
           <Input
             onChange={(e) => setData({ ...data, accountNumber: e.target.value })}
-            value={data.accountNumber ?? ""}
+            value={data.defaultAccountNumber ?? ""}
             placeholder="Enter Account Number"
             className="w-full text-center text-xl py-2 border rounded-lg"
           />
@@ -198,7 +201,7 @@ const PaybillPage = () => {
           <p className="text-xl text-center">Enter Phone Number to pay directly (starting with 254...)</p>
           <Input
             onChange={handlePhoneNumberChange}
-            value={phoneNumber ?? ""}
+            value={defaultPhoneNumber ?? ""}
             placeholder="Enter Phone Number"
             className="w-full text-center text-xl py-2 border rounded-lg"
           />

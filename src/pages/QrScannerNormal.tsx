@@ -1,3 +1,4 @@
+//QrScannerNormal.tsx
 import Layout from "@/components/Layout";
 import { useState, useRef, useEffect } from "react";
 import { BrowserMultiFormatReader, Result, NotFoundException } from "@zxing/library";

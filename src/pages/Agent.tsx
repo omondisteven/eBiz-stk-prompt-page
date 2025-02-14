@@ -1,6 +1,7 @@
+//Agent.tsx
 import Layout from "@/components/Layout";
 import { useContext, useEffect, useState } from "react";
-import { AppContext, AppContextType } from "@/context/AppContext";
+import { AppContext, AppContextType, useAppContext } from "@/context/AppContext";
 import { Input } from "@/components/ui/input";
 import { NumericFormat } from "react-number-format";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,7 +17,7 @@ import NumPad from "@/components/NumPad";
 import { HiOutlineCreditCard } from "react-icons/hi"; // Import payment icon
 
 const AgentPage = () => {
-  const { data, setData } = useContext(AppContext) as AppContextType;
+  // const { data, setData } = useContext(AppContext) as AppContextType;
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
   const [showQRCode, setShowQRCode] = useState(true);
@@ -25,6 +26,9 @@ const AgentPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [isPayEnabled, setIsPayEnabled] = useState(false);
+
+  const { data, setData } = useAppContext();
+  const { defaultAgentNumber, defaultStoreNumber, defaultPhoneNumber } = data;
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -162,7 +166,7 @@ const AgentPage = () => {
               }
             }}
             inputMode="numeric"
-            value={data.agentNumber}
+            value={data.defaultAgentNumber}
             customInput={Input}
             allowNegative={false}
             allowLeadingZeros={true}
@@ -180,7 +184,7 @@ const AgentPage = () => {
               }
             }}
             inputMode="numeric"
-            value={data.storeNumber}
+            value={data.defaultStoreNumber}
             customInput={Input}
             allowNegative={false}
             allowLeadingZeros={true}
@@ -230,7 +234,7 @@ const AgentPage = () => {
           <p className="text-xl text-center">Enter Phone Number to withdraw</p>
           <Input
             onChange={handlePhoneNumberChange}
-            value={phoneNumber ?? ""}
+            value={defaultPhoneNumber ?? ""}
             placeholder="Enter Phone Number"
             className="w-full text-center text-xl py-2 border rounded-lg"
           />

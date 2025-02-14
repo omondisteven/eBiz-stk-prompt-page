@@ -1,3 +1,4 @@
+//SendMoney.tsx
 import Layout from "@/components/Layout";
 import { useContext, useEffect, useState } from "react";
 import { AppContext, AppContextType } from "@/context/AppContext";

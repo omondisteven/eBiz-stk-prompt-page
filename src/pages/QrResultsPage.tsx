@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
+import { AppContext, AppContextType, useAppContext } from "@/context/AppContext";
 
 const QrResultsPage = () => {
   const router = useRouter();
@@ -14,6 +15,8 @@ const QrResultsPage = () => {
   const [phoneNumber, setPhoneNumber] = useState("254"); // State for phone number input
   const [warning, setWarning] = useState<string | null>(null); // Warning message
   const [error, setError] = useState<string | null>(null); // Error message
+  
+  const { defaultPhoneNumber, defaultPaybillNumber, defaultAccountNumber } = data;
 
   useEffect(() => {
     if (router.query.data) {
@@ -315,7 +318,7 @@ const QrResultsPage = () => {
               <>
                 <label className="block text-sm font-medium">Payers Phone Number</label>
                 <Input
-                  value={phoneNumber}
+                  value={defaultPhoneNumber}
                   onChange={handlePhoneNumberChange}
                   onBlur={handlePhoneNumberBlur}
                   placeholder="Enter Phone Number"

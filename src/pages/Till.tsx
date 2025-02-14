@@ -1,3 +1,4 @@
+//Till.tsx
 import Layout from "@/components/Layout";
 import { useContext, useEffect, useState } from "react";
 import { AppContext, AppContextType } from "@/context/AppContext";
@@ -24,6 +25,7 @@ const TillPage = () => {
   const [warning, setWarning] = useState<string | null>(null);
   const [isPayEnabled, setIsPayEnabled] = useState(false);
   // const [amount, setAmount] = useState(""); // Amount to be paid
+  const { defaultPhoneNumber, defaultPaybillNumber, defaultAccountNumber } = data;
 
 
   useEffect(() => {
@@ -164,7 +166,7 @@ const TillPage = () => {
           }
         }}
         inputMode="numeric"
-        value={data.tillNumber}
+        value={data.defaultTillNumber}
         customInput={Input}
         allowNegative={false}
         allowLeadingZeros={true}
@@ -234,7 +236,7 @@ const TillPage = () => {
           <p className="text-xl text-center">Enter Phone Number to pay directly</p>
           <Input
             onChange={handlePhoneNumberChange}
-            value={phoneNumber ?? ""}
+            value={defaultPhoneNumber ?? ""}
             placeholder="Enter Phone Number"
             className="w-full text-center text-xl py-2 border rounded-lg"
           />
