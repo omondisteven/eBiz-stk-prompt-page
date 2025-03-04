@@ -155,7 +155,7 @@ const PaybillPage = () => {
           <p className="text-xl text-center text-green-600">ACCOUNT NUMBER</p>
           <Input
             onChange={(e) => setData({ ...data, accountNumber: e.target.value })}
-            value={data.defaultAccountNumber ?? ""}
+            value={data.accountNumber ?? ""}  // Use data.accountNumber instead of data.defaultAccountNumber
             placeholder="Enter Account Number"
             className="w-full text-center text-xl py-2 border rounded-lg"
           />
@@ -214,7 +214,7 @@ const PaybillPage = () => {
           <Button
           className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handlePay}
-          disabled={!isPayEnabled}
+          // disabled={!isPayEnabled}
         >
           <HiOutlineCreditCard className="text-xl" />
           <span>Pay Now</span>
