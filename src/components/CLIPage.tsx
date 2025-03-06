@@ -77,7 +77,7 @@ const CLIPage = () => {
           ]);
         } else if (command.toLowerCase() === "y") {
           try {
-            const response = await fetch("http://localhost:3000/api/stk_api/paybill_stk_api", {
+            const response = await fetch("/api/stk_api/paybill_stk_api", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -124,7 +124,7 @@ const CLIPage = () => {
           ]);
         } else if (command.toLowerCase() === "y") {
           try {
-            const response = await fetch("http://localhost:3000/api/stk_api/till_stk_api", {
+            const response = await fetch("/api/stk_api/till_stk_api", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -171,7 +171,7 @@ const CLIPage = () => {
           ]);
         } else if (command.toLowerCase() === "y") {
           try {
-            const response = await fetch("http://localhost:3000/api/stk_api/sendmoney_stk_api", {
+            const response = await fetch("/api/stk_api/sendmoney_stk_api", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -222,7 +222,7 @@ const CLIPage = () => {
           ]);
         } else if (command.toLowerCase() === "y") {
           try {
-            const response = await fetch("http://localhost:3000/api/stk_api/agent_stk_api", {
+            const response = await fetch("/api/stk_api/agent_stk_api", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
