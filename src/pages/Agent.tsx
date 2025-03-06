@@ -234,7 +234,7 @@ const AgentPage = () => {
           <p className="text-xl text-center">Enter Phone Number to withdraw</p>
           <Input
             onChange={handlePhoneNumberChange}
-            value={defaultPhoneNumber ?? ""}
+            value={phoneNumber ?? ""}
             placeholder="Enter Phone Number"
             className="w-full text-center text-xl py-2 border rounded-lg"
           />

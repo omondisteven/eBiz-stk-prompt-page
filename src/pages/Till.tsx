@@ -236,7 +236,7 @@ const TillPage = () => {
           <p className="text-xl text-center">Enter Phone Number to pay directly</p>
           <Input
             onChange={handlePhoneNumberChange}
-            value={defaultPhoneNumber ?? ""}
+            value={phoneNumber ?? ""}
             placeholder="Enter Phone Number"
             className="w-full text-center text-xl py-2 border rounded-lg"
           />
