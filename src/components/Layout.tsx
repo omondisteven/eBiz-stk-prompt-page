@@ -104,13 +104,13 @@ const Layout = ({ children }: { children: ReactNode }) => {
           {/* Divider with centered label */}
           <div className="flex items-center my-2">
             <div className="flex-grow border-t border-gray-100"></div>
-            <h3 className="text-sm font-bold text-gray-400 px-3 whitespace-nowrap">CLI</h3><h4 className="text-red-600">(New!)</h4>
+            <h3 className="text-sm font-bold text-gray-400 px-3 whitespace-nowrap">CLI</h3><h4 className="text-yellow-300">(New!)</h4>
             <div className="flex-grow border-t border-gray-100"></div>
           </div>
 
           {/* CLI Link */}
           <Link href="/CLI" className={`flex items-center p-3 rounded-md transition-all ${isActive("/CLI") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaTerminal className="mr-2" /> eBiz Comand Line Interface (CLI)
+            <FaTerminal className="mr-2" /> Use Comand Line Interface (CLI)
           </Link>
 
           {/* Divider with centered label */}
