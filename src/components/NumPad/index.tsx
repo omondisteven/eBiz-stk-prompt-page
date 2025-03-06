@@ -7,10 +7,11 @@ import { TRANSACTION_TYPE } from "@/@types/TransactionType";
 
 interface NumPadProps {
   className?: string;
-  hideInput?: boolean; // New prop to control input visibility
+  hideInput?: boolean;
+  textColor?: string; // New prop for text color
 }
 
-const NumPad: React.FC<NumPadProps> = ({ className, hideInput = false }) => {
+const NumPad: React.FC<NumPadProps> = ({ className, hideInput = false, textColor = "#000000" }) => {
   const { data, setData } = useContext(AppContext) as AppContextType;
   const [expression, setExpression] = useState<string>("");
 
@@ -52,6 +53,7 @@ const NumPad: React.FC<NumPadProps> = ({ className, hideInput = false }) => {
             data.type === TRANSACTION_TYPE.SEND_MONEY ? "to send" : "to pay"
           }`}
           className="font-display py-7 md:py-7 border-4 shadow-inner text-gray-900 text-xl md:text-4xl text-center w-full"
+          style={{ color: textColor }} // Apply text color
         />
       )}
       <div className="w-full grid grid-cols-4 gap-1">
@@ -60,6 +62,7 @@ const NumPad: React.FC<NumPadProps> = ({ className, hideInput = false }) => {
             key={item}
             onClick={() => handleClick(item)}
             className="py-8 text-4xl font-bold bg-white hover:bg-gray-300 text-gray-900 border border-gray-800"
+            style={{ color: textColor }} // Apply text color
           >
             {item}
           </Button>
@@ -69,6 +72,7 @@ const NumPad: React.FC<NumPadProps> = ({ className, hideInput = false }) => {
             key={item}
             onClick={() => handleClick(item)}
             className="py-8 text-4xl font-bold bg-white hover:bg-gray-300 text-gray-900 border border-gray-800"
+            style={{ color: textColor }} // Apply text color
           >
             {item}
           </Button>
@@ -78,6 +82,7 @@ const NumPad: React.FC<NumPadProps> = ({ className, hideInput = false }) => {
             key={item}
             onClick={() => handleClick(item)}
             className="py-8 text-4xl font-bold bg-white hover:bg-gray-300 text-gray-900 border border-gray-800"
+            style={{ color: textColor }} // Apply text color
           >
             {item}
           </Button>
@@ -91,6 +96,7 @@ const NumPad: React.FC<NumPadProps> = ({ className, hideInput = false }) => {
               handleClick(item)
             }
             className="py-8 text-4xl font-bold bg-white hover:bg-gray-300 text-gray-900 border border-gray-800"
+            style={{ color: textColor }} // Apply text color
           >
             {item}
           </Button>
@@ -98,6 +104,7 @@ const NumPad: React.FC<NumPadProps> = ({ className, hideInput = false }) => {
         <Button
           onClick={handleDeleteLast}
           className="col-span-4 py-8 text-4xl font-bold bg-white hover:bg-gray-300 text-gray-900 border border-gray-800"
+          style={{ color: textColor }} // Apply text color
         >
           <FiDelete />
         </Button>

@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import {
   FaBars, FaTimes, FaHome, FaMoneyBill, FaBuilding, FaUsers,
-  FaExchangeAlt, FaCreditCard, FaQrcode, FaChevronDown, FaChevronRight, FaCog, FaTerminal
+  FaExchangeAlt, FaCreditCard, FaQrcode, FaChevronDown, FaChevronRight, FaCog, FaTerminal, FaPalette
 } from "react-icons/fa";
 
 const Layout = ({ children }: { children: ReactNode }) => {
@@ -11,10 +11,15 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNonMpesaQrOpen, setIsNonMpesaQrOpen] = useState(false);
   const [isNormalQrOpen, setIsNormalQrOpen] = useState(false);
+  const [textColor, setTextColor] = useState("#000000"); // Default text color
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   const isActive = (path: string) => router.pathname === path;
   const closeSidebar = () => setIsSidebarOpen(false);
+
+  const handleColorChange = (color: string) => {
+    setTextColor(color);
+  };
 
   return (
     <div className="h-screen flex flex-col md:flex-row">
@@ -105,7 +110,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
 
           {/* CLI Link */}
           <Link href="/CLI" className={`flex items-center p-3 rounded-md transition-all ${isActive("/CLI") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaTerminal className="mr-2" /> eBiz CLI
+            <FaTerminal className="mr-2" /> eBiz Comand Line Interface (CLI)
           </Link>
 
           {/* Divider with centered label */}
@@ -127,9 +132,19 @@ const Layout = ({ children }: { children: ReactNode }) => {
         <header className="hidden md:flex bg-blue-700 text-white p-4 items-center shadow-md">
           <FaCreditCard className="text-3xl mr-2" />
           <h1 className="text-2xl font-bold">Welcome to eBiz Business Payment Platform</h1>
+          {/* Color Picker Button */}
+          <div className="ml-auto flex items-center">
+            <input
+              type="color"
+              value={textColor}
+              onChange={(e) => handleColorChange(e.target.value)}
+              className="w-8 h-8 cursor-pointer"
+            />
+            <FaPalette className="text-2xl ml-2" />
+          </div>
         </header>
 
-        <main className="flex-1 bg-gray-100 text-gray-900 p-6 rounded-lg shadow-md overflow-y-auto">
+        <main className="flex-1 bg-gray-100 text-gray-900 p-6 rounded-lg shadow-md overflow-y-auto" style={{ color: textColor }}>
           {children}
         </main>
 

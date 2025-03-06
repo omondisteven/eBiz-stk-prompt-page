@@ -161,18 +161,7 @@ const PaybillPage = () => {
             className="w-full text-center text-xl py-2 border rounded-lg"
           />
 
-<div className="flex items-center px-4 py-2 space-x-2">
-            <Checkbox
-              id="hideAmount"
-              checked={data.hideAmount}
-              onCheckedChange={(checked) => setData({ ...data, hideAmount: !!checked })}
-            />
-            <label htmlFor="hideAmount" className="text-sm font-medium">
-              Hide amount
-            </label>
-          </div>
-
-          <NumPad className="w-full" hideInput={data.hideAmount} />
+          <NumPad className="w-full"/>
         </div>
 
         {/* Right Column: Hide QR, Color Picker, QR Code, Phone Number, Pay Button */}
