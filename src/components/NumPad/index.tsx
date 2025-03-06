@@ -79,12 +79,12 @@ const NumPad: React.FC<NumPadProps> = ({ className }) => {
             {item}
           </Button>
         ))}
-        {["CLR", "0", "=", "÷"].map((item) => (
+        {["CLR", "0", "Enter", "÷"].map((item) => (
           <Button
             key={item}
             onClick={() =>
               item === "CLR" ? handleClear() : 
-              item === "=" ? handleCalculate() : 
+              item === "Enter" ? handleCalculate() : 
               handleClick(item)
             }
             className="py-8 text-4xl font-bold bg-white hover:bg-gray-300 text-gray-900 border border-gray-800"

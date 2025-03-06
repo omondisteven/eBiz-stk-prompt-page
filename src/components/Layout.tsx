@@ -1,10 +1,9 @@
-// Layout.tsx
-import { ReactNode, useState, useRef, useEffect } from "react";
+import { ReactNode, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import {
   FaBars, FaTimes, FaHome, FaMoneyBill, FaBuilding, FaUsers,
-  FaExchangeAlt, FaCreditCard, FaQrcode, FaChevronDown, FaChevronRight, FaCog
+  FaExchangeAlt, FaCreditCard, FaQrcode, FaChevronDown, FaChevronRight, FaCog, FaTerminal
 } from "react-icons/fa";
 
 const Layout = ({ children }: { children: ReactNode }) => {
@@ -100,6 +99,18 @@ const Layout = ({ children }: { children: ReactNode }) => {
           {/* Divider with centered label */}
           <div className="flex items-center my-2">
             <div className="flex-grow border-t border-gray-100"></div>
+            <h3 className="text-sm font-bold text-gray-400 px-3 whitespace-nowrap">CLI</h3><h4 className="text-red-600">(New!)</h4>
+            <div className="flex-grow border-t border-gray-100"></div>
+          </div>
+
+          {/* CLI Link */}
+          <Link href="/CLI" className={`flex items-center p-3 rounded-md transition-all ${isActive("/CLI") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
+            <FaTerminal className="mr-2" /> eBiz CLI
+          </Link>
+
+          {/* Divider with centered label */}
+          <div className="flex items-center my-2">
+            <div className="flex-grow border-t border-gray-100"></div>
             <h3 className="text-sm font-bold text-gray-400 px-3 whitespace-nowrap">ADVANCED</h3>
             <div className="flex-grow border-t border-gray-100"></div>
           </div>
@@ -112,13 +123,13 @@ const Layout = ({ children }: { children: ReactNode }) => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 md:ml-1/5" ref={mainContentRef} onClick={() => isSidebarOpen && closeSidebar()}>
+      <div className="flex-1 flex flex-col md:ml-1/5" ref={mainContentRef} onClick={() => isSidebarOpen && closeSidebar()}>
         <header className="hidden md:flex bg-blue-700 text-white p-4 items-center shadow-md">
           <FaCreditCard className="text-3xl mr-2" />
           <h1 className="text-2xl font-bold">Welcome to eBiz Business Payment Platform</h1>
         </header>
 
-        <main className="bg-gray-100 text-gray-900 p-6 rounded-lg shadow-md">
+        <main className="flex-1 bg-gray-100 text-gray-900 p-6 rounded-lg shadow-md overflow-y-auto">
           {children}
         </main>
 
