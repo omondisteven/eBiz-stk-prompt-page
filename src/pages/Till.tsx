@@ -1,4 +1,3 @@
-//Till.tsx
 import Layout from "@/components/Layout";
 import { useContext, useEffect, useState } from "react";
 import { AppContext, AppContextType } from "@/context/AppContext";
@@ -24,9 +23,7 @@ const TillPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [isPayEnabled, setIsPayEnabled] = useState(false);
-  // const [amount, setAmount] = useState(""); // Amount to be paid
   const { defaultPhoneNumber, defaultPaybillNumber, defaultAccountNumber } = data;
-
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -150,7 +147,6 @@ const TillPage = () => {
     }
   };
 
-  // *************NEW LOOK COMPONENT***************
   return (
     <Layout>
       <h1 className="text-3xl font-bold mb-4 text-center">Till Payment</h1>
@@ -158,39 +154,39 @@ const TillPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
         {/* Left Column: Paybill Number, Account Number, NumPad */}
         <div className="space-y-4">
-        <p className="text-xl text-center">TILL NUMBER</p>
-      <NumericFormat
-        onValueChange={(value) => {
-          if (value.floatValue && value.floatValue.toString().length <= 12) {
-            setData({ ...data, tillNumber: value.value, type: TRANSACTION_TYPE.TILL_NUMBER });
-          }
-        }}
-        inputMode="numeric"
-        value={data.defaultTillNumber}
-        customInput={Input}
-        allowNegative={false}
-        allowLeadingZeros={true}
-        placeholder="Enter Till Number"
-        className="w-full text-center text-xl py-2 border rounded-lg"
-      />
+          <p className="text-xl text-center">TILL NUMBER</p>
+          <NumericFormat
+            onValueChange={(value) => {
+              if (value.floatValue && value.floatValue.toString().length <= 12) {
+                setData({ ...data, tillNumber: value.value, type: TRANSACTION_TYPE.TILL_NUMBER });
+              }
+            }}
+            inputMode="numeric"
+            value={data.defaultTillNumber}
+            customInput={Input}
+            allowNegative={false}
+            allowLeadingZeros={true}
+            placeholder="Enter Till Number"
+            className="w-full text-center text-xl py-2 border rounded-lg"
+          />
 
-      <div className="flex items-center px-4 py-2 space-x-2">
-        <Checkbox
-          id="hideAmount"
-          checked={data.hideAmount}
-          onCheckedChange={(checked) => setData({ ...data, hideAmount: !!checked })}
-        />
-        <label htmlFor="hideAmount" className="text-sm font-medium">
-          Hide amount
-        </label>
-      </div>
+          <div className="flex items-center px-4 py-2 space-x-2">
+            <Checkbox
+              id="hideAmount"
+              checked={data.hideAmount}
+              onCheckedChange={(checked) => setData({ ...data, hideAmount: !!checked })}
+            />
+            <label htmlFor="hideAmount" className="text-sm font-medium">
+              Hide amount
+            </label>
+          </div>
 
-          <NumPad className="w-full" />
+          <NumPad className="w-full" hideInput={data.hideAmount} />
         </div>
 
         {/* Right Column: Hide QR, Color Picker, QR Code, Phone Number, Pay Button */}
         <div className="flex flex-col items-center space-y-4 pt-[50px] bg-white">
-        <p className="text-xl text-center">Scan Qr Code to pay with Mpesa App</p>
+          <p className="text-xl text-center">Scan Qr Code to pay with Mpesa App</p>
           {/* Hide QR Code Button */}
           <Button
             className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-all"
@@ -200,17 +196,6 @@ const TillPage = () => {
             <span>{showQRCode ? "Hide QR Code" : "Show QR Code"}</span>
           </Button>
 
-          {/* Color Picker */}
-          {/* <div className="flex items-center space-x-2">
-            <input
-              id="colorPicker"
-              type="color"
-              value={qrColor}
-              onChange={(e) => setQrColor(e.target.value)}
-              className="w-16 h-10 border rounded-md cursor-pointer"
-            />
-            <label htmlFor="colorPicker" className="text-sm font-small">Change QR Color</label>
-          </div> */}            
           {/* QR Code Display */}
           {showQRCode && (
             <div className="p-3 border-4 border-black bg-white rounded-md">

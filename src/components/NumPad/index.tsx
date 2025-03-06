@@ -7,9 +7,10 @@ import { TRANSACTION_TYPE } from "@/@types/TransactionType";
 
 interface NumPadProps {
   className?: string;
+  hideInput?: boolean; // New prop to control input visibility
 }
 
-const NumPad: React.FC<NumPadProps> = ({ className }) => {
+const NumPad: React.FC<NumPadProps> = ({ className, hideInput = false }) => {
   const { data, setData } = useContext(AppContext) as AppContextType;
   const [expression, setExpression] = useState<string>("");
 
@@ -41,16 +42,18 @@ const NumPad: React.FC<NumPadProps> = ({ className }) => {
 
   return (
     <div className={`flex flex-col space-y-2 bg-gray-800 p-2 rounded-md border border-gray-700 ${className}`}>
-      {/* Use regular <input> to allow operators */}
-      <Input
-        value={expression}
-        readOnly
-        placeholder={`Enter Amount ${
-          data.type === TRANSACTION_TYPE.AGENT ? "to withdraw" :
-          data.type === TRANSACTION_TYPE.SEND_MONEY ? "to send" : "to pay"
-        }`}
-        className="font-display py-7 md:py-7 border-4 shadow-inner text-gray-900 text-xl md:text-4xl text-center w-full"
-      />
+      {/* Conditionally render the input box */}
+      {!hideInput && (
+        <Input
+          value={expression}
+          readOnly
+          placeholder={`Enter Amount ${
+            data.type === TRANSACTION_TYPE.AGENT ? "to withdraw" :
+            data.type === TRANSACTION_TYPE.SEND_MONEY ? "to send" : "to pay"
+          }`}
+          className="font-display py-7 md:py-7 border-4 shadow-inner text-gray-900 text-xl md:text-4xl text-center w-full"
+        />
+      )}
       <div className="w-full grid grid-cols-4 gap-1">
         {["1", "2", "3", "+"].map((item) => (
           <Button
