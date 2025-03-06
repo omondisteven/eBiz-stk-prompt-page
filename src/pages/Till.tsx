@@ -1,5 +1,5 @@
 import Layout from "@/components/Layout";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import { AppContext, AppContextType } from "@/context/AppContext";
 import { Input } from "@/components/ui/input";
 import { NumericFormat } from "react-number-format";
@@ -24,6 +24,18 @@ const TillPage = () => {
   const [warning, setWarning] = useState<string | null>(null);
   const [isPayEnabled, setIsPayEnabled] = useState(false);
   const { defaultPhoneNumber, defaultPaybillNumber, defaultAccountNumber } = data;
+
+  const qrSvgRef = useRef<SVGSVGElement>(null);
+  
+    useEffect(() => {
+      if (qrSvgRef.current) {
+        const paths = qrSvgRef.current.querySelectorAll("path");
+        paths.forEach(path => {
+          path.setAttribute("fill", qrColor);
+        });
+      }
+    }, [qrColor]);
+  
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -197,16 +209,24 @@ const TillPage = () => {
           </Button>
 
           {/* QR Code Display */}
-          {showQRCode && (
-            <div className="p-3 border-4 border-black bg-white rounded-md">
-              <QrSvg
-                value={generateQRCode(data) ?? ""}
-                className="qr-code-svg w-32 h-32 md:w-40 md:h-40"
-                style={{ color: qrColor }}
-              />
-            </div>
-          )}
-
+                    {showQRCode && (
+                      <div className="p-3 border-4 border-black bg-white rounded-md flex flex-col items-center">
+                        <QrSvg
+                            value={generateQRCode(data) ?? ""}
+                            className="qr-code-svg w-32 h-32 md:w-40 md:h-40"
+                            fgColor={qrColor} // Use fgColor instead of style.fill
+                          />
+          
+                        <label className="mt-2 text-sm font-medium">Choose QR Color:</label>
+                        <input
+                          type="color"
+                          value={qrColor}
+                          onChange={(e) => setQrColor(e.target.value)}
+                          className="w-12 h-8 border rounded-md"
+                        />
+                      </div>
+                    )}
+          
           {/* Download Qr */}
           <Button
             onClick={handleQRCodeDownload}
