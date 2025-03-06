@@ -295,7 +295,7 @@ const CLIPage = () => {
 
   return (
     <Layout>
-      <div className="bg-black text-white p-4 rounded-lg font-mono h-96 overflow-y-auto" ref={outputContainerRef}>
+      <div className="bg-black text-white p-4 rounded-lg font-mono h-[calc(105vh-200px)] overflow-y-auto" ref={outputContainerRef}>
         <div className="mb-4">
           {output.map((line, index) => (
             <div key={index}>{line}</div>
