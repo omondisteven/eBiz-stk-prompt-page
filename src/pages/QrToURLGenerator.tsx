@@ -1,9 +1,21 @@
 import Layout from "@/components/Layout";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import QRCode from "react-qr-code";
+import QrSvg from "@wojtekmaj/react-qr-svg";
 
 const QrToURLGenerator = () => {
   const [transactionType, setTransactionType] = useState("PayBill");
+  const qrSvgRef = useRef<SVGSVGElement>(null);
+  const [qrColor, setQrColor] = useState("#000000");
+    
+      useEffect(() => {
+        if (qrSvgRef.current) {
+          const paths = qrSvgRef.current.querySelectorAll("path");
+          paths.forEach(path => {
+            path.setAttribute("fill", qrColor);
+          });
+        }
+      }, [qrColor]);
   const [formData, setFormData] = useState({
     TransactionType: "",
     PaybillNumber: "",
@@ -377,13 +389,13 @@ const QrToURLGenerator = () => {
           className={`w-full mt-4 px-4 py-2 rounded-lg 
             ${isFormValid() ? "bg-green-500 hover:bg-green-600 text-white" : "bg-gray-300 text-gray-600 cursor-not-allowed"}`}
         >
-          {isLoading ? "Generating..." : "Scan QR Code"}
-        </button>;
+          {isLoading ? "Generating..." : "Generate QR Code"}
+        </button>
 
         {/* QR Code Display */}
         <div className="flex flex-col items-center mt-4" ref={qrRef}>
           {showQRCode && qrData && <QRCode value={qrData} size={180} level="H" />}
-          {showQRCode && qrData && (
+          {showQRCode && qrData && (            
             <button
               onClick={downloadQrCode}
               className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
