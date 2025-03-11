@@ -14,6 +14,7 @@ const QrResultsPage = () => {
   const [data, setData] = useState<any>({});
   const { data: appData } = useAppContext(); // Use the context
   const [phoneNumber, setPhoneNumber] = useState(appData.defaultPhoneNumber || "254"); // Initialize with defaultPhoneNumber
+  const [amount, setAmount] = useState(data.Amount || ""); // State for editable Amount
   const [warning, setWarning] = useState<string | null>(null); // Warning message
   const [error, setError] = useState<string | null>(null); // Error message
 
@@ -27,6 +28,7 @@ const QrResultsPage = () => {
       const parsedData = JSON.parse(decodeURIComponent(router.query.data as string));
       setTransactionType(parsedData.TransactionType);
       setData(parsedData);
+      setAmount(parsedData.Amount || ""); // Initialize Amount from parsed data
     }
   }, [router.query]);
 
@@ -66,14 +68,20 @@ const QrResultsPage = () => {
     }
   };
 
+  // Handle Amount input change
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setAmount(value);
+  };
+
   // ******PAYMENT METHODS******
   const handlePayBill = async () => {
     if (
       !phoneNumber.trim() ||
       !data.PaybillNumber?.trim() ||
       !data.AccountNumber?.trim() ||
-      !data.Amount ||
-      isNaN(Number(data.Amount)) || Number(data.Amount) <= 0
+      !amount ||
+      isNaN(Number(amount)) || Number(amount) <= 0
     ) {
       toast.error("Please fill in all the fields.");
       return;
@@ -85,7 +93,7 @@ const QrResultsPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: phoneNumber.trim(),
-          amount: data.Amount.toString(),
+          amount: amount.toString(),
           accountnumber: data.AccountNumber.trim(),
         }),
       });
@@ -105,8 +113,8 @@ const QrResultsPage = () => {
     if (
       !phoneNumber.trim() ||
       !data.TillNumber?.trim() ||
-      !data.Amount ||
-      isNaN(Number(data.Amount)) || Number(data.Amount) <= 0
+      !amount ||
+      isNaN(Number(amount)) || Number(amount) <= 0
     ) {
       toast.error("Please fill in all the fields.");
       return;
@@ -118,7 +126,7 @@ const QrResultsPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: phoneNumber.trim(),
-          amount: data.Amount.toString(),
+          amount: amount.toString(),
           accountnumber: data.TillNumber.trim(),
         }),
       });
@@ -138,8 +146,8 @@ const QrResultsPage = () => {
     if (
       !phoneNumber.trim() ||
       !data.RecepientPhoneNumber?.trim() ||
-      !data.Amount ||
-      isNaN(Number(data.Amount)) || Number(data.Amount) <= 0
+      !amount ||
+      isNaN(Number(amount)) || Number(amount) <= 0
     ) {
       toast.error("Please fill in all the fields.");
       return;
@@ -151,7 +159,7 @@ const QrResultsPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: phoneNumber.trim(),
-          amount: data.Amount.toString(),
+          amount: amount.toString(),
           recepientPhoneNumber: data.RecepientPhoneNumber.trim(),
         }),
       });
@@ -172,8 +180,8 @@ const QrResultsPage = () => {
       !phoneNumber.trim() ||
       !data.AgentId?.trim() ||
       !data.StoreNumber?.trim() ||
-      !data.Amount ||
-      isNaN(Number(data.Amount)) || Number(data.Amount) <= 0
+      !amount ||
+      isNaN(Number(amount)) || Number(amount) <= 0
     ) {
       toast.error("Please fill in all the fields.");
       return;
@@ -185,7 +193,7 @@ const QrResultsPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: phoneNumber.trim(),
-          amount: data.Amount.toString(),
+          amount: amount.toString(),
           accountnumber: data.StoreNumber.trim(),
         }),
       });
@@ -262,21 +270,39 @@ const QrResultsPage = () => {
           <>
             <p>Paybill Number: {data.PaybillNumber}</p>
             <p>Account Number: {data.AccountNumber}</p>
-            <p>Amount: {data.Amount}</p>
+            <label className="block text-sm font-medium">Amount</label>
+            <Input
+              value={amount}
+              onChange={handleAmountChange}
+              placeholder="Enter Amount"
+              type="number"
+            />
           </>
         )}
 
         {transactionType === "BuyGoods" && (
           <>
             <p>Till Number: {data.TillNumber}</p>
-            <p>Amount: {data.Amount}</p>
+            <label className="block text-sm font-medium">Amount</label>
+            <Input
+              value={amount}
+              onChange={handleAmountChange}
+              placeholder="Enter Amount"
+              type="number"
+            />
           </>
         )}
 
         {transactionType === "SendMoney" && (
           <>
             <p>Recipient Phone Number: {data.RecepientPhoneNumber}</p>
-            <p>Amount: {data.Amount}</p>
+            <label className="block text-sm font-medium">Amount</label>
+            <Input
+              value={amount}
+              onChange={handleAmountChange}
+              placeholder="Enter Amount"
+              type="number"
+            />
           </>
         )}
 
@@ -284,7 +310,13 @@ const QrResultsPage = () => {
           <>
             <p>Agent ID: {data.AgentId}</p>
             <p>Store Number: {data.StoreNumber}</p>
-            <p>Amount: {data.Amount}</p>
+            <label className="block text-sm font-medium">Amount</label>
+            <Input
+              value={amount}
+              onChange={handleAmountChange}
+              placeholder="Enter Amount"
+              type="number"
+            />
           </>
         )}
 
@@ -340,7 +372,7 @@ const QrResultsPage = () => {
                   <Button
                     className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
                     onClick={handlePayBill}
-                    disabled={!!error || !!warning || phoneNumber.length !== 12}
+                    disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
                   >
                     <HiOutlineCreditCard className="text-xl" />
                     <span>Pay Now</span>
@@ -351,7 +383,7 @@ const QrResultsPage = () => {
                   <Button
                     className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
                     onClick={handlePayTill}
-                    disabled={!!error || !!warning || phoneNumber.length !== 12}
+                    disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
                   >
                     <HiOutlineCreditCard className="text-xl" />
                     <span>Pay Now</span>
@@ -362,7 +394,7 @@ const QrResultsPage = () => {
                   <Button
                     className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
                     onClick={handleSendMoney}
-                    disabled={!!error || !!warning || phoneNumber.length !== 12}
+                    disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
                   >
                     <HiOutlineCreditCard className="text-xl" />
                     <span>Send Now</span>
@@ -373,7 +405,7 @@ const QrResultsPage = () => {
                   <Button
                     className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
                     onClick={handleWithdraw}
-                    disabled={!!error || !!warning || phoneNumber.length !== 12}
+                    disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
                   >
                     <HiOutlineCreditCard className="text-xl" />
                     <span>Withdraw Now</span>
