@@ -13,22 +13,19 @@ const QrResultsPage = () => {
   const [transactionType, setTransactionType] = useState("");
   const [data, setData] = useState<any>({});
   const { data: appData } = useAppContext(); // Use the context
-  const [phoneNumber, setPhoneNumber] = useState(appData.defaultPhoneNumber || "254"); // Initialize with defaultPhoneNumber
+  const [phoneNumber, setPhoneNumber] = useState("254"); // Initialize with default value
   const [amount, setAmount] = useState(data.Amount || ""); // State for editable Amount
   const [warning, setWarning] = useState<string | null>(null); // Warning message
   const [error, setError] = useState<string | null>(null); // Error message
 
-  // Update phoneNumber when defaultPhoneNumber changes in the context
-  useEffect(() => {
-    setPhoneNumber(appData.defaultPhoneNumber || "254");
-  }, [appData.defaultPhoneNumber]);
-
+  // Update phoneNumber when QR code data is decoded
   useEffect(() => {
     if (router.query.data) {
       const parsedData = JSON.parse(decodeURIComponent(router.query.data as string));
       setTransactionType(parsedData.TransactionType);
       setData(parsedData);
       setAmount(parsedData.Amount || ""); // Initialize Amount from parsed data
+      setPhoneNumber(parsedData.PhoneNumber || "254"); // Initialize PhoneNumber from parsed data
     }
   }, [router.query]);
 
