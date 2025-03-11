@@ -215,31 +215,37 @@ const QrToURLGenerator = () => {
   };
 
   const getRequiredFields = () => {
-    switch (transactionType) {
-      case "PayBill":
-        return ["PaybillNumber", "AccountNumber", "Amount"];
-      case "BuyGoods":
-        return ["TillNumber", "Amount", "PhoneNumber"];
-      case "SendMoney":
-        return ["RecepientPhoneNumber", "Amount"];
-      case "WithdrawMoney":
-        return ["AgentId", "StoreNumber", "Amount"];  
-            
-      default:
-        return [];
-    }
-  };
+  switch (transactionType) {
+    case "PayBill":
+      return ["PaybillNumber", "AccountNumber"];
+    case "BuyGoods":
+      return ["TillNumber"];
+    case "SendMoney":
+      return ["RecepientPhoneNumber"];
+    case "WithdrawMoney":
+      return ["AgentId", "StoreNumber"];
+    default:
+      return [];
+  }
+};
   
   const isFormValid = () => {
-    if (formData.TransactionType === "Contact") {
-      return true; // Always valid when TransactionType is 'Contact'
-    }
-  
-    const requiredFields = getRequiredFields() as (keyof typeof formData)[];
-    return requiredFields.every(field => formData[field].trim() !== "");
-  };
-    
+  if (formData.TransactionType === "Contact") {
+    return true; // Always valid when TransactionType is 'Contact'
+  }
 
+  const requiredFields = getRequiredFields() as (keyof typeof formData)[];
+  
+  // Remove 'Amount' and 'PhoneNumber' from required fields if they are not mandatory
+  const filteredRequiredFields = requiredFields.filter(field => {
+    if (field === "Amount" || field === "PhoneNumber") {
+      return false; // Exclude 'Amount' and 'PhoneNumber' from validation
+    }
+    return true;
+  });
+
+  return filteredRequiredFields.every(field => formData[field].trim() !== "");
+};
   const handleScanQRCode = async () => {
     const shortUrl = await getQrData();
     setQrData(shortUrl);
