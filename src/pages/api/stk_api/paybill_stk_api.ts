@@ -21,6 +21,12 @@ function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS'); // Allow POST and OPTIONS
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); // Allow Content-Type header
+
+
     console.log("Handler started"); //debugging
   await runMiddleware(req, res, cors);
     console.log("Middleware finished"); //debugging
