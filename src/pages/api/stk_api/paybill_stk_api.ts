@@ -1,5 +1,5 @@
-import axios from 'axios';
 import { NextApiRequest, NextApiResponse } from 'next';
+import axios from 'axios';
 import Cors from 'cors';
 
 // Initialize the CORS middleware
@@ -21,9 +21,12 @@ function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    console.log("Handler started"); //debugging
   await runMiddleware(req, res, cors);
+    console.log("Middleware finished"); //debugging
 
   if (req.method === 'OPTIONS') {
+    console.log("Options request received"); //debugging
     return res.status(200).end();
   }
 
