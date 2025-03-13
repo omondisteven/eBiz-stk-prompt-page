@@ -1,7 +1,7 @@
 {
     "headers": [
       {
-        "source": "pages/api/(.*)",
+        "source": "/pages/api/(.*)",
         "headers": [
           {
             "key": "Access-Control-Allow-Origin",
