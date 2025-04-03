@@ -248,11 +248,11 @@ const HomeUI = () => {
       {/* Header Section */}
       <div className="p-4 border-b border-gray-200 bg-white shadow-sm rounded-t-lg mx-2 sm:mx-0 mt-2 sm:mt-0">
         <h2 className="text-xl font-bold text-center"
-            style={{color: "#006400"}}>
+            style={{color: "#3CB371"}}>
           {transactionType === 'Contact' ? (
             <>E-BUSINESS CARD SCAN DETAILS</>
           ) : (
-            <>M-POSTER - M-PESA PAYMENT</>
+            <>M-POSTER: M-PESA PAYMENT PROMPT</>
           )}
         </h2>
       </div>
