@@ -294,7 +294,7 @@ const HomeUI = () => {
               {transactionType === "BuyGoods" && (
                 <>
                   <p>Till Number: {data.TillNumber}</p>
-                  <label className="block text-sm font-medium">Amount:</label>
+                  <label className="block text-sm font-bold">Amount:</label>
                   <Input
                     value={amount}
                     onChange={handleAmountChange}
@@ -308,7 +308,7 @@ const HomeUI = () => {
               {transactionType === "SendMoney" && (
                 <>
                   <p>Recipient Phone Number: {data.RecepientPhoneNumber}</p>
-                  <label className="block text-sm font-medium">Amoun:t</label>
+                  <label className="block text-sm font-bold">Amoun:t</label>
                   <Input
                     value={amount}
                     onChange={handleAmountChange}
@@ -323,7 +323,7 @@ const HomeUI = () => {
                 <>
                   <p>Agent ID: {data.AgentId}</p>
                   <p>Store Number: {data.StoreNumber}</p>
-                  <label className="block text-sm font-medium">Amount:</label>
+                  <label className="block text-sm font-bold">Amount:</label>
                   <Input
                     value={amount}
                     onChange={handleAmountChange}
@@ -365,7 +365,7 @@ const HomeUI = () => {
             {/* Phone Number Input */}
             {transactionType && transactionType !== "Contact" && (
               <div className="mt-4">
-                <label className="block text-sm font-medium">Payers Phone Number</label>
+                <label className="block text-sm font-bold">Payers Phone Number:</label>
                 <Input
                   value={phoneNumber}
                   onChange={handlePhoneNumberChange}
