@@ -1,4 +1,3 @@
-import Layout from "@/components/Layout";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { HiOutlineCreditCard } from "react-icons/hi";
@@ -8,7 +7,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
 import { useAppContext } from "@/context/AppContext"; 
-import { green } from "tailwindcss/colors";
+import Link from "next/link";
 
 const HomeUI = () => {
   const router = useRouter();
@@ -246,7 +245,7 @@ const HomeUI = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 items-center">
       {/* Container with width constraints */}
-      <div className="w-full md:w-1/3 lg:w-1/3 xl:w-1/3 2xl:w-1/3 flex flex-col">
+      <div className="w-full md:w-1/3 lg:w-1/3 xl:w-1/3 2xl:w-1/3 flex flex-col flex-grow">
         {/* Header Section */}
         <div className="p-4 border-b border-gray-200 bg-white shadow-sm rounded-t-lg mx-2 sm:mx-0 mt-2 sm:mt-0">
           <h2 className="text-xl font-bold text-center"
@@ -308,7 +307,7 @@ const HomeUI = () => {
               {transactionType === "SendMoney" && (
                 <>
                   <p>Recipient Phone Number: {data.RecepientPhoneNumber}</p>
-                  <label className="block text-sm font-bold">Amoun:t</label>
+                  <label className="block text-sm font-bold">Amount:</label>
                   <Input
                     value={amount}
                     onChange={handleAmountChange}
@@ -449,6 +448,19 @@ const HomeUI = () => {
               Cancel
             </Button>
           </div>
+        </div>
+
+        {/* Footer Section */}
+        <div className="py-4 text-center text-sm text-gray-500">
+          Powered by{' '}
+          <Link 
+            href="https://www.bltasolutions.co.ke" 
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-green-600 hover:text-green-800 hover:underline"
+          >
+            BLTA Solutions
+          </Link>
         </div>
       </div>
     </div>
