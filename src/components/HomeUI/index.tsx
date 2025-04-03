@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
 import { useAppContext } from "@/context/AppContext"; 
+import { green } from "tailwindcss/colors";
 
 const HomeUI = () => {
   const router = useRouter();
@@ -245,7 +246,8 @@ const HomeUI = () => {
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header Section */}
       <div className="p-4 border-b border-gray-200 bg-white shadow-sm rounded-t-lg mx-2 sm:mx-0 mt-2 sm:mt-0">
-        <h2 className="text-xl font-bold text-center text-color:green">
+        <h2 className="text-xl font-bold text-center"
+            style={{color: "#006400"}}>
           {transactionType === 'Contact' ? (
             <>E-BUSINESS CARD SCAN DETAILS</>
           ) : (
