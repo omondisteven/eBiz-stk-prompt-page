@@ -270,9 +270,9 @@ const HomeUI = () => {
                 <>You are about to perform a <strong style={{color: "#3CB371"}}>{transactionType}</strong> transaction.</>
               )}
             </p>
-            </div>
-            
+            </div>            
             <hr />
+            <br />
 
             {/* Transaction Details */}
             <div className="space-y-3">
@@ -294,7 +294,7 @@ const HomeUI = () => {
               {transactionType === "BuyGoods" && (
                 <>
                   <p>Till Number: {data.TillNumber}</p>
-                  <label className="block text-sm font-medium">Amount</label>
+                  <label className="block text-sm font-medium">Amount:</label>
                   <Input
                     value={amount}
                     onChange={handleAmountChange}
@@ -308,7 +308,7 @@ const HomeUI = () => {
               {transactionType === "SendMoney" && (
                 <>
                   <p>Recipient Phone Number: {data.RecepientPhoneNumber}</p>
-                  <label className="block text-sm font-medium">Amount</label>
+                  <label className="block text-sm font-medium">Amoun:t</label>
                   <Input
                     value={amount}
                     onChange={handleAmountChange}
@@ -323,7 +323,7 @@ const HomeUI = () => {
                 <>
                   <p>Agent ID: {data.AgentId}</p>
                   <p>Store Number: {data.StoreNumber}</p>
-                  <label className="block text-sm font-medium">Amount</label>
+                  <label className="block text-sm font-medium">Amount:</label>
                   <Input
                     value={amount}
                     onChange={handleAmountChange}
