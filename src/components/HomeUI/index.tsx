@@ -376,7 +376,8 @@ const HomeUI = () => {
         <div className="flex flex-col space-y-2">
           {transactionType === "PayBill" && (
             <Button
-              className="w-full bg-green-800 hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+              className="font-bold w-full hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+              style={{backgroundColor: "#006400"}}
               onClick={handlePayBill}
               disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
             >
@@ -387,7 +388,7 @@ const HomeUI = () => {
 
           {transactionType === "BuyGoods" && (
             <Button
-              className="w-full hover:bg-green-700 text-white py-3 rounded-md shadow-md"
+              className="font-bold w-full hover:bg-green-700 text-white py-3 rounded-md shadow-md"
               style={{backgroundColor: "#006400"}}
               onClick={handlePayTill}
               disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
@@ -399,7 +400,8 @@ const HomeUI = () => {
 
           {transactionType === "SendMoney" && (
             <Button
-              className="w-full bg-green-800 hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+              className="font-bold w-full hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+              style={{backgroundColor: "#006400"}}
               onClick={handleSendMoney}
               disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
             >
@@ -410,7 +412,8 @@ const HomeUI = () => {
 
           {transactionType === "WithdrawMoney" && (
             <Button
-              className="w-full bg-green-800 hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+              className="font-bold w-full hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+              style={{backgroundColor: "#006400"}}
               onClick={handleWithdraw}
               disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
             >
@@ -421,7 +424,8 @@ const HomeUI = () => {
 
           {transactionType === "Contact" && (
             <Button
-              className="w-full bg-green-800 hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+              className="font-bold w-full hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+              style={{backgroundColor: "#006400"}}
               onClick={handleSaveContact}
             >
               Save Contact
@@ -429,7 +433,7 @@ const HomeUI = () => {
           )}
 
           <Button
-            className="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-md shadow-md"
+            className="font-bold w-full bg-gray-700 hover:bg-gray-800 text-white py-3 rounded-md shadow-md"
             onClick={() => router.push("ThankYouPage")}
           >
             Cancel
