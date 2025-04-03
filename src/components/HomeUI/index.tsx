@@ -2,6 +2,7 @@ import Layout from "@/components/Layout";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { HiOutlineCreditCard } from "react-icons/hi";
+import { HiX } from "react-icons/hi";
 import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -438,6 +439,7 @@ const HomeUI = () => {
             className="font-bold w-full bg-gray-700 hover:bg-gray-800 text-white py-3 rounded-md shadow-md"
             onClick={() => router.push("ThankYouPage")}
           >
+           <HiX className="mr-2" />
             Cancel
           </Button>
         </div>
