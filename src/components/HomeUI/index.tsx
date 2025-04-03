@@ -242,194 +242,193 @@ const HomeUI = () => {
   };
 
   return (
-    <div className="flex flex-col bg-gray-100">
-      <h2 className="text-2xl font-bold text-center mb-4 flex items-center justify-center">
-        {transactionType === 'Contact' ? (
-          <>E-BUSINESS CARD SCAN DETAILS</>
-        ) : (
-          <>M-POSTER - M-PESA PAYMENT</>
-        )}
-      </h2>
-
-      <div className="w-full border-t-2 border-gray-300 my-4"></div>
-
-      <div className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-lg mt-8">
-        <p className="text-xl text-center">
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* Header Section */}
+      <div className="p-4 border-b border-gray-200">
+        <h2 className="text-xl font-semibold text-center">
           {transactionType === 'Contact' ? (
-            <>You are viewing the Contact Details for <strong>{data.FirstName}</strong>.</>
+            <>E-BUSINESS CARD SCAN DETAILS</>
           ) : (
-            <>You are about to perform a <strong>{transactionType}</strong> transaction. Please confirm or cancel.</>
+            <>M-POSTER - M-PESA PAYMENT</>
           )}
-        </p>
+        </h2>
+      </div>
 
-        <br />
-        {transactionType === "PayBill" && (
-          <>
-            <p>Paybill Number: {data.PaybillNumber}</p>
-            <p>Account Number: {data.AccountNumber}</p>
-            <label className="block text-sm font-medium">Amount</label>
-            <Input
-              value={amount}
-              onChange={handleAmountChange}
-              placeholder="Enter Amount"
-              type="number"
-            />
-          </>
-        )}
-
-        {transactionType === "BuyGoods" && (
-          <>
-            <p>Till Number: {data.TillNumber}</p>
-            <label className="block text-sm font-medium">Amount</label>
-            <Input
-              value={amount}
-              onChange={handleAmountChange}
-              placeholder="Enter Amount"
-              type="number"
-            />
-          </>
-        )}
-
-        {transactionType === "SendMoney" && (
-          <>
-            <p>Recipient Phone Number: {data.RecepientPhoneNumber}</p>
-            <label className="block text-sm font-medium">Amount</label>
-            <Input
-              value={amount}
-              onChange={handleAmountChange}
-              placeholder="Enter Amount"
-              type="number"
-            />
-          </>
-        )}
-
-        {transactionType === "WithdrawMoney" && (
-          <>
-            <p>Agent ID: {data.AgentId}</p>
-            <p>Store Number: {data.StoreNumber}</p>
-            <label className="block text-sm font-medium">Amount</label>
-            <Input
-              value={amount}
-              onChange={handleAmountChange}
-              placeholder="Enter Amount"
-              type="number"
-            />
-          </>
-        )}
-
-        {transactionType === "Contact" && (
-          <>
-            {data.Photo && (
-              <div className="mt-4 flex flex-col items-center">
-                <p className="text-center">Profile Picture:</p>
-                <img
-                  src={`data:image/png;base64,${data.Photo}`}
-                  alt="Scanned Contact"
-                  className="mt-2 w-32 h-32 object-cover rounded-full shadow-md border border-gray-300"
-                  onError={(e) => console.error("Image Load Error:", e)}
-                />
-              </div>
+      {/* Main Content */}
+      <div className="flex-1 p-4 overflow-auto">
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+          <p className="text-lg mb-4">
+            {transactionType === 'Contact' ? (
+              <>You are viewing the Contact Details for <strong>{data.FirstName}</strong>.</>
+            ) : (
+              <>You are about to perform a <strong>{transactionType}</strong> transaction.</>
             )}
-            <p>Title: {data.Title}</p>
-            <p>First Name: {data.FirstName}</p>
-            <p>Last Name: {data.LastName}</p>
-            <p>Company Name: {data.CompanyName}</p>
-            <p>Position: {data.Position}</p>
-            <p>Email: {data.Email}</p>
-            <p>Address: {data.Address}</p>
-            <p>Post Code: {data.PostCode}</p>
-            <p>City: {data.City}</p>
-            <p>Country: {data.Country}</p>
-            <p>Phone Number: {data.PhoneNumber}</p>
-          </>
-        )}
+          </p>
 
-        {/* Phone Number Input and Payment Button */}
-        {transactionType && (
-          <div className="mt-4">
-            {transactionType !== "Contact" && (
+          {/* Transaction Details */}
+          <div className="space-y-3">
+            {transactionType === "PayBill" && (
               <>
-                <label className="block text-sm font-medium">Payers Phone Number</label>
+                <p>Paybill Number: {data.PaybillNumber}</p>
+                <p>Account Number: {data.AccountNumber}</p>
+                <label className="block text-sm font-medium">Amount</label>
                 <Input
-                  value={phoneNumber}
-                  onChange={handlePhoneNumberChange}
-                  onBlur={handlePhoneNumberBlur}
-                  placeholder="Enter Phone Number"
+                  value={amount}
+                  onChange={handleAmountChange}
+                  placeholder="Enter Amount"
+                  type="number"
                 />
-                {warning && <p className="text-yellow-600">{warning}</p>}
-                {error && <p className="text-red-600">{error}</p>}
               </>
             )}
 
-            <br />
+            {transactionType === "BuyGoods" && (
+              <>
+                <p>Till Number: {data.TillNumber}</p>
+                <label className="block text-sm font-medium">Amount</label>
+                <Input
+                  value={amount}
+                  onChange={handleAmountChange}
+                  placeholder="Enter Amount"
+                  type="number"
+                />
+              </>
+            )}
 
-            <div className="flex justify-between items-center mt-4 space-x-4">
-              <div>
-                {transactionType === "PayBill" && (
-                  <Button
-                    className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
-                    onClick={handlePayBill}
-                    disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
-                  >
-                    <HiOutlineCreditCard className="text-xl" />
-                    <span>Pay Now</span>
-                  </Button>
+            {transactionType === "SendMoney" && (
+              <>
+                <p>Recipient Phone Number: {data.RecepientPhoneNumber}</p>
+                <label className="block text-sm font-medium">Amount</label>
+                <Input
+                  value={amount}
+                  onChange={handleAmountChange}
+                  placeholder="Enter Amount"
+                  type="number"
+                />
+              </>
+            )}
+
+            {transactionType === "WithdrawMoney" && (
+              <>
+                <p>Agent ID: {data.AgentId}</p>
+                <p>Store Number: {data.StoreNumber}</p>
+                <label className="block text-sm font-medium">Amount</label>
+                <Input
+                  value={amount}
+                  onChange={handleAmountChange}
+                  placeholder="Enter Amount"
+                  type="number"
+                />
+              </>
+            )}
+
+            {transactionType === "Contact" && (
+              <>
+                {data.Photo && (
+                  <div className="mt-4 flex flex-col items-center">
+                    <p className="text-center">Profile Picture:</p>
+                    <img
+                      src={`data:image/png;base64,${data.Photo}`}
+                      alt="Scanned Contact"
+                      className="mt-2 w-32 h-32 object-cover rounded-full shadow-md border border-gray-300"
+                      onError={(e) => console.error("Image Load Error:", e)}
+                    />
+                  </div>
                 )}
-
-                {transactionType === "BuyGoods" && (
-                  <Button
-                    className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
-                    onClick={handlePayTill}
-                    disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
-                  >
-                    <HiOutlineCreditCard className="text-xl" />
-                    <span>Pay Now</span>
-                  </Button>
-                )}
-
-                {transactionType === "SendMoney" && (
-                  <Button
-                    className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
-                    onClick={handleSendMoney}
-                    disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
-                  >
-                    <HiOutlineCreditCard className="text-xl" />
-                    <span>Send Now</span>
-                  </Button>
-                )}
-
-                {transactionType === "WithdrawMoney" && (
-                  <Button
-                    className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md transition-all"
-                    onClick={handleWithdraw}
-                    disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
-                  >
-                    <HiOutlineCreditCard className="text-xl" />
-                    <span>Withdraw Now</span>
-                  </Button>
-                )}
-              </div>
-
-              {/* CANCEL BUTTON */}
-              <button
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-700"
-                onClick={() => router.push("ThankYouPage")}
-              >
-                CANCEL
-              </button>
-
-              {/* SAVE CONTACT BUTTON */}
-              {transactionType === "Contact" && (
-                <button
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-700"
-                  onClick={handleSaveContact}
-                >
-                  Save Contact
-                </button>
-              )}
-            </div>
+                <p>Title: {data.Title}</p>
+                <p>First Name: {data.FirstName}</p>
+                <p>Last Name: {data.LastName}</p>
+                <p>Company Name: {data.CompanyName}</p>
+                <p>Position: {data.Position}</p>
+                <p>Email: {data.Email}</p>
+                <p>Address: {data.Address}</p>
+                <p>Post Code: {data.PostCode}</p>
+                <p>City: {data.City}</p>
+                <p>Country: {data.Country}</p>
+                <p>Phone Number: {data.PhoneNumber}</p>
+              </>
+            )}
           </div>
-        )}
+
+          {/* Phone Number Input */}
+          {transactionType && transactionType !== "Contact" && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium">Payers Phone Number</label>
+              <Input
+                value={phoneNumber}
+                onChange={handlePhoneNumberChange}
+                onBlur={handlePhoneNumberBlur}
+                placeholder="Enter Phone Number"
+              />
+              {warning && <p className="text-yellow-600 text-sm mt-1">{warning}</p>}
+              {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Action Buttons - Fixed at bottom */}
+      <div className="p-4 border-t border-gray-200 bg-white">
+        <div className="flex flex-col space-y-2">
+          {transactionType === "PayBill" && (
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md"
+              onClick={handlePayBill}
+              disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
+            >
+              <HiOutlineCreditCard className="mr-2" />
+              Pay Now
+            </Button>
+          )}
+
+          {transactionType === "BuyGoods" && (
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md"
+              onClick={handlePayTill}
+              disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
+            >
+              <HiOutlineCreditCard className="mr-2" />
+              Pay Now
+            </Button>
+          )}
+
+          {transactionType === "SendMoney" && (
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md"
+              onClick={handleSendMoney}
+              disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
+            >
+              <HiOutlineCreditCard className="mr-2" />
+              Send Now
+            </Button>
+          )}
+
+          {transactionType === "WithdrawMoney" && (
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md"
+              onClick={handleWithdraw}
+              disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
+            >
+              <HiOutlineCreditCard className="mr-2" />
+              Withdraw Now
+            </Button>
+          )}
+
+          {transactionType === "Contact" && (
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md"
+              onClick={handleSaveContact}
+            >
+              Save Contact
+            </Button>
+          )}
+
+          <Button
+            className="w-full bg-black hover:bg-gray-800 text-white py-3 rounded-md"
+            onClick={() => router.push("ThankYouPage")}
+          >
+            Cancel
+          </Button>
+        </div>
       </div>
     </div>
   );
