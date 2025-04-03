@@ -261,7 +261,7 @@ const HomeUI = () => {
 
         {/* Main Content */}
         <div className="flex-1 p-4 overflow-auto mx-2 sm:mx-0">
-          <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.15)] p-4 mb-4 border border-gray-200">
+          <div className="bg-white text-center rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.15)] p-4 mb-4 border border-gray-200">
             <p className="text-lg mb-4">
               {transactionType === 'Contact' ? (
                 <>You are viewing the Contact Details for <strong>{data.FirstName}</strong>.</>
