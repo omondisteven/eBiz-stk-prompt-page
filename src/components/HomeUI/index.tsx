@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { HiOutlineCreditCard } from "react-icons/hi";
+import { HiOutlineCreditCard, HiCalculator } from "react-icons/hi";
 import { HiX } from "react-icons/hi";
 import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
@@ -8,6 +8,70 @@ import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
 import { useAppContext } from "@/context/AppContext"; 
 import Link from "next/link";
+
+// Add this Calculator component near your other imports
+const Calculator = ({ onCalculate, onClose }: { onCalculate: (result: string) => void, onClose: () => void }) => {
+  const [input, setInput] = useState('');
+  const [result, setResult] = useState('');
+
+  const handleButtonClick = (value: string) => {
+    if (value === '=') {
+      try {
+        // eslint-disable-next-line no-eval
+        const calculationResult = eval(input);
+        setResult(calculationResult.toString());
+        onCalculate(calculationResult.toString());
+        onClose();
+      } catch (error) {
+        setResult('Error');
+      }
+    } else if (value === 'C') {
+      setInput('');
+      setResult('');
+    } else if (value === '⌫') {
+      setInput(input.slice(0, -1));
+    } else {
+      setInput(input + value);
+    }
+  };
+
+  const buttons = [
+    '7', '8', '9', '/',
+    '4', '5', '6', '*',
+    '1', '2', '3', '-',
+    '0', '.', '=', '+',
+    'C', '⌫'
+  ];
+
+  return (
+    <div className="mt-2 bg-white rounded-lg shadow-md p-2 border border-gray-200 relative">
+      <button 
+        onClick={onClose}
+        className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+      >
+        <HiX className="h-4 w-4" />
+      </button>
+      <div className="mb-2 p-2 bg-gray-100 rounded text-right">
+        <div className="text-gray-600 text-sm h-5">{input || '0'}</div>
+        <div className="text-lg font-semibold">{result || '0'}</div>
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {buttons.map((btn) => (
+          <button
+            key={btn}
+            onClick={() => handleButtonClick(btn)}
+            className={`p-2 rounded-md text-center font-medium 
+              ${btn === '=' ? 'bg-green-500 text-white' : 
+                btn === 'C' || btn === '⌫' ? 'bg-red-500 text-white' : 
+                'bg-gray-200 hover:bg-gray-300'}`}
+          >
+            {btn}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const HomeUI = () => {
   const router = useRouter();
@@ -18,6 +82,7 @@ const HomeUI = () => {
   const [amount, setAmount] = useState(data.Amount || ""); // State for editable Amount
   const [warning, setWarning] = useState<string | null>(null); // Warning message
   const [error, setError] = useState<string | null>(null); // Error message
+  const [showCalculator, setShowCalculator] = useState(false);
 
   // Update phoneNumber when QR code data is decoded
   useEffect(() => {
@@ -280,13 +345,28 @@ const HomeUI = () => {
                   <p>Paybill Number: {data.PaybillNumber}</p>
                   <p>Account Number: {data.AccountNumber}</p>
                   <label className="block text-sm font-bold">Amount:</label>
-                  <Input
-                    value={amount}
-                    onChange={handleAmountChange}
-                    placeholder="Enter Amount"
-                    type="number"
-                    className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm"
-                  />
+                  <div className="relative">
+                    <Input
+                      value={amount}
+                      onChange={handleAmountChange}
+                      placeholder="Enter Amount"
+                      type="number"
+                      className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm pr-10"
+                    />
+                    <button 
+                      onClick={() => setShowCalculator(true)}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      <HiCalculator className="h-5 w-5" />
+                    </button>
+                  </div>
+                  {showCalculator && (
+                    <Calculator 
+                      onCalculate={(result) => setAmount(result)} 
+                      onClose={() => setShowCalculator(false)}
+                    />
+                  )}
+                  
                 </>
               )}
 
