@@ -269,6 +269,7 @@ const HomeUI = () => {
                 <>You are about to perform a <strong style={{color: "#3CB371"}}>{transactionType}</strong> transaction.</>
               )}
             </p>
+            <hr />
 
             {/* Transaction Details */}
             <div className="space-y-3">
