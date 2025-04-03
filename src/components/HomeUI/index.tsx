@@ -387,7 +387,7 @@ const HomeUI = () => {
 
           {transactionType === "BuyGoods" && (
             <Button
-              className="w-full bg-green-300 hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md shadow-md"
               onClick={handlePayTill}
               disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
             >
