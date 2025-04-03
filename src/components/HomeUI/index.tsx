@@ -12,26 +12,49 @@ import Link from "next/link";
 // Add this Calculator component near your other imports
 const Calculator = ({ onCalculate, onClose }: { onCalculate: (result: string) => void, onClose: () => void }) => {
   const [input, setInput] = useState('');
-  const [result, setResult] = useState('');
+  const [liveResult, setLiveResult] = useState('0');
+
+  // Calculate live result whenever input changes
+  useEffect(() => {
+    try {
+      if (input) {
+        // Remove any trailing operators before evaluating
+        const sanitizedInput = input.replace(/[+\-*/]+$/, '');
+        if (sanitizedInput) {
+          // eslint-disable-next-line no-eval
+          const result = eval(sanitizedInput);
+          setLiveResult(result.toString());
+        } else {
+          setLiveResult('0');
+        }
+      } else {
+        setLiveResult('0');
+      }
+    } catch (error) {
+      setLiveResult('Error');
+    }
+  }, [input]);
 
   const handleButtonClick = (value: string) => {
     if (value === '=') {
-      try {
-        // eslint-disable-next-line no-eval
-        const calculationResult = eval(input);
-        setResult(calculationResult.toString());
-        onCalculate(calculationResult.toString());
+      if (liveResult !== 'Error') {
+        onCalculate(liveResult);
         onClose();
-      } catch (error) {
-        setResult('Error');
       }
     } else if (value === 'C') {
       setInput('');
-      setResult('');
+      setLiveResult('0');
     } else if (value === '⌫') {
       setInput(input.slice(0, -1));
     } else {
-      setInput(input + value);
+      // Prevent multiple operators in a row
+      const lastChar = input.slice(-1);
+      if (['+', '-', '*', '/'].includes(value) && ['+', '-', '*', '/'].includes(lastChar)) {
+        // Replace the last operator with the new one
+        setInput(input.slice(0, -1) + value);
+      } else {
+        setInput(input + value);
+      }
     }
   };
 
@@ -51,18 +74,25 @@ const Calculator = ({ onCalculate, onClose }: { onCalculate: (result: string) =>
       >
         <HiX className="h-4 w-4" />
       </button>
-      <div className="mb-2 p-2 bg-gray-100 rounded text-right">
-        <div className="text-gray-600 text-sm h-5">{input || '0'}</div>
-        <div className="text-lg font-semibold">{result || '0'}</div>
+      
+      {/* Display current input and live result */}
+      <div className="mb-2 p-2 bg-gray-100 rounded">
+        <div className="text-gray-600 text-sm h-5 text-right">{input || '0'}</div>
+        <div className={`text-lg font-semibold text-right ${
+          liveResult === 'Error' ? 'text-red-500' : 'text-gray-800'
+        }`}>
+          {liveResult}
+        </div>
       </div>
+      
       <div className="grid grid-cols-4 gap-2">
         {buttons.map((btn) => (
           <button
             key={btn}
             onClick={() => handleButtonClick(btn)}
             className={`p-2 rounded-md text-center font-medium 
-              ${btn === '=' ? 'bg-green-500 text-white' : 
-                btn === 'C' || btn === '⌫' ? 'bg-red-500 text-white' : 
+              ${btn === '=' ? 'bg-green-500 text-white hover:bg-green-600' : 
+                btn === 'C' || btn === '⌫' ? 'bg-red-500 text-white hover:bg-red-600' : 
                 'bg-gray-200 hover:bg-gray-300'}`}
           >
             {btn}
