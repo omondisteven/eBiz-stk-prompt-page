@@ -3,9 +3,9 @@ import HomeUI from "@/components/HomeUI";
 
 const Home = () => {
   return (
-    <Layout>
+    <div>
       <HomeUI />
-    </Layout>
+    </div>
   );
 };
 
