@@ -9,7 +9,7 @@ import colors from "tailwindcss/colors";
 // Define the default data structure
 const defaultData: FormData = {
   paybillNumber: "",
-  accountNumber: "",
+  accountNumber: "", 
   color: colors.green[600],
   hideAmount: false,
   type: TRANSACTION_TYPE.TILL_NUMBER,
