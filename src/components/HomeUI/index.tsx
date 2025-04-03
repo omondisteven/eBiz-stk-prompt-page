@@ -245,7 +245,7 @@ const HomeUI = () => {
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header Section */}
       <div className="p-4 border-b border-gray-200 bg-white shadow-sm rounded-t-lg mx-2 sm:mx-0 mt-2 sm:mt-0">
-        <h2 className="text-xl font-semibold text-center">
+        <h2 className="text-xl font-semibold text-center text-color-green">
           {transactionType === 'Contact' ? (
             <>E-BUSINESS CARD SCAN DETAILS</>
           ) : (
@@ -376,7 +376,7 @@ const HomeUI = () => {
         <div className="flex flex-col space-y-2">
           {transactionType === "PayBill" && (
             <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md shadow-md"
+              className="w-full bg-green-800 hover:bg-green-900 text-white py-3 rounded-md shadow-md"
               onClick={handlePayBill}
               disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
             >
@@ -387,7 +387,7 @@ const HomeUI = () => {
 
           {transactionType === "BuyGoods" && (
             <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md shadow-md"
+              className="w-full bg-green-800 hover:bg-green-900 text-white py-3 rounded-md shadow-md"
               onClick={handlePayTill}
               disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
             >
@@ -398,7 +398,7 @@ const HomeUI = () => {
 
           {transactionType === "SendMoney" && (
             <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md shadow-md"
+              className="w-full bg-green-800 hover:bg-green-900 text-white py-3 rounded-md shadow-md"
               onClick={handleSendMoney}
               disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
             >
@@ -409,7 +409,7 @@ const HomeUI = () => {
 
           {transactionType === "WithdrawMoney" && (
             <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md shadow-md"
+              className="w-full bg-green-800 hover:bg-green-900 text-white py-3 rounded-md shadow-md"
               onClick={handleWithdraw}
               disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
             >
@@ -420,7 +420,7 @@ const HomeUI = () => {
 
           {transactionType === "Contact" && (
             <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md shadow-md"
+              className="w-full bg-green-800 hover:bg-green-900 text-white py-3 rounded-md shadow-md"
               onClick={handleSaveContact}
             >
               Save Contact
@@ -428,7 +428,7 @@ const HomeUI = () => {
           )}
 
           <Button
-            className="w-full bg-black hover:bg-gray-800 text-white py-3 rounded-md shadow-md"
+            className="w-full bg-gray-300 hover:bg-gray-800 text-white py-3 rounded-md shadow-md"
             onClick={() => router.push("ThankYouPage")}
           >
             Cancel
