@@ -429,7 +429,7 @@ const HomeUI = () => {
           )}
 
           <Button
-            className="w-full bg-gray-300 hover:bg-gray-800 text-white py-3 rounded-md shadow-md"
+            className="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-md shadow-md"
             onClick={() => router.push("ThankYouPage")}
           >
             Cancel
