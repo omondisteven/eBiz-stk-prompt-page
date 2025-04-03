@@ -245,7 +245,7 @@ const HomeUI = () => {
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header Section */}
       <div className="p-4 border-b border-gray-200 bg-white shadow-sm rounded-t-lg mx-2 sm:mx-0 mt-2 sm:mt-0">
-        <h2 className="text-xl font-semibold text-center text-color-green">
+        <h2 className="text-xl font-bold text-center text-color:green">
           {transactionType === 'Contact' ? (
             <>E-BUSINESS CARD SCAN DETAILS</>
           ) : (
@@ -387,7 +387,7 @@ const HomeUI = () => {
 
           {transactionType === "BuyGoods" && (
             <Button
-              className="w-full bg-green-800 hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+              className="w-full bg-green-1200 hover:bg-green-900 text-white py-3 rounded-md shadow-md"
               onClick={handlePayTill}
               disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
             >
