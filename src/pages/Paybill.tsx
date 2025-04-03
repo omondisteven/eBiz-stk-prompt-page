@@ -12,7 +12,6 @@ import { generateQRCode } from "@/utils/helpers";
 import toast from "react-hot-toast";
 import NumPad from "@/components/NumPad";
 import { HiOutlineCreditCard } from "react-icons/hi"; // Import payment icon
-import { Checkbox } from "@/components/ui/checkbox";
 
 const PaybillPage = () => {
   // const { data, setData } = useContext(AppContext) as AppContextType;
