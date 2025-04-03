@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
-import { useAppContext } from "@/context/AppContext"; // Import useAppContext
+import { useAppContext } from "@/context/AppContext"; 
 
 const MPosterQrResultsPage = () => {
   const router = useRouter();
