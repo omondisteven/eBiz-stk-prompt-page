@@ -277,7 +277,7 @@ const HomeUI = () => {
                 <>
                   <p>Paybill Number: {data.PaybillNumber}</p>
                   <p>Account Number: {data.AccountNumber}</p>
-                  <label className="block text-sm font-medium">Amount</label>
+                  <label className="block text-sm font-bold">Amount:</label>
                   <Input
                     value={amount}
                     onChange={handleAmountChange}
