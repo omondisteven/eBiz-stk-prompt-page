@@ -10,15 +10,17 @@ import { useAppContext } from "@/context/AppContext";
 import Link from "next/link";
 
 // Add this Calculator component near your other imports
-const Calculator = ({ onCalculate, onClose }: { onCalculate: (result: string) => void, onClose: () => void }) => {
+const Calculator = ({ onCalculate, onClose, onClear }: { 
+  onCalculate: (result: string) => void, 
+  onClose: () => void,
+  onClear: () => void 
+}) => {
   const [input, setInput] = useState('');
   const [liveResult, setLiveResult] = useState('0');
 
-  // Calculate live result whenever input changes
   useEffect(() => {
     try {
       if (input) {
-        // Remove any trailing operators before evaluating
         const sanitizedInput = input.replace(/[+\-*/]+$/, '');
         if (sanitizedInput) {
           // eslint-disable-next-line no-eval
@@ -44,13 +46,12 @@ const Calculator = ({ onCalculate, onClose }: { onCalculate: (result: string) =>
     } else if (value === 'C') {
       setInput('');
       setLiveResult('0');
+      onClear(); // Clear the amount input box
     } else if (value === '⌫') {
       setInput(input.slice(0, -1));
     } else {
-      // Prevent multiple operators in a row
       const lastChar = input.slice(-1);
       if (['+', '-', '*', '/'].includes(value) && ['+', '-', '*', '/'].includes(lastChar)) {
-        // Replace the last operator with the new one
         setInput(input.slice(0, -1) + value);
       } else {
         setInput(input + value);
@@ -394,6 +395,7 @@ const HomeUI = () => {
                     <Calculator 
                       onCalculate={(result) => setAmount(result)} 
                       onClose={() => setShowCalculator(false)}
+                      onClear={() => setAmount('')} // Pass the clear function
                     />
                   )}
                   
