@@ -362,7 +362,7 @@ const HomeUI = () => {
               {transactionType === 'Contact' ? (
                 <>You are viewing the Contact Details for <strong>{data.FirstName}</strong>.</>
               ) : (
-                <>You are about to perform a <strong style={{color: "#3CB371"}}>{transactionType}</strong> transaction.</>
+                <>You are about to perform a <strong style={{color: "#3CB371"}}>{transactionType}</strong> transaction to {data.Name ? <strong style={{color: "#3CB371"}}>{data.Name}</strong> : 'this recipient'}.</>
               )}
             </p>
             </div>            
