@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         TransactionType: 'CustomerPayBillOnline',
         Amount: amount,
         PartyA: phone,
-        PartyB: accountnumber ,
+        PartyB: BusinessShortCode ,
         PhoneNumber: phone,
         CallBackURL,
         AccountReference: accountnumber ,
