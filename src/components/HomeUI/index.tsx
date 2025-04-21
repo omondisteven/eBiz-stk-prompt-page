@@ -405,13 +405,21 @@ const HomeUI = () => {
                 <>
                   <p>Till Number: {data.TillNumber}</p>
                   <label className="block text-sm font-bold">Amount:</label>
+                  <div className="relative">
                   <Input
                     value={amount}
                     onChange={handleAmountChange}
-                    placeholder="Enter Amount"
+                    placeholder="Enter Amount (KES)"
                     type="number"
-                    className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm"
+                    className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm pr-10 w-full"
                   />
+                  <button 
+                    onClick={() => setShowCalculator(true)}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1"
+                  >
+                    <HiCalculator className="h-5 w-5" />
+                  </button>
+                </div>
                 </>
               )}
 
@@ -419,13 +427,21 @@ const HomeUI = () => {
                 <>
                   <p>Recipient Phone Number: {data.RecepientPhoneNumber}</p>
                   <label className="block text-sm font-bold">Amount:</label>
+                  <div className="relative">
                   <Input
                     value={amount}
                     onChange={handleAmountChange}
-                    placeholder="Enter Amount"
+                    placeholder="Enter Amount (KES)"
                     type="number"
-                    className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm"
+                    className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm pr-10 w-full"
                   />
+                  <button 
+                    onClick={() => setShowCalculator(true)}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1"
+                  >
+                    <HiCalculator className="h-5 w-5" />
+                  </button>
+                </div>
                 </>
               )}
 
@@ -434,13 +450,21 @@ const HomeUI = () => {
                   <p>Agent ID: {data.AgentId}</p>
                   <p>Store Number: {data.StoreNumber}</p>
                   <label className="block text-sm font-bold">Amount:</label>
+                  <div className="relative">
                   <Input
                     value={amount}
                     onChange={handleAmountChange}
-                    placeholder="Enter Amount"
+                    placeholder="Enter Amount (KES)"
                     type="number"
-                    className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm"
+                    className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm pr-10 w-full"
                   />
+                  <button 
+                    onClick={() => setShowCalculator(true)}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1"
+                  >
+                    <HiCalculator className="h-5 w-5" />
+                  </button>
+                </div>
                 </>
               )}
 
