@@ -16,6 +16,9 @@ const ThankYouPage = () => {
         <h1 className="text-2xl font-bold mb-6">
           Thank you for using M-Poster payment Platform for M-Pesa
         </h1>
+        <h4 className="text-2xl text-color:green font-bold mb-6">
+        if you cancelled the "Enter PIN" prompt and you still wish to make corrections your entries, you may go BACK to the payments page if you cancelled the "Enter PIN" prompt and wish to correct your entries
+        </h4>
         <Button 
           onClick={handleExit}
           className="bg-red-500 hover:bg-red-600 text-white py-2 px-6 rounded-md"
