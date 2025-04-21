@@ -38,7 +38,7 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
   }, [input]);
 
   const handleButtonClick = (value: string) => {
-    if (value === '=') {
+    if (value === 'OK') {
       if (liveResult !== 'Error') {
         onCalculate(liveResult);
         onClose();
@@ -63,7 +63,7 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
     '7', '8', '9', '/',
     '4', '5', '6', '*',
     '1', '2', '3', '-',
-    '0', '.', '=', '+',
+    '0', '.', 'OK', '+',
     'C', '⌫'
   ];
 
@@ -92,7 +92,7 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
             key={btn}
             onClick={() => handleButtonClick(btn)}
             className={`p-2 rounded-md text-center font-medium 
-              ${btn === '=' ? 'bg-green-500 text-white hover:bg-green-600' : 
+              ${btn === 'OK' ? 'bg-green-500 text-white hover:bg-green-600' : 
                 btn === 'C' || btn === '⌫' ? 'bg-red-500 text-white hover:bg-red-600' : 
                 'bg-gray-200 hover:bg-gray-300'}`}
           >
