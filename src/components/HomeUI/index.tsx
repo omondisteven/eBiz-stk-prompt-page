@@ -420,6 +420,13 @@ const HomeUI = () => {
                     <HiCalculator className="h-5 w-5" />
                   </button>
                 </div>
+                {showCalculator && (
+                  <Calculator 
+                    onCalculate={(result) => setAmount(result)} 
+                    onClose={() => setShowCalculator(false)}
+                    onClear={() => setAmount('')}
+                  />
+                )}
                 </>
               )}
 
@@ -442,6 +449,13 @@ const HomeUI = () => {
                     <HiCalculator className="h-5 w-5" />
                   </button>
                 </div>
+                {showCalculator && (
+                  <Calculator 
+                    onCalculate={(result) => setAmount(result)} 
+                    onClose={() => setShowCalculator(false)}
+                    onClear={() => setAmount('')}
+                  />
+                )}
                 </>
               )}
 
@@ -465,6 +479,13 @@ const HomeUI = () => {
                     <HiCalculator className="h-5 w-5" />
                   </button>
                 </div>
+                {showCalculator && (
+                  <Calculator 
+                    onCalculate={(result) => setAmount(result)} 
+                    onClose={() => setShowCalculator(false)}
+                    onClear={() => setAmount('')}
+                  />
+                )}
                 </>
               )}
 
