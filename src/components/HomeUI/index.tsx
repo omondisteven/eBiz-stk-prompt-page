@@ -255,7 +255,7 @@ const HomeUI = () => {
         body: JSON.stringify({
           phone: phoneNumber.trim(),
           amount: amount.toString(),
-          recepientPhoneNumber: data.RecepientPhoneNumber.trim(),
+          accountnumber: data.RecepientPhoneNumber.trim(),
         }),
       });
 
