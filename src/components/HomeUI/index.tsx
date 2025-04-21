@@ -380,7 +380,7 @@ const HomeUI = () => {
                   <Input
                     value={amount}
                     onChange={handleAmountChange}
-                    placeholder="Enter Amount"
+                    placeholder="Enter Amount (KES)"
                     type="number"
                     className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm pr-10 w-full"
                   />
