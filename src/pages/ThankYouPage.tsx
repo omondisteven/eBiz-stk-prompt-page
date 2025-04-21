@@ -6,7 +6,7 @@ const ThankYouPage = () => {
 
   const handleExit = () => {
     if (typeof window !== "undefined") {
-      window.close(); // Close the current tab
+      window.location.href = "/"; // go to browser's homepage
     }
   };
 
@@ -21,7 +21,7 @@ const ThankYouPage = () => {
           Thank you for using M-Poster payment Platform for M-Pesa
         </h1>
         <h4 className="text-2xl text-green-600 font-bold mb-6">
-          If you cancelled the &quot;Enter PIN&quot; prompt and you still wish to make corrections to your entries, you may go BACK to the payments page.
+          If you cancelled the &quot;Enter PIN&quot; prompt and you still wish to make corrections to your entries, you may go BACK to the payments page or EXIT and SCAN the Qr code again.
         </h4>
         <div className="flex justify-center gap-4">
           <Button 
