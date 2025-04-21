@@ -6,7 +6,7 @@ const ThankYouPage = () => {
 
   const handleExit = () => {
     if (typeof window !== "undefined") {
-      window.location.href = "/"; // go to browser's homepage
+      window.location.href = "https://www.google.com"; // go to browser's homepage
     }
   };
 
