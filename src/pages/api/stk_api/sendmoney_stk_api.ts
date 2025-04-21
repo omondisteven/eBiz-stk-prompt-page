@@ -48,9 +48,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
       res.status(200).json(stkResponse.data);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal Server Error' });
+    } catch (error: any) {
+      console.error('Withdraw STK Error:', error?.response?.data || error.message || error);
+      res.status(500).json({ message: error?.response?.data?.errorMessage || 'Internal Server Error' });
     }
   } else {
     res.status(405).json({ message: 'Method Not Allowed' });
