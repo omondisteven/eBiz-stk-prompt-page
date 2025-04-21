@@ -181,7 +181,7 @@ const HomeUI = () => {
       toast.error("Please fill in all the fields.");
       return;
     }
-
+  
     try {
       const response = await fetch("/api/stk_api/paybill_stk_api", {
         method: "POST",
@@ -192,10 +192,11 @@ const HomeUI = () => {
           accountnumber: data.AccountNumber.trim(),
         }),
       });
-
+  
       const result = await response.json();
       if (response.ok) {
         toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
+        router.push("ThankYouPage"); // Add this line
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -229,6 +230,7 @@ const HomeUI = () => {
       const result = await response.json();
       if (response.ok) {
         toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
+        router.push("ThankYouPage"); // Add this line
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -262,6 +264,7 @@ const HomeUI = () => {
       const result = await response.json();
       if (response.ok) {
         toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
+        router.push("ThankYouPage");
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -296,6 +299,7 @@ const HomeUI = () => {
       const result = await response.json();
       if (response.ok) {
         toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
+        router.push("ThankYouPage");
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -541,7 +545,7 @@ const HomeUI = () => {
           <div className="flex flex-col space-y-2">
             {transactionType === "PayBill" && (
               <Button
-                className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md active:scale-95 focus:outline-none focus:scale-95 transition-transform duration-100"
+                className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"
                 style={{ backgroundColor: "#006400" }}
                 onClick={handlePayBill}
                 disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
