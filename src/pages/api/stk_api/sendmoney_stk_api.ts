@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         BusinessShortCode,
         Password,
         Timestamp,
-        TransactionType: 'CustomerPayBillOnline',
+        TransactionType: 'CustomerTransferSender',
         Amount: amount,
         PartyA: phone,
         PartyB: BusinessShortCode ,
