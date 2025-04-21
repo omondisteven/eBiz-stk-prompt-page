@@ -1,10 +1,11 @@
-// src/pages/api/stk_api/paybill_stk_api.ts
+// src/pages/api/stk_api/sendMoney_stk_api.ts
+// sendMoney_stk_api.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { phone, amount, accountnumber } = req.body;
+    const { phone, amount, recepientPhoneNumber } = req.body;
 
     const consumerKey = 'JOugZC2lkqSZhy8eLeQMx8S0UbOXZ5A8Yzz26fCx9cyU1vqH';
     const consumerSecret = 'fqyZyrdW3QE3pDozsAcWNkVjwDADAL1dFMF3T9v65gJq8XZeyEeaTqBRXbC5RIvC';
@@ -32,14 +33,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         BusinessShortCode,
         Password,
         Timestamp,
-        TransactionType: 'CustomerBuyGoodsOnline',
+        TransactionType: 'CustomerPayBillOnline',
         Amount: amount,
         PartyA: phone,
-        PartyB: BusinessShortCode,
+        PartyB: recepientPhoneNumber,
         PhoneNumber: phone,
         CallBackURL,
-        AccountReference: accountnumber,
-        TransactionDesc: 'Buy Goos/Till Payment',
+        AccountReference: recepientPhoneNumber,
+        TransactionDesc: 'Send Money',
       }, {
         headers: {
           Authorization: `Bearer ${access_token}`,
@@ -48,9 +49,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
       res.status(200).json(stkResponse.data);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal Server Error' });
+    } catch (error: any) {
+      console.error('SendMoney STK Error:', error?.response?.data || error.message || error);
+      res.status(500).json({ message: error?.response?.data?.errorMessage || 'Internal Server Error' });
     }
   } else {
     res.status(405).json({ message: 'Method Not Allowed' });
