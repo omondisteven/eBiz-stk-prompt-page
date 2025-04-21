@@ -1,7 +1,7 @@
 {
-  "name": "eBiz - Generate M-Pesa Payment QR Codes and short URLs, Push STK payments",
+  "name": "eBiz",
   "short_name": "eBiz",
-  "description": "Generate Payment QR Codes",
+  "description": "Generate M-Pesa Payment QR Codes and short URLs, Push STK payments",
   "scope": "/",
   "start_url": "/",
   "orientation": "landscape",
