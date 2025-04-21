@@ -289,7 +289,7 @@ const HomeUI = () => {
         body: JSON.stringify({
           phone: phoneNumber.trim(),
           amount: amount.toString(),
-          accountnumber: data.StoreNumber.trim(),
+          storenumber: data.StoreNumber.trim(),
         }),
       });
 
