@@ -5,7 +5,7 @@ import axios from 'axios';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { phone, amount, recepientPhoneNumber } = req.body;
+    const { phone, amount, accountnumber } = req.body;
 
     const consumerKey = 'JOugZC2lkqSZhy8eLeQMx8S0UbOXZ5A8Yzz26fCx9cyU1vqH';
     const consumerSecret = 'fqyZyrdW3QE3pDozsAcWNkVjwDADAL1dFMF3T9v65gJq8XZeyEeaTqBRXbC5RIvC';
@@ -36,10 +36,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         TransactionType: 'CustomerPayBillOnline',
         Amount: amount,
         PartyA: phone,
-        PartyB: recepientPhoneNumber,
+        PartyB: accountnumber ,
         PhoneNumber: phone,
         CallBackURL,
-        AccountReference: recepientPhoneNumber,
+        AccountReference: accountnumber ,
         TransactionDesc: 'Send Money',
       }, {
         headers: {
