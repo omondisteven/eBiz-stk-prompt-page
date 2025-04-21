@@ -63,8 +63,8 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
     '7', '8', '9', '/',
     '4', '5', '6', '*',
     '1', '2', '3', '-',
-    '0', '.', 'OK', '+',
-    'C', '⌫'
+    '0', '.', '⌫', '+',
+    'C', 'OK'
   ];
 
   return (
@@ -93,7 +93,7 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
             onClick={() => handleButtonClick(btn)}
             className={`p-2 rounded-md text-center font-medium 
               ${btn === 'OK' ? 'bg-green-500 text-white hover:bg-green-600' : 
-                btn === 'C' || btn === '⌫' ? 'bg-red-500 text-white hover:bg-red-600' : 
+                btn === 'C' || btn === '⌫' ? 'bg-gray-500 text-white hover:bg-gray-600' : 
                 'bg-gray-200 hover:bg-gray-300'}`}
           >
             {btn}
