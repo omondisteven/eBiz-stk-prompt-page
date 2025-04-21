@@ -196,7 +196,10 @@ const HomeUI = () => {
       const result = await response.json();
       if (response.ok) {
         toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
-        router.push("ThankYouPage"); // Add this line
+        // Add 3-second delay before redirecting
+      setTimeout(() => {
+        router.push("ThankYouPage");
+      }, 3000);
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -230,7 +233,10 @@ const HomeUI = () => {
       const result = await response.json();
       if (response.ok) {
         toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
-        router.push("ThankYouPage"); // Add this line
+        // Add 3-second delay before redirecting
+        setTimeout(() => {
+          router.push("ThankYouPage");
+        }, 3000);
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -264,7 +270,10 @@ const HomeUI = () => {
       const result = await response.json();
       if (response.ok) {
         toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
-        router.push("ThankYouPage");
+        // Add 3-second delay before redirecting
+        setTimeout(() => {
+          router.push("ThankYouPage");
+        }, 3000);
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -299,7 +308,9 @@ const HomeUI = () => {
       const result = await response.json();
       if (response.ok) {
         toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
-        router.push("ThankYouPage");
+        setTimeout(() => {
+          router.push("ThankYouPage");
+        }, 3000);
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
