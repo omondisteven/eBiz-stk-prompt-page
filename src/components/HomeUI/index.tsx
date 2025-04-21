@@ -371,36 +371,35 @@ const HomeUI = () => {
 
             {/* Transaction Details */}
             <div className="space-y-3">
-              {transactionType === "PayBill" && (
-                <>
-                  <p>Paybill Number: {data.PaybillNumber}</p>
-                  <p>Account Number: {data.AccountNumber}</p>
-                  <label className="block text-sm font-bold">Amount:</label>
-                  <div className="relative">
-                    <Input
-                      value={amount}
-                      onChange={handleAmountChange}
-                      placeholder="Enter Amount"
-                      type="number"
-                      className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm pr-10"
-                    />
-                    <button 
-                      onClick={() => setShowCalculator(true)}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    >
-                      <HiCalculator className="h-5 w-5" />
-                    </button>
-                  </div>
-                  {showCalculator && (
-                    <Calculator 
-                      onCalculate={(result) => setAmount(result)} 
-                      onClose={() => setShowCalculator(false)}
-                      onClear={() => setAmount('')} // Pass the clear function
-                    />
-                  )}
-                  
-                </>
-              )}
+            {transactionType === "PayBill" && (
+              <>
+                <p>Paybill Number: {data.PaybillNumber}</p>
+                <p>Account Number: {data.AccountNumber}</p>
+                <label className="block text-sm font-bold">Amount:</label>
+                <div className="relative">
+                  <Input
+                    value={amount}
+                    onChange={handleAmountChange}
+                    placeholder="Enter Amount"
+                    type="number"
+                    className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm pr-10 w-full"
+                  />
+                  <button 
+                    onClick={() => setShowCalculator(true)}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1"
+                  >
+                    <HiCalculator className="h-5 w-5" />
+                  </button>
+                </div>
+                {showCalculator && (
+                  <Calculator 
+                    onCalculate={(result) => setAmount(result)} 
+                    onClose={() => setShowCalculator(false)}
+                    onClear={() => setAmount('')}
+                  />
+                )}
+              </>
+            )}
 
               {transactionType === "BuyGoods" && (
                 <>
