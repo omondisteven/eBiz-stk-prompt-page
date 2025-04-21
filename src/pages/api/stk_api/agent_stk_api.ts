@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         BusinessShortCode,
         Password,
         Timestamp,
-        TransactionType: 'CustomerToAgentTransfer',
+        TransactionType: 'CustomerBuyGoodsOnline',
         Amount: amount,
         PartyA: phone,
         PartyB: BusinessShortCode,
