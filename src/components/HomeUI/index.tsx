@@ -547,7 +547,7 @@ const HomeUI = () => {
                 disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
-                Pay Now
+                PAY
               </Button>
             )}
 
@@ -559,7 +559,7 @@ const HomeUI = () => {
                 disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
-                Pay Now
+                PAY
               </Button>
             )}
 
@@ -571,7 +571,7 @@ const HomeUI = () => {
                 disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
-                Send Now
+                SEND
               </Button>
             )}
 
@@ -583,7 +583,7 @@ const HomeUI = () => {
                 disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
-                Withdraw Now
+                WITHDRAW
               </Button>
             )}
 
