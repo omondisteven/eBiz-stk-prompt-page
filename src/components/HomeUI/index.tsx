@@ -541,7 +541,7 @@ const HomeUI = () => {
           <div className="flex flex-col space-y-2">
             {transactionType === "PayBill" && (
               <Button
-                className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"
+                className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md active:scale-95 focus:outline-none focus:scale-95 transition-transform duration-100"
                 style={{ backgroundColor: "#006400" }}
                 onClick={handlePayBill}
                 disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
