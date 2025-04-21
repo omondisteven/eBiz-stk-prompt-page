@@ -541,56 +541,56 @@ const HomeUI = () => {
           <div className="flex flex-col space-y-2">
             {transactionType === "PayBill" && (
               <Button
-                className="font-bold w-full hover:no-underline md:hover:bg-green-900 text-white py-3 rounded-md shadow-md"
-                style={{backgroundColor: "#006400"}}
+                className="font-bold w-full sm:hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+                style={{ backgroundColor: "#006400" }}
                 onClick={handlePayBill}
                 disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
-                PAY
+                Pay Now
               </Button>
             )}
 
             {transactionType === "BuyGoods" && (
               <Button
-                className="font-bold w-full hover:no-underline md:hover:bg-green-900 text-white py-3 rounded-md shadow-md"
-                style={{backgroundColor: "#006400"}}
+                className="font-bold w-full sm:hover:bg-green-700 text-white py-3 rounded-md shadow-md"
+                style={{ backgroundColor: "#006400" }}
                 onClick={handlePayTill}
                 disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
-                PAY
+                Pay Now
               </Button>
             )}
 
             {transactionType === "SendMoney" && (
               <Button
-                className="font-bold w-full hover:no-underline md:hover:bg-green-900 text-white py-3 rounded-md shadow-md"
-                style={{backgroundColor: "#006400"}}
+                className="font-bold w-full sm:hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+                style={{ backgroundColor: "#006400" }}
                 onClick={handleSendMoney}
                 disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
-                SEND
+                Send Now
               </Button>
             )}
 
             {transactionType === "WithdrawMoney" && (
               <Button
-                className="font-bold w-full hover:no-underline md:hover:bg-green-900 text-white py-3 rounded-md shadow-md"
-                style={{backgroundColor: "#006400"}}
+                className="font-bold w-full sm:hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+                style={{ backgroundColor: "#006400" }}
                 onClick={handleWithdraw}
                 disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
-                WITHDRAW
+                Withdraw Now
               </Button>
             )}
 
             {transactionType === "Contact" && (
               <Button
-                className="font-bold w-full hover:no-underline md:hover:bg-green-900 text-white py-3 rounded-md shadow-md"
-                style={{backgroundColor: "#006400"}}
+                className="font-bold w-full sm:hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+                style={{ backgroundColor: "#006400" }}
                 onClick={handleSaveContact}
               >
                 Save Contact
@@ -598,7 +598,7 @@ const HomeUI = () => {
             )}
 
             <Button
-              className="font-bold w-full hover:no-underline md:hover:bg-green-900 text-white py-3 rounded-md shadow-md"
+              className="font-bold w-full bg-gray-700 sm:hover:bg-gray-800 text-white py-3 rounded-md shadow-md"
               onClick={() => router.push("ThankYouPage")}
             >
               <HiX className="mr-2" />
@@ -606,6 +606,7 @@ const HomeUI = () => {
             </Button>
           </div>
         </div>
+
 
         {/* Footer Section */}
         <div className="py-4 text-center text-sm text-gray-500">
