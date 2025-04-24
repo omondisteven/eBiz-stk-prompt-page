@@ -70,13 +70,13 @@ const ThankYouPage = () => {
         ref={receiptRef}
         className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto"
       >
-        <h2 className="text-2xl font-bold mb-4">YOUR RECEIPT</h2>
+        <h2 className="text-lg font-semibold mt-2 mb-1">
+          {receiptData.businessName || "Merchant Name"}
+        </h2>
         <p className="text-sm text-gray-500 mb-1">Receipt No: {receiptNumber}</p>
         <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
-
-        <h3 className="text-lg font-semibold mt-2 mb-1">
-          {receiptData.businessName || "Recipient"}
-        </h3>
+        
+        <h3 className="text-2xl font-bold font-underline mb-4">YOUR RECEIPT</h3>
         <p>{receiptData.TransactionType}</p>
 
         <p className="text-3xl text-green-700 font-bold my-4">
