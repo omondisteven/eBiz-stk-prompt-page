@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-// import QRCode from "react-qr-code";
+import QRCode from "react-qr-code";
 
 const ThankYouPage = () => {
   const router = useRouter();
@@ -75,7 +75,7 @@ const ThankYouPage = () => {
         <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
 
         <h3 className="text-lg font-semibold mt-2 mb-1">
-          {receiptData.Name || "Recipient"}
+          {receiptData.businessName || "Recipient"}
         </h3>
         <p>{receiptData.TransactionType}</p>
 
@@ -83,22 +83,25 @@ const ThankYouPage = () => {
           KSHS {receiptData.Amount}
         </p>
 
-        {/* <QRCode
+        <QRCode
           value={JSON.stringify({
             receiptNumber,
-            name: receiptData.Name,
+            businessName: receiptData.businessName,
             amount: receiptData.Amount,
             timestamp,
           })}
           size={128}
           className="mx-auto my-4"
-        /> */}
+        />
 
-        {/* Footer Section with spacing and word wrapping */}
-        <div className="mt-6 text-sm text-gray-600 break-words space-y-1">
+        {/* Divider added here */}
+        <hr className="my-4 border-gray-300" />
+
+        {/* Footer Section with spacing, word wrapping and captions */}
+        <div className="mt-2 text-sm text-gray-600 break-words space-y-1">
           {receiptData.businessAddress && <p>{receiptData.businessAddress}</p>}
-          {receiptData.businessPhone && <p>{receiptData.businessPhone}</p>}
-          {receiptData.businessEmail && <p>{receiptData.businessEmail}</p>}
+          {receiptData.businessPhone && <p>Phone: {receiptData.businessPhone}</p>}
+          {receiptData.businessEmail && <p>Email: {receiptData.businessEmail}</p>}
         </div>
 
       </div>
