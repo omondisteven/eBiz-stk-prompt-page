@@ -198,7 +198,11 @@ const HomeUI = () => {
         toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
         // Add 3-second delay before redirecting
       setTimeout(() => {
-        router.push(`ThankYouPage?data=${encodeURIComponent(JSON.stringify(data))}`);
+        router.push(
+          `/ThankYouPage?data=${encodeURIComponent(
+            JSON.stringify({ ...data, Amount: amount }) // overwrite the amount from QR with user input
+          )}`
+        );
       }, 3000);
       } else {
         toast.error(result?.message || "Something went wrong.");
@@ -235,7 +239,11 @@ const HomeUI = () => {
         toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
         // Add 3-second delay before redirecting
         setTimeout(() => {
-          router.push(`ThankYouPage?data=${encodeURIComponent(JSON.stringify(data))}`);
+          router.push(
+            `/ThankYouPage?data=${encodeURIComponent(
+              JSON.stringify({ ...data, Amount: amount }) // overwrite the amount from QR with user input
+            )}`
+          );
         }, 3000);
       } else {
         toast.error(result?.message || "Something went wrong.");
@@ -272,7 +280,11 @@ const HomeUI = () => {
         toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
         // Add 3-second delay before redirecting
         setTimeout(() => {
-          router.push(`ThankYouPage?data=${encodeURIComponent(JSON.stringify(data))}`);
+          router.push(
+            `/ThankYouPage?data=${encodeURIComponent(
+              JSON.stringify({ ...data, Amount: amount }) // overwrite the amount from QR with user input
+            )}`
+          );
         }, 3000);
       } else {
         toast.error(result?.message || "Something went wrong.");
@@ -309,7 +321,11 @@ const HomeUI = () => {
       if (response.ok) {
         toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
         setTimeout(() => {
-          router.push(`ThankYouPage?data=${encodeURIComponent(JSON.stringify(data))}`);
+          router.push(
+            `/ThankYouPage?data=${encodeURIComponent(
+              JSON.stringify({ ...data, Amount: amount }) // overwrite the amount from QR with user input
+            )}`
+          );
         }, 3000);
       } else {
         toast.error(result?.message || "Something went wrong.");

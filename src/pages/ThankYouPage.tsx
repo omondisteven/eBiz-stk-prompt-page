@@ -1,181 +1,121 @@
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { useAppContext } from "@/context/AppContext";
-import { HiDownload, HiShare } from "react-icons/hi";
+import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import toast from 'react-hot-toast';
+// import QRCode from "react-qr-code";
 
 const ThankYouPage = () => {
   const router = useRouter();
+  const receiptRef = useRef<HTMLDivElement>(null);
   const [receiptData, setReceiptData] = useState<any>({});
   const [receiptNumber, setReceiptNumber] = useState("");
-  // const { data: appData } = useAppContext();
+  const [timestamp, setTimestamp] = useState("");
 
   useEffect(() => {
     if (router.query.data) {
       const parsedData = JSON.parse(decodeURIComponent(router.query.data as string));
       setReceiptData(parsedData);
-      // Generate a random receipt number (8 alphanumeric characters)
-      setReceiptNumber("RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase());
+
+      const randomRef = "RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+      setReceiptNumber(randomRef);
+
+      const now = new Date();
+      const formatted = now.toLocaleString("en-KE", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+      setTimestamp(formatted);
     }
   }, [router.query]);
 
-  const handleExit = () => {
-    if (typeof window !== "undefined") {
-      window.location.href = "about:blank";
-    }
+  const handleDownload = async () => {
+    const input = receiptRef.current;
+    if (!input) return;
+
+    const canvas = await html2canvas(input);
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF();
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`${receiptNumber}.pdf`);
   };
 
-  const handleGoBack = () => {
-    router.back();
-  };
-
-  const downloadReceipt = () => {
-    const receiptElement = document.getElementById("receipt");
-    if (receiptElement) {
-      html2canvas(receiptElement).then((canvas) => {
-        const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF();
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`receipt_${receiptNumber}.pdf`);
+  const handleShare = async () => {
+    if (navigator.share && receiptRef.current) {
+      const canvas = await html2canvas(receiptRef.current);
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob!], `${receiptNumber}.png`, { type: "image/png" });
+        await navigator.share({
+          files: [file],
+          title: "Your Receipt",
+          text: "Here is your transaction receipt.",
+        });
       });
-    }
-  };
-
-  const shareReceipt = async () => {
-    const receiptElement = document.getElementById("receipt");
-    if (receiptElement) {
-      try {
-        const canvas = await html2canvas(receiptElement);
-        const image = canvas.toDataURL("image/png");
-        
-        if (navigator.share) {
-          // Convert base64 to blob
-          const blob = await (await fetch(image)).blob();
-          const file = new File([blob], "receipt.png", { type: "image/png" });
-          
-          await navigator.share({
-            title: "Payment Receipt",
-            text: `Receipt for ${receiptData.TransactionType} payment`,
-            files: [file]
-          });
-        } else {
-          // Fallback for browsers that don't support sharing files
-          const link = document.createElement("a");
-          link.href = image;
-          link.download = `receipt_${receiptNumber}.png`;
-          link.click();
-        }
-      } catch (err) {
-        console.error("Error sharing:", err);
-        toast.error("Sharing failed. You can download the receipt instead.");
-      }
+    } else {
+      alert("Sharing not supported. Please download the receipt instead.");
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
-        {/* Receipt Component */}
-        <div id="receipt" className="p-6 border border-gray-200 rounded-lg">
-          <h1 className="text-2xl font-bold text-center mb-6">YOUR RECEIPT</h1>
-          
-          {/* Name Section */}
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2">{receiptData.Name || receiptData.FirstName}</h2>
-            <div className="space-y-1">
-              <div>{receiptData.TransactionType}</div>
-              {receiptData.Amount && (
-                <div className="text-3xl font-bold text-center my-4">
-                  KSHS {receiptData.Amount}
-                </div>
-              )}
-            </div>
-          </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
+      <div
+        ref={receiptRef}
+        className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto"
+      >
+        <h2 className="text-2xl font-bold mb-4">YOUR RECEIPT</h2>
+        <p className="text-sm text-gray-500 mb-1">Receipt No: {receiptNumber}</p>
+        <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
 
-          {/* Receipt Details */}
-          <div className="border-t border-b border-gray-200 py-4 my-4">
-            <div className="flex justify-between mb-2">
-              <span>Receipt No:</span>
-              <span className="font-medium">{receiptNumber}</span>
-            </div>
-            {receiptData.PaybillNumber && (
-              <div className="flex justify-between mb-2">
-                <span>Paybill:</span>
-                <span className="font-medium">{receiptData.PaybillNumber}</span>
-              </div>
-            )}
-            {receiptData.AccountNumber && (
-              <div className="flex justify-between mb-2">
-                <span>Account:</span>
-                <span className="font-medium">{receiptData.AccountNumber}</span>
-              </div>
-            )}
-            {receiptData.TillNumber && (
-              <div className="flex justify-between mb-2">
-                <span>Till No:</span>
-                <span className="font-medium">{receiptData.TillNumber}</span>
-              </div>
-            )}
-            {receiptData.RecepientPhoneNumber && (
-              <div className="flex justify-between mb-2">
-                <span>Recipient:</span>
-                <span className="font-medium">{receiptData.RecepientPhoneNumber}</span>
-              </div>
-            )}
-            <div className="flex justify-between mb-2">
-              <span>Date:</span>
-              <span className="font-medium">{new Date().toLocaleString()}</span>
-            </div>
-          </div>
+        <h3 className="text-lg font-semibold mt-2 mb-1">
+          {receiptData.Name || "Recipient"}
+        </h3>
+        <p>{receiptData.TransactionType}</p>
 
-          {/* Footer */}
-          <div className="mt-6 text-center text-sm">
-            <div>{receiptData.Address || receiptData.address}</div>
-            <div>{receiptData.businessPhone || receiptData.PhoneNumber || receiptData.whatsappnumber}</div>
-            <div>{receiptData.Email || receiptData.email}</div>
-          </div>
+        <p className="text-3xl text-green-700 font-bold my-4">
+          KSHS {receiptData.Amount}
+        </p>
+
+        {/* <QRCode
+          value={JSON.stringify({
+            receiptNumber,
+            name: receiptData.Name,
+            amount: receiptData.Amount,
+            timestamp,
+          })}
+          size={128}
+          className="mx-auto my-4"
+        /> */}
+
+        {/* Footer Section with spacing and word wrapping */}
+        <div className="mt-6 text-sm text-gray-600 break-words space-y-1">
+          {receiptData.address && <p>{receiptData.address}</p>}
+          {receiptData.businessPhone && <p>{receiptData.businessPhone}</p>}
+          {receiptData.email && <p>{receiptData.email}</p>}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-between mt-6">
-          <Button 
-            onClick={downloadReceipt}
-            className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md flex items-center"
-          >
-            <HiDownload className="mr-2" />
-            Download
-          </Button>
-          <Button 
-            onClick={shareReceipt}
-            className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md flex items-center"
-          >
-            <HiShare className="mr-2" />
-            Share
-          </Button>
-        </div>
+      </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-center gap-4 mt-6">
-          <Button 
-            onClick={handleGoBack}
-            className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-6 rounded-md"
-          >
-            Back
-          </Button>
-          <Button 
-            onClick={handleExit}
-            className="bg-red-500 hover:bg-red-600 text-white py-2 px-6 rounded-md"
-          >
-            Exit
-          </Button>
-        </div>
+      <div className="flex gap-4 mt-6">
+        <Button
+          onClick={handleDownload}
+          className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
+        >
+          Download
+        </Button>
+        <Button
+          onClick={handleShare}
+          className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded"
+        >
+          Share
+        </Button>
       </div>
     </div>
   );
