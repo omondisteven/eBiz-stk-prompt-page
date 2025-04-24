@@ -119,41 +119,45 @@ const ThankYouPage = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
       {!showContact ? (
         <div
-          ref={receiptRef}
-          className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto"
-        >
-          <h2 className="text-lg font-semibold mt-2 mb-1">
-            {receiptData.businessName || "Merchant Name"}
-          </h2>
-          <p className="text-sm text-gray-500 mb-1">Receipt No: {receiptNumber}</p>
-          <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
-          
-          <h3 className="text-2xl font-bold font-underline mb-4">YOUR RECEIPT</h3>
-          <p>{receiptData.TransactionType}</p>
-
-          <p className="text-3xl text-green-700 font-bold my-4">
-            KSHS {receiptData.Amount}
-          </p>
-
-          <QRCode
-            value={JSON.stringify({
-              receiptNumber,
-              businessName: receiptData.businessName,
-              amount: receiptData.Amount,
-              timestamp,
-            })}
-            size={128}
-            className="mx-auto my-4"
-          />
-
-          <hr className="my-4 border-gray-300" />
-
-          <div className="mt-2 text-sm text-gray-600 break-words space-y-1">
-            {receiptData.businessAddress && <p>{receiptData.businessAddress}</p>}
-            {receiptData.businessPhone && <p>Phone: {receiptData.businessPhone}</p>}
-            {receiptData.businessEmail && <p>Email: {receiptData.businessEmail}</p>}
-          </div>
+        ref={receiptRef}
+        className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto"
+      >
+        {/* Increased size for businessName */}
+        <h2 className="text-2xl font-bold mt-2 mb-1">
+          {receiptData.businessName || "Merchant Name"}
+        </h2>
+        
+        <p className="text-sm text-gray-500 mb-1">Receipt No: {receiptNumber}</p>
+        <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
+        
+        {/* Reduced size for "YOUR RECEIPT" heading */}
+        <h3 className="text-xl font-bold mb-4">YOUR RECEIPT</h3>
+        
+        <p>{receiptData.TransactionType}</p>
+      
+        <p className="text-3xl text-green-700 font-bold my-4">
+          KSHS {receiptData.Amount}
+        </p>
+      
+        <QRCode
+          value={JSON.stringify({
+            receiptNumber,
+            businessName: receiptData.businessName,
+            amount: receiptData.Amount,
+            timestamp,
+          })}
+          size={128}
+          className="mx-auto my-4"
+        />
+      
+        <hr className="my-4 border-gray-300" />
+      
+        <div className="mt-2 text-sm text-gray-600 break-words space-y-1">
+          {receiptData.businessAddress && <p>{receiptData.businessAddress}</p>}
+          {receiptData.businessPhone && <p>Phone: {receiptData.businessPhone}</p>}
+          {receiptData.businessEmail && <p>Email: {receiptData.businessEmail}</p>}
         </div>
+      </div>
       ) : (
         <div
           ref={contactRef}
