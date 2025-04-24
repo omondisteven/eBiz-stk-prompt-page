@@ -68,7 +68,7 @@ const ThankYouPage = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
       <div
         ref={receiptRef}
-        className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center"
+        className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto"
       >
         <h2 className="text-2xl font-bold mb-4">YOUR RECEIPT</h2>
         <p className="text-sm text-gray-500 mb-1">Receipt No: {receiptNumber}</p>
@@ -94,11 +94,13 @@ const ThankYouPage = () => {
           className="mx-auto my-4"
         />
 
-        <div className="mt-6 text-sm text-gray-600">
-          <p>{receiptData.address}</p>
-          <p>{receiptData.businessPhone}</p>
-          <p>{receiptData.email}</p>
+        {/* Footer Section with spacing and word wrapping */}
+        <div className="mt-6 text-sm text-gray-600 break-words space-y-1">
+          {receiptData.address && <p>{receiptData.address}</p>}
+          {receiptData.businessPhone && <p>{receiptData.businessPhone}</p>}
+          {receiptData.email && <p>{receiptData.email}</p>}
         </div>
+
       </div>
 
       <div className="flex gap-4 mt-6">
