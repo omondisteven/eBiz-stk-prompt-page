@@ -175,9 +175,6 @@ const HomeUI = () => {
       !phoneNumber.trim() ||
       !data.PaybillNumber?.trim() ||
       !data.AccountNumber?.trim() ||
-      !data.Email?.trim() ||
-      !data.Address?.trim() ||
-      !data.businessPhone?.trim() ||
       !amount ||
       isNaN(Number(amount)) || Number(amount) <= 0
     ) {
