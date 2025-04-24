@@ -157,19 +157,19 @@ const ThankYouPage = () => {
       ) : (
         <div
           ref={contactRef}
-          className="bg-white p-6 rounded-lg border-4 border-[#2f363d] shadow-md w-full max-w-md"
+          className="bg-white p-6 rounded-lg border-4 border-[#2f363d] shadow-md w-full max-w-md relative" // Added relative positioning
         >
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Contact Information</h2>
-            <Button 
+          {/* New close button positioned above the heading */}
+          <div className="flex justify-end mb-1">
+            <button 
               onClick={() => setShowContact(false)}
-              variant="ghost"
-              size="sm"
-              className="p-2 hover:bg-gray-100"
+              className="text-sm text-gray-500 hover:text-gray-700 hover:underline"
             >
-              <X className="w-5 h-5" />
-            </Button>
+              Close
+            </button>
           </div>
+
+          <h2 className="text-xl font-bold mb-4">Contact Information</h2>
 
           <div className="flex justify-center mb-4 w-full p-4">
             <div className="w-full">
@@ -186,7 +186,6 @@ const ThankYouPage = () => {
               />
             </div>
           </div>
-
           <hr className="border-t border-gray-300 my-2" />
 
           <div className="space-y-2">
@@ -320,31 +319,36 @@ const ThankYouPage = () => {
         </div>
       )}
 
-      <div className="flex gap-4 mt-6">
+<div className="flex justify-between w-full max-w-md mt-6">
+        {/* Left-aligned Contact Us button with label */}
         {!showContact && (
-          <>
-            <Button
-              onClick={() => setShowContact(true)}
-              className="bg-purple-600 text-white hover:bg-purple-700 px-4 py-2 rounded flex items-center gap-2"
-            >
-              <Contact className="w-4 h-4" />
-              Contact Us
-            </Button>
+          <Button
+            onClick={() => setShowContact(true)}
+            className="bg-purple-600 text-white hover:bg-purple-700 px-4 py-2 rounded flex items-center gap-2"
+          >
+            <Contact className="w-4 h-4" />
+            Contact Us
+          </Button>
+        )}
+
+        {/* Right-aligned Download and Share buttons (icon only) */}
+        {!showContact && (
+          <div className="flex gap-2">
             <Button
               onClick={handleDownload}
-              className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded flex items-center gap-2"
+              className="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded"
+              title="Download"
             >
               <FileDown className="w-4 h-4" />
-              Download
             </Button>
             <Button
               onClick={handleShare}
-              className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded flex items-center gap-2"
+              className="bg-green-600 text-white hover:bg-green-700 p-2 rounded"
+              title="Share"
             >
               <Share className="w-4 h-4" />
-              Share
             </Button>
-          </>
+          </div>
         )}
       </div>
     </div>
