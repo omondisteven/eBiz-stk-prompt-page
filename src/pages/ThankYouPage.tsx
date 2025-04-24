@@ -96,9 +96,9 @@ const ThankYouPage = () => {
 
         {/* Footer Section with spacing and word wrapping */}
         <div className="mt-6 text-sm text-gray-600 break-words space-y-1">
-          {receiptData.address && <p>{receiptData.address}</p>}
+          {receiptData.businessAddress && <p>{receiptData.businessAddress}</p>}
           {receiptData.businessPhone && <p>{receiptData.businessPhone}</p>}
-          {receiptData.email && <p>{receiptData.email}</p>}
+          {receiptData.businessEmail && <p>{receiptData.businessEmail}</p>}
         </div>
 
       </div>
