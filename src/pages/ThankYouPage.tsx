@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import QRCode from "react-qr-code";
+// import QRCode from "react-qr-code";
 
 const ThankYouPage = () => {
   const router = useRouter();
@@ -83,7 +83,7 @@ const ThankYouPage = () => {
           KSHS {receiptData.Amount}
         </p>
 
-        <QRCode
+        {/* <QRCode
           value={JSON.stringify({
             receiptNumber,
             name: receiptData.Name,
@@ -92,7 +92,7 @@ const ThankYouPage = () => {
           })}
           size={128}
           className="mx-auto my-4"
-        />
+        /> */}
 
         {/* Footer Section with spacing and word wrapping */}
         <div className="mt-6 text-sm text-gray-600 break-words space-y-1">
