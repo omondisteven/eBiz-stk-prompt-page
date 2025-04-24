@@ -331,23 +331,19 @@ const ThankYouPage = () => {
           </Button>
         )}
 
-        {/* Right-aligned Download and Share buttons (icon only) */}
+        {/* Right-aligned Download and Share icons */}
         {!showContact && (
-          <div className="flex gap-2">
-            <Button
+          <div className="flex items-center gap-4">
+            <Download 
               onClick={handleDownload}
-              className="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded"
-              title="Download"
-            >
-              <FileDown className="w-4 h-4" />
-            </Button>
-            <Button
+              className="w-5 h-5 text-blue-600 cursor-pointer hover:text-blue-700 hover:scale-110 transition-all"
+              name="Download Receipt"
+            />
+            <Share 
               onClick={handleShare}
-              className="bg-green-600 text-white hover:bg-green-700 p-2 rounded"
-              title="Share"
-            >
-              <Share className="w-4 h-4" />
-            </Button>
+              className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700 hover:scale-110 transition-all"
+              name="Share Receipt"
+            />
           </div>
         )}
       </div>
