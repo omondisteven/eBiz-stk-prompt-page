@@ -5,7 +5,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import QRCode from "react-qr-code";
 import {
-  Mail, Phone, Globe, MapPin, Share2, Download, Copy, X
+  Mail, Phone, Globe, MapPin, Share2, Download, Copy, X, Contact, FileDown, Share
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { toPng } from "html-to-image";
@@ -322,25 +322,30 @@ const ThankYouPage = () => {
 
       <div className="flex gap-4 mt-6">
         {!showContact && (
-          <Button
-            onClick={() => setShowContact(true)}
-            className="bg-purple-600 text-white hover:bg-purple-700 px-4 py-2 rounded"
-          >
-            Contact Us
-          </Button>
+          <>
+            <Button
+              onClick={() => setShowContact(true)}
+              className="bg-purple-600 text-white hover:bg-purple-700 px-4 py-2 rounded flex items-center gap-2"
+            >
+              <Contact className="w-4 h-4" />
+              Contact Us
+            </Button>
+            <Button
+              onClick={handleDownload}
+              className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded flex items-center gap-2"
+            >
+              <FileDown className="w-4 h-4" />
+              Download
+            </Button>
+            <Button
+              onClick={handleShare}
+              className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded flex items-center gap-2"
+            >
+              <Share className="w-4 h-4" />
+              Share
+            </Button>
+          </>
         )}
-        <Button
-          onClick={handleDownload}
-          className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
-        >
-          Download
-        </Button>
-        <Button
-          onClick={handleShare}
-          className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded"
-        >
-          Share
-        </Button>
       </div>
     </div>
   );
