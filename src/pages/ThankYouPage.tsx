@@ -4,13 +4,21 @@ import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import QRCode from "react-qr-code";
+import {
+  Mail, Phone, Globe, MapPin, Share2, Download, Copy, X
+} from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
+import { toPng } from "html-to-image";
+import { saveAs } from "file-saver";
 
 const ThankYouPage = () => {
   const router = useRouter();
   const receiptRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLDivElement>(null);
   const [receiptData, setReceiptData] = useState<any>({});
   const [receiptNumber, setReceiptNumber] = useState("");
   const [timestamp, setTimestamp] = useState("");
+  const [showContact, setShowContact] = useState(false);
 
   useEffect(() => {
     if (router.query.data) {
@@ -34,7 +42,7 @@ const ThankYouPage = () => {
   }, [router.query]);
 
   const handleDownload = async () => {
-    const input = receiptRef.current;
+    const input = showContact ? contactRef.current : receiptRef.current;
     if (!input) return;
 
     const canvas = await html2canvas(input);
@@ -45,68 +53,282 @@ const ThankYouPage = () => {
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
     pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`${receiptNumber}.pdf`);
+    pdf.save(`${showContact ? 'contact' : receiptNumber}.pdf`);
   };
 
   const handleShare = async () => {
-    if (navigator.share && receiptRef.current) {
-      const canvas = await html2canvas(receiptRef.current);
+    const input = showContact ? contactRef.current : receiptRef.current;
+    if (navigator.share && input) {
+      const canvas = await html2canvas(input);
       canvas.toBlob(async (blob) => {
-        const file = new File([blob!], `${receiptNumber}.png`, { type: "image/png" });
+        const file = new File([blob!], `${showContact ? 'contact' : receiptNumber}.png`, { type: "image/png" });
         await navigator.share({
           files: [file],
-          title: "Your Receipt",
-          text: "Here is your transaction receipt.",
+          title: showContact ? "Contact Information" : "Your Receipt",
+          text: showContact ? "Here is the contact information." : "Here is your transaction receipt.",
         });
       });
     } else {
-      alert("Sharing not supported. Please download the receipt instead.");
+      alert("Sharing not supported. Please download instead.");
+    }
+  };
+
+  const downloadContactQR = () => {
+    if (contactRef.current) {
+      toPng(contactRef.current).then(dataUrl => {
+        saveAs(dataUrl, `contact.png`);
+      });
+    }
+  };
+
+  const copyLink = () => {
+    const link = window.location.href;
+    navigator.clipboard.writeText(link)
+      .then(() => alert("Link copied to clipboard!"))
+      .catch(() => alert("Failed to copy link"));
+  };
+
+  const shareContact = async () => {
+    if ('share' in navigator && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          title: `${receiptData.businessName}'s Contact Card`,
+          text: `Here's ${receiptData.businessName}'s contact information`,
+          url: window.location.href,
+        });
+      } catch (err) {
+        console.log('Error sharing', err);
+      }
+    } else {
+      copyLink();
+    }
+  };
+
+  const handleWhatsAppClick = (phoneNumber: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      window.location.href = `whatsapp://send?phone=${phoneNumber}`;
+    } else {
+      window.open(`https://web.whatsapp.com/send?phone=${phoneNumber}`, '_blank');
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-      <div
-        ref={receiptRef}
-        className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto"
-      >
-        <h2 className="text-lg font-semibold mt-2 mb-1">
-          {receiptData.businessName || "Merchant Name"}
-        </h2>
-        <p className="text-sm text-gray-500 mb-1">Receipt No: {receiptNumber}</p>
-        <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
-        
-        <h3 className="text-2xl font-bold font-underline mb-4">YOUR RECEIPT</h3>
-        <p>{receiptData.TransactionType}</p>
+      {!showContact ? (
+        <div
+          ref={receiptRef}
+          className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto"
+        >
+          <h2 className="text-lg font-semibold mt-2 mb-1">
+            {receiptData.businessName || "Merchant Name"}
+          </h2>
+          <p className="text-sm text-gray-500 mb-1">Receipt No: {receiptNumber}</p>
+          <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
+          
+          <h3 className="text-2xl font-bold font-underline mb-4">YOUR RECEIPT</h3>
+          <p>{receiptData.TransactionType}</p>
 
-        <p className="text-3xl text-green-700 font-bold my-4">
-          KSHS {receiptData.Amount}
-        </p>
+          <p className="text-3xl text-green-700 font-bold my-4">
+            KSHS {receiptData.Amount}
+          </p>
 
-        <QRCode
-          value={JSON.stringify({
-            receiptNumber,
-            businessName: receiptData.businessName,
-            amount: receiptData.Amount,
-            timestamp,
-          })}
-          size={128}
-          className="mx-auto my-4"
-        />
+          <QRCode
+            value={JSON.stringify({
+              receiptNumber,
+              businessName: receiptData.businessName,
+              amount: receiptData.Amount,
+              timestamp,
+            })}
+            size={128}
+            className="mx-auto my-4"
+          />
 
-        {/* Divider added here */}
-        <hr className="my-4 border-gray-300" />
+          <hr className="my-4 border-gray-300" />
 
-        {/* Footer Section with spacing, word wrapping and captions */}
-        <div className="mt-2 text-sm text-gray-600 break-words space-y-1">
-          {receiptData.businessAddress && <p>{receiptData.businessAddress}</p>}
-          {receiptData.businessPhone && <p>Phone: {receiptData.businessPhone}</p>}
-          {receiptData.businessEmail && <p>Email: {receiptData.businessEmail}</p>}
+          <div className="mt-2 text-sm text-gray-600 break-words space-y-1">
+            {receiptData.businessAddress && <p>{receiptData.businessAddress}</p>}
+            {receiptData.businessPhone && <p>Phone: {receiptData.businessPhone}</p>}
+            {receiptData.businessEmail && <p>Email: {receiptData.businessEmail}</p>}
+          </div>
         </div>
+      ) : (
+        <div
+          ref={contactRef}
+          className="bg-white p-6 rounded-lg border-4 border-[#2f363d] shadow-md w-full max-w-md"
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Contact Information</h2>
+            <Button 
+              onClick={() => setShowContact(false)}
+              variant="ghost"
+              size="sm"
+              className="p-2 hover:bg-gray-100"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
 
-      </div>
+          <div className="flex justify-center mb-4 w-full p-4">
+            <div className="w-full">
+              <QRCode 
+                value={JSON.stringify({
+                  name: receiptData.businessName,
+                  email: receiptData.businessEmail,
+                  phone: receiptData.businessPhone,
+                  address: receiptData.businessAddress,
+                })} 
+                size={256}
+                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                bgColor="transparent"
+              />
+            </div>
+          </div>
+
+          <hr className="border-t border-gray-300 my-2" />
+
+          <div className="space-y-2">
+            <div className="text-center mb-4">
+              <h1 className="text-2xl font-bold text-[#2f363d] hover:text-[#170370] transition-colors">
+                {receiptData.businessName}
+              </h1>
+            </div>
+
+            {/* Phone */}
+            {receiptData.businessPhone && (
+              <>
+                <div className="h-[1px] bg-gray-200 mx-2 my-1"></div>
+                <div className="group pl-2 border-l-4 border-gray-500 hover:border-l-8 hover:border-[#170370] hover:bg-[rgba(23,3,112,0.05)] transition-all">
+                  <div className="text-xs uppercase font-bold text-gray-500 group-hover:text-[#170370] transition-colors pl-2">
+                    Telephone
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="group-hover:text-[#170370] transition-colors pl-2 py-1">
+                      {receiptData.businessPhone}
+                    </p>
+                    <a href={`tel:${receiptData.businessPhone}`} className="p-2 hover:scale-125 transition-transform">
+                      <Phone className="w-5 h-5" />
+                    </a>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Email */}
+            {receiptData.businessEmail && (
+              <>
+                <div className="h-[1px] bg-gray-200 mx-2 my-1 group-hover:bg-[rgba(23,3,112,0.2)]"></div>
+                <div className="group pl-2 border-l-4 border-gray-500 hover:border-l-8 hover:border-[#170370] hover:bg-[rgba(23,3,112,0.05)] transition-all">
+                  <div className="text-xs uppercase font-bold text-gray-500 group-hover:text-[#170370] transition-colors pl-2">
+                    Email
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="group-hover:text-[#170370] transition-colors pl-2 py-1">
+                      {receiptData.businessEmail}
+                    </p>
+                    <a href={`mailto:${receiptData.businessEmail}`} className="p-2 hover:scale-125 transition-transform">
+                      <Mail className="w-5 h-5" />
+                    </a>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Address */}
+            {receiptData.businessAddress && (
+              <>
+                <div className="h-[1px] bg-gray-200 mx-2 my-1"></div>
+                <div className="group pl-2 border-l-4 border-gray-500 hover:border-l-8 hover:border-[#170370] hover:bg-[rgba(23,3,112,0.05)] transition-all">
+                  <div className="text-xs uppercase font-bold text-gray-500 group-hover:text-[#170370] transition-colors pl-2">
+                    Address
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="group-hover:text-[#170370] transition-colors pl-2 py-1">
+                      {receiptData.businessAddress}
+                    </p>
+                    <a 
+                      href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(receiptData.businessAddress)}`} 
+                      target="_blank" 
+                      className="p-2 hover:scale-125 transition-transform"
+                    >
+                      <MapPin className="w-5 h-5" />
+                    </a>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* WhatsApp */}
+            {receiptData.businessPhone && (
+              <>
+                <div className="h-[1px] bg-gray-200 mx-2 my-1"></div>
+                <div className="group pl-2 border-l-4 border-gray-500 hover:border-l-8 hover:border-[#170370] hover:bg-[rgba(23,3,112,0.05)] transition-all">
+                  <div className="text-xs uppercase font-bold text-gray-500 group-hover:text-[#170370] transition-colors pl-2">
+                    WhatsApp
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="group-hover:text-[#170370] transition-colors pl-2 py-1">
+                      {receiptData.businessPhone}
+                    </p>
+                    <a 
+                      href="#" 
+                      onClick={(e) => handleWhatsAppClick(receiptData.businessPhone, e)}
+                      className="p-2 hover:scale-125 transition-transform"
+                    >
+                      <FaWhatsapp className="w-4 h-4 mr-1 text-green-500" />
+                    </a>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <hr className="border-t border-gray-300 my-4" />
+
+          <div className="flex justify-end gap-2">
+            {'share' in navigator && typeof navigator.share === 'function' ? (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={shareContact}
+                className="p-2 hover:bg-gray-100"
+              >
+                <Share2 className="w-4 h-4" />
+              </Button>
+            ) : (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={copyLink}
+                className="p-2 hover:bg-gray-100"
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            )}
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={downloadContactQR}
+              className="p-2 hover:bg-gray-100"
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-4 mt-6">
+        {!showContact && (
+          <Button
+            onClick={() => setShowContact(true)}
+            className="bg-purple-600 text-white hover:bg-purple-700 px-4 py-2 rounded"
+          >
+            Contact Us
+          </Button>
+        )}
         <Button
           onClick={handleDownload}
           className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
