@@ -343,7 +343,7 @@ const ThankYouPage = () => {
               className="w-5 h-5 text-blue-600 cursor-pointer hover:text-blue-700 hover:scale-110 transition-all"
               name="Download Receipt"
             />
-            <Share 
+            <Share2 
               onClick={handleShare}
               className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700 hover:scale-110 transition-all"
               name="Share Receipt"
