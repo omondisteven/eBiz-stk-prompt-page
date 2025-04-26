@@ -64,8 +64,8 @@ const ThankYouPage = () => {
         const file = new File([blob!], `${showContact ? 'contact' : receiptNumber}.png`, { type: "image/png" });
         await navigator.share({
           files: [file],
-          title: showContact ? "Contact us directly!" : "Your Receipt",
-          text: showContact ? "Here is the contact us directly." : "Here is your transaction receipt.",
+          title: showContact ? "Contact information!" : "Your Receipt",
+          text: showContact ? "Here is the contact information." : "Here is your transaction receipt.",
         });
       });
     } else {
@@ -173,7 +173,7 @@ const ThankYouPage = () => {
             </button>
           </div>
 
-          <h2 className="text-xl font-bold mb-4">Contact Information</h2>
+          <h2 className="text-xl font-bold mb-4">Contact us directly</h2>
 
           <div className="flex justify-center mb-4 w-full p-4">
             <div className="w-full">
@@ -194,7 +194,8 @@ const ThankYouPage = () => {
 
           <div className="space-y-2">
             <div className="text-center mb-4">
-              <h1 className="text-2xl font-bold text-[#2f363d] hover:text-[#170370] transition-colors">
+              <h1 className="text-2xl font-bold text-[#2f363d] te hover:text-[#170370] transition-colors"
+              style={{color: "#3CB371"}}>
                 {receiptData.businessName}
               </h1>
             </div>
