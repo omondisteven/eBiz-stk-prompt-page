@@ -64,8 +64,8 @@ const ThankYouPage = () => {
         const file = new File([blob!], `${showContact ? 'contact' : receiptNumber}.png`, { type: "image/png" });
         await navigator.share({
           files: [file],
-          title: showContact ? "Contact Information" : "Your Receipt",
-          text: showContact ? "Here is the contact information." : "Here is your transaction receipt.",
+          title: showContact ? "Contact us directly!" : "Your Receipt",
+          text: showContact ? "Here is the contact us directly." : "Here is your transaction receipt.",
         });
       });
     } else {
