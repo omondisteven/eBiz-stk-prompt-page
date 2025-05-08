@@ -174,9 +174,9 @@ const ThankYouPage = () => {
       ) : (
         <div
           ref={contactRef}
-          className="bg-white p-6 rounded-lg border-4 border-[#2f363d] shadow-md w-full max-w-md mx-auto my-4 overflow-y-auto max-h-[90vh]" 
-          style={{ position: 'relative', zIndex: 50 }}
+          className="bg-white p-6 rounded-lg border-4 border-[#2f363d] shadow-md w-full max-w-md relative overflow-y-auto max-h-[90vh]"
          >
+
           {/* Close button at top right */}
           <div className="flex justify-end mb-2">
             <button 
