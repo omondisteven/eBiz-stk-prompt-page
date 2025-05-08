@@ -150,19 +150,7 @@ const ThankYouPage = () => {
           size={128}
           className="mx-auto my-4"
         />
-        {/* Center-aligned Download and Share icons */}
-        <div className="flex justify-center gap-4 mb-4">
-          <Download 
-            onClick={handleDownload}
-            className="w-5 h-5 text-blue-600 cursor-pointer hover:text-blue-700 hover:scale-110 transition-all"
-            name="Download Receipt"
-          />
-          <Share2 
-            onClick={handleShare}
-            className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700 hover:scale-110 transition-all"
-            name="Share Receipt"
-          />
-        </div>
+      
         <hr className="my-4 border-gray-300" />
       
         <div className="mt-2 text-sm text-gray-600 break-words space-y-1">
@@ -337,19 +325,34 @@ const ThankYouPage = () => {
         </div>
       )}
 
-      {!showContact && (
-        <div className="w-full max-w-md mt-6">
-        <Button
-          onClick={() => setShowContact(true)}
-          className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
-        >
-          <Contact className="w-6 h-6" />
-          Contact Us Now!
-        </Button>
-      </div>
-      
-      )}
+<div className="flex justify-between w-full max-w-md mt-6">
+        {/* Left-aligned Contact Us button with label */}
+        {!showContact && (
+          <Button
+            onClick={() => setShowContact(true)}
+            className="bg-purple-600 text-white hover:bg-purple-700 px-4 py-2 rounded flex items-center gap-2"
+          >
+            <Contact className="w-4 h-4" />
+            Contact Us
+          </Button>
+        )}
 
+        {/* Right-aligned Download and Share icons */}
+        {!showContact && (
+          <div className="flex items-center gap-4">
+            <Download 
+              onClick={handleDownload}
+              className="w-5 h-5 text-blue-600 cursor-pointer hover:text-blue-700 hover:scale-110 transition-all"
+              name="Download Receipt"
+            />
+            <Share2 
+              onClick={handleShare}
+              className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700 hover:scale-110 transition-all"
+              name="Share Receipt"
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
