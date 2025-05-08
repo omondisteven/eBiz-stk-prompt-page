@@ -343,7 +343,7 @@ const ThankYouPage = () => {
             onClick={() => setShowContact(true)}
             className="w-full bg-green-900 text-white hover:bg-purple-700 px-4 py-2 rounded flex items-center justify-center gap-2"
           >
-            <Contact className="text-bold w-4 h-4" />
+            <Contact className="font-bold w-4 h-4" />
             Contact Us
           </Button>
         </div>
