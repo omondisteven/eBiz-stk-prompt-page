@@ -150,7 +150,19 @@ const ThankYouPage = () => {
           size={128}
           className="mx-auto my-4"
         />
-      
+        {/* Center-aligned Download and Share icons */}
+        <div className="flex justify-center gap-4 mb-4">
+          <Download 
+            onClick={handleDownload}
+            className="w-5 h-5 text-blue-600 cursor-pointer hover:text-blue-700 hover:scale-110 transition-all"
+            name="Download Receipt"
+          />
+          <Share2 
+            onClick={handleShare}
+            className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700 hover:scale-110 transition-all"
+            name="Share Receipt"
+          />
+        </div>
         <hr className="my-4 border-gray-300" />
       
         <div className="mt-2 text-sm text-gray-600 break-words space-y-1">
@@ -162,197 +174,140 @@ const ThankYouPage = () => {
       ) : (
         <div
           ref={contactRef}
-          className="bg-white p-6 rounded-lg border-4 border-[#2f363d] shadow-md w-full max-w-md relative" // Added relative positioning
+          className="bg-white p-6 rounded-lg border-4 border-[#2f363d] shadow-md w-full max-w-md mx-auto my-4 overflow-y-auto max-h-[90vh]" 
+          style={{ position: 'relative', zIndex: 50 }}
          >
-          {/* New close button positioned above the heading */}
-          <div className="flex justify-end mb-1">
+          {/* Close button at top right */}
+          <div className="flex justify-end mb-2">
             <button 
               onClick={() => setShowContact(false)}
-              className="text-sm text-gray-500 hover:text-gray-700 hover:underline"
+              className="p-1 text-gray-500 hover:text-gray-700"
             >
-              Close
+              <X className="w-5 h-5" />
             </button>
           </div>
 
-          <h2 className="text-xl font-bold mb-4">Contact us directly</h2>
+          <h2 className="text-xl font-bold mb-4 text-center">Contact us directly</h2>
 
-          <div className="flex justify-center mb-4 w-full p-4">
-            <div className="w-full">
-              <QRCode 
-                value={JSON.stringify({
-                  name: receiptData.businessName,
-                  email: receiptData.businessEmail,
-                  phone: receiptData.businessPhone,
-                  address: receiptData.businessAddress,
-                })} 
-                size={256}
-                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                bgColor="transparent"
-              />
-            </div>
+          <div className="flex justify-center mb-4 w-full p-4 bg-white">
+            <QRCode 
+              value={JSON.stringify({
+                name: receiptData.businessName,
+                email: receiptData.businessEmail,
+                phone: receiptData.businessPhone,
+                address: receiptData.businessAddress,
+              })} 
+              size={200}
+              style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+              bgColor="transparent"
+            />
           </div>
-          <hr className="border-t border-gray-300 my-2" />
 
-          <div className="space-y-2">
-            <div className="text-center mb-4">
-              <h1 className="text-2xl font-bold text-[#2f363d] te hover:text-[#170370] transition-colors"
-              style={{color: "#3CB371"}}>
+          <div className="space-y-3">
+            <div className="text-center mb-2">
+              <h1 className="text-2xl font-bold" style={{color: "#3CB371"}}>
                 {receiptData.businessName}
               </h1>
             </div>
 
             {/* Phone */}
             {receiptData.businessPhone && (
-              <>
-                <div className="h-[1px] bg-gray-200 mx-2 my-1"></div>
-                <div className="group pl-2 border-l-4 border-gray-500 hover:border-l-8 hover:border-[#170370] hover:bg-[rgba(23,3,112,0.05)] transition-all">
-                  <div className="text-xs uppercase font-bold text-gray-500 group-hover:text-[#170370] transition-colors pl-2">
-                    Telephone
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="group-hover:text-[#170370] transition-colors pl-2 py-1">
-                      {receiptData.businessPhone}
-                    </p>
-                    <a href={`tel:${receiptData.businessPhone}`} className="p-2 hover:scale-125 transition-transform">
-                      <Phone className="w-5 h-5" />
-                    </a>
-                  </div>
+              <div className="flex items-center p-2 border rounded hover:bg-gray-50">
+                <Phone className="w-5 h-5 mr-3 text-gray-500" />
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500">Phone</p>
+                  <p>{receiptData.businessPhone}</p>
                 </div>
-              </>
+                <a href={`tel:${receiptData.businessPhone}`} className="p-1 hover:bg-gray-100 rounded">
+                  <Phone className="w-5 h-5 text-blue-500" />
+                </a>
+              </div>
             )}
 
             {/* Email */}
             {receiptData.businessEmail && (
-              <>
-                <div className="h-[1px] bg-gray-200 mx-2 my-1 group-hover:bg-[rgba(23,3,112,0.2)]"></div>
-                <div className="group pl-2 border-l-4 border-gray-500 hover:border-l-8 hover:border-[#170370] hover:bg-[rgba(23,3,112,0.05)] transition-all">
-                  <div className="text-xs uppercase font-bold text-gray-500 group-hover:text-[#170370] transition-colors pl-2">
-                    Email
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="group-hover:text-[#170370] transition-colors pl-2 py-1">
-                      {receiptData.businessEmail}
-                    </p>
-                    <a href={`mailto:${receiptData.businessEmail}`} className="p-2 hover:scale-125 transition-transform">
-                      <Mail className="w-5 h-5" />
-                    </a>
-                  </div>
+              <div className="flex items-center p-2 border rounded hover:bg-gray-50">
+                <Mail className="w-5 h-5 mr-3 text-gray-500" />
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p>{receiptData.businessEmail}</p>
                 </div>
-              </>
+                <a href={`mailto:${receiptData.businessEmail}`} className="p-1 hover:bg-gray-100 rounded">
+                  <Mail className="w-5 h-5 text-blue-500" />
+                </a>
+              </div>
             )}
 
             {/* Address */}
             {receiptData.businessAddress && (
-              <>
-                <div className="h-[1px] bg-gray-200 mx-2 my-1"></div>
-                <div className="group pl-2 border-l-4 border-gray-500 hover:border-l-8 hover:border-[#170370] hover:bg-[rgba(23,3,112,0.05)] transition-all">
-                  <div className="text-xs uppercase font-bold text-gray-500 group-hover:text-[#170370] transition-colors pl-2">
-                    Address
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="group-hover:text-[#170370] transition-colors pl-2 py-1">
-                      {receiptData.businessAddress}
-                    </p>
-                    <a 
-                      href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(receiptData.businessAddress)}`} 
-                      target="_blank" 
-                      className="p-2 hover:scale-125 transition-transform"
-                    >
-                      <MapPin className="w-5 h-5" />
-                    </a>
-                  </div>
+              <div className="flex items-center p-2 border rounded hover:bg-gray-50">
+                <MapPin className="w-5 h-5 mr-3 text-gray-500" />
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500">Address</p>
+                  <p>{receiptData.businessAddress}</p>
                 </div>
-              </>
+                <a 
+                  href={`https://maps.google.com?q=${encodeURIComponent(receiptData.businessAddress)}`} 
+                  target="_blank" 
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  <MapPin className="w-5 h-5 text-blue-500" />
+                </a>
+              </div>
             )}
 
             {/* WhatsApp */}
             {receiptData.businessPhone && (
-              <>
-                <div className="h-[1px] bg-gray-200 mx-2 my-1"></div>
-                <div className="group pl-2 border-l-4 border-gray-500 hover:border-l-8 hover:border-[#170370] hover:bg-[rgba(23,3,112,0.05)] transition-all">
-                  <div className="text-xs uppercase font-bold text-gray-500 group-hover:text-[#170370] transition-colors pl-2">
-                    WhatsApp
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="group-hover:text-[#170370] transition-colors pl-2 py-1">
-                      {receiptData.businessPhone}
-                    </p>
-                    <a 
-                      href="#" 
-                      onClick={(e) => handleWhatsAppClick(receiptData.businessPhone, e)}
-                      className="p-2 hover:scale-125 transition-transform"
-                    >
-                      <FaWhatsapp className="w-4 h-4 mr-1 text-green-500" />
-                    </a>
-                  </div>
+              <div className="flex items-center p-2 border rounded hover:bg-gray-50">
+                <FaWhatsapp className="w-5 h-5 mr-3 text-green-500" />
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500">WhatsApp</p>
+                  <p>{receiptData.businessPhone}</p>
                 </div>
-              </>
+                <a 
+                  href="#" 
+                  onClick={(e) => handleWhatsAppClick(receiptData.businessPhone, e)}
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  <FaWhatsapp className="w-5 h-5 text-green-500" />
+                </a>
+              </div>
             )}
           </div>
 
-          <hr className="border-t border-gray-300 my-4" />
-
-          <div className="flex justify-end gap-2">
-            {'share' in navigator && typeof navigator.share === 'function' ? (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={shareContact}
-                className="p-2 hover:bg-gray-100"
-              >
-                <Share2 className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={copyLink}
-                className="p-2 hover:bg-gray-100"
-              >
-                <Copy className="w-4 h-4" />
-              </Button>
-            )}
-            
+          <div className="flex justify-center gap-4 mt-6">
             <Button 
-              variant="ghost" 
-              size="sm" 
+              variant="outline" 
               onClick={downloadContactQR}
-              className="p-2 hover:bg-gray-100"
+              className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
+              Download
+            </Button>
+            <Button 
+              onClick={shareContact}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+            >
+              <Share className="w-4 h-4" />
+              Share
             </Button>
           </div>
         </div>
       )}
 
-<div className="flex justify-between w-full max-w-md mt-6">
-        {/* Left-aligned Contact Us button with label */}
-        {!showContact && (
-          <Button
-            onClick={() => setShowContact(true)}
-            className="bg-purple-600 text-white hover:bg-purple-700 px-4 py-2 rounded flex items-center gap-2"
-          >
-            <Contact className="w-4 h-4" />
-            Contact Us
-          </Button>
-        )}
-
-        {/* Right-aligned Download and Share icons */}
-        {!showContact && (
-          <div className="flex items-center gap-4">
-            <Download 
-              onClick={handleDownload}
-              className="w-5 h-5 text-blue-600 cursor-pointer hover:text-blue-700 hover:scale-110 transition-all"
-              name="Download Receipt"
-            />
-            <Share2 
-              onClick={handleShare}
-              className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700 hover:scale-110 transition-all"
-              name="Share Receipt"
-            />
-          </div>
-        )}
+      {!showContact && (
+        <div className="w-full max-w-md mt-6">
+        <Button
+          onClick={() => setShowContact(true)}
+          className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
+        >
+          <Contact className="w-6 h-6" />
+          Contact Us Now!
+        </Button>
       </div>
+      
+      )}
+
     </div>
   );
 };
