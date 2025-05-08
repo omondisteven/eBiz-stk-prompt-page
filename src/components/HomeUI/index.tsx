@@ -550,6 +550,7 @@ const HomeUI = () => {
             </div>
 
             {/* Phone Number Input */}
+            {/* Update the phone number input field in the transaction details section */}
             {transactionType && transactionType !== "Contact" && (
               <div className="mt-4">
                 <label className="block text-sm font-bold">Payers Phone Number:</label>
@@ -558,7 +559,20 @@ const HomeUI = () => {
                   onChange={handlePhoneNumberChange}
                   onBlur={handlePhoneNumberBlur}
                   placeholder="Enter Phone Number"
+                  type="tel" // Change to tel input type
+                  inputMode="tel" // Ensure numeric keyboard on mobile
+                  pattern="[0-9\- ]*" // Only allow numbers, dashes and spaces
                   className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm"
+                  onKeyDown={(e) => {
+                    // Only allow numbers, dashes, spaces, and navigation keys
+                    const allowedKeys = [
+                      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                      '-', ' ', 'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'
+                    ];
+                    if (!allowedKeys.includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                 />
                 {warning && <p className="text-yellow-600 text-sm mt-1">{warning}</p>}
                 {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
@@ -637,8 +651,6 @@ const HomeUI = () => {
             </Button>
           </div>
         </div>
-
-
         {/* Footer Section */}
         <div className="py-4 text-center text-sm text-gray-500">
           Powered by{' '}
