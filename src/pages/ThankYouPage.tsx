@@ -339,14 +339,15 @@ const ThankYouPage = () => {
 
       {!showContact && (
         <div className="w-full max-w-md mt-6">
-          <Button
-            onClick={() => setShowContact(true)}
-            className="w-full bg-green-900 text-white hover:bg-purple-700 px-4 py-2 rounded flex items-center justify-center gap-2"
-          >
-            <Contact className="font-bold w-4 h-4" />
-            Contact Us
-          </Button>
-        </div>
+        <Button
+          onClick={() => setShowContact(true)}
+          className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
+        >
+          <Contact className="w-6 h-6" />
+          Contact Us
+        </Button>
+      </div>
+      
       )}
 
     </div>
