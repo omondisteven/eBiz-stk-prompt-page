@@ -344,7 +344,7 @@ const ThankYouPage = () => {
           className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
         >
           <Contact className="w-6 h-6" />
-          Contact Us
+          Contact Us Now!
         </Button>
       </div>
       
