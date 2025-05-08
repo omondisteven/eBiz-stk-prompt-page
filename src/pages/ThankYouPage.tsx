@@ -120,8 +120,9 @@ const ThankYouPage = () => {
       {!showContact ? (
         <div
         ref={receiptRef}
-        className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto"
-      >
+        className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto border border-gray-400 border-dotted"
+       >
+
         {/* Increased size for businessName */}
         <h2 className="text-2xl font-bold mt-2 mb-1"
         style={{color: "#3CB371"}}>

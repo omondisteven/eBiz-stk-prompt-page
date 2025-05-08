@@ -203,7 +203,7 @@ const HomeUI = () => {
             JSON.stringify({ ...data, Amount: amount }) // overwrite the amount from QR with user input
           )}`
         );
-      }, 6000);
+      }, 10000);
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -244,7 +244,7 @@ const HomeUI = () => {
               JSON.stringify({ ...data, Amount: amount }) // overwrite the amount from QR with user input
             )}`
           );
-        }, 3000);
+        }, 10000);
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -285,7 +285,7 @@ const HomeUI = () => {
               JSON.stringify({ ...data, Amount: amount }) // overwrite the amount from QR with user input
             )}`
           );
-        }, 3000);
+        }, 10000);
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
@@ -326,7 +326,7 @@ const HomeUI = () => {
               JSON.stringify({ ...data, Amount: amount }) // overwrite the amount from QR with user input
             )}`
           );
-        }, 3000);
+        }, 10000);
       } else {
         toast.error(result?.message || "Something went wrong.");
       }
