@@ -385,7 +385,6 @@ const HomeUI = () => {
             )}
           </h2>
         </div>
-
         {/* Main Content */}
         <div className="flex-1 p-4 overflow-auto mx-2 sm:mx-0">
           <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.15)] p-4 mb-4 border border-gray-200">
@@ -394,7 +393,7 @@ const HomeUI = () => {
               {transactionType === 'Contact' ? (
                 <>You are viewing the Contact Details for <strong>{data.FirstName}</strong>.</>
               ) : (
-                <>You are about to perform a <strong style={{color: "#3CB371"}}>{transactionType}</strong> transaction to {data.businessName ? <strong style={{color: "#3CB371"}}>{data.businessName}</strong> : <strong style={{color: "#3CB371"}}>BLTA SOLUTIONS LTD</strong>}.</>
+                <>You are about to perform a <strong style={{color: "#3CB371"}}>{transactionType}</strong> transaction to {data.businessName ? <strong style={{color: "#3CB371"}}>{data.businessName}</strong> : <strong style={{color: "#3CB371"}}>BLTA SOLUTIONS LTD</strong>} of {data.businessAddress}.</>
               )}
             </p>
             </div>            
