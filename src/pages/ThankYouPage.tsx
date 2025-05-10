@@ -125,22 +125,19 @@ const ThankYouPage = () => {
 
         {/* Increased size for businessName */}
         <h2 className="text-2xl font-bold mt-2 mb-1"
-        style={{color: "#3CB371"}}>
-          {receiptData.businessName || "Merchant Name"}
+        style={{color: "1c0351"}}>
+          {receiptData.businessName || "BLTA Solutions Limited"}
         </h2>
-        
-        <p className="text-sm text-gray-500 mb-1">Receipt No: {receiptNumber}</p>
-        <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
+        <h4 className="text-2xl font-bold mt-2 mb-1"
+        style={{color: "#8373a5"}}>
+          {receiptData.businessTitle || "SMS | Short Codes | Solutions"}
+        </h4>       
         
         {/* Reduced size for "YOUR RECEIPT" heading */}
-        <h3 className="text-xl font-bold mb-4">YOUR RECEIPT</h3>
-        
-        <p>{receiptData.TransactionType}</p>
-      
+        {/* <h3 className="text-xl font-bold mb-4">YOUR RECEIPT</h3> */}
         <p className="text-3xl text-green-700 font-bold my-4">
           KSHS {receiptData.Amount}
         </p>
-      
         <QRCode
           value={JSON.stringify({
             receiptNumber,
@@ -164,13 +161,20 @@ const ThankYouPage = () => {
             name="Share Receipt"
           />
         </div>
-        <hr className="my-4 border-gray-300" />
-      
-        <div className="mt-2 text-sm text-gray-600 break-words space-y-1">
+        <div className="mt-2 text-sm break-words space-y-1">
           {receiptData.businessAddress && <p>{receiptData.businessAddress}</p>}
-          {receiptData.businessPhone && <p>Phone: {receiptData.businessPhone}</p>}
-          {receiptData.businessEmail && <p>Email: {receiptData.businessEmail}</p>}
+          {receiptData.businessPhone && <p className="font-bold text-green-600">{receiptData.businessPhone}</p>}
+          {receiptData.businessTitle && <p>{receiptData.businessTitle}</p>}
         </div>
+
+        <br />
+        <p>{receiptData.TransactionType}</p>  
+        <p className="text-sm text-gray-500 mb-1">Transaction ID: {receiptNumber}</p>
+        <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
+        {/* <hr className="my-4 border-gray-300" /> */}
+        <br />
+        <h2>{receiptData.businessPromo1}</h2>
+        
       </div>
       ) : (
         <div
@@ -303,7 +307,7 @@ const ThankYouPage = () => {
           className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
         >
           <Contact className="w-6 h-6" />
-          Contact Us Now!
+          <p>{receiptData.businessPromo2}</p>
         </Button>
       </div>
       
