@@ -86,7 +86,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error("Error in STK Push:", error);
       res.status(500).json({ message: 'Internal Server Error' });
     }
-  } else {
+   } else {
     res.status(405).json({ message: 'Method Not Allowed' });
   }
+
 }
