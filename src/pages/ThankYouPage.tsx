@@ -125,10 +125,10 @@ const ThankYouPage = () => {
 
         {/* Increased size for businessName */}
         <h2 className="text-2xl font-bold mt-2 mb-1"
-        style={{color: "1c0351"}}>
+        style={{color: "d9d2e7"}}>
           {receiptData.businessName || "BLTA Solutions Limited"}
         </h2>
-        <h4 className="text-2xl font-bold mt-2 mb-1"
+        <h4 className="text-2xl mt-2 mb-1"
         style={{color: "#8373a5"}}>
           {receiptData.businessTitle || "SMS | Short Codes | Solutions"}
         </h4>       
@@ -164,11 +164,12 @@ const ThankYouPage = () => {
         <div className="mt-2 text-sm break-words space-y-1">
           {receiptData.businessAddress && <p>{receiptData.businessAddress}</p>}
           {receiptData.businessPhone && <p className="font-bold text-green-600">{receiptData.businessPhone}</p>}
-          {receiptData.businessTitle && <p>{receiptData.businessTitle}</p>}
+          <p>{receiptData.businessTitle}</p>
         </div>
 
         <br />
         <p>{receiptData.TransactionType}</p>  
+        <br />
         <p className="text-sm text-gray-500 mb-1">Transaction ID: {receiptNumber}</p>
         <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
         {/* <hr className="my-4 border-gray-300" /> */}
