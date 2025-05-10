@@ -529,66 +529,41 @@ const HomeUI = () => {
           </div>
         </div>
 
-        {/* Action Buttons - Fixed at bottom */}
+          {/* Updated Action Buttons section */}
         <div className="p-4 border-t border-gray-200 bg-white shadow-sm rounded-b-lg mx-2 sm:mx-0 mb-2 sm:mb-0">
           <div className="flex flex-col space-y-2">
-            {transactionType === "PayBill" && (
+            {(transactionType === "PayBill" || 
+              transactionType === "BuyGoods" || 
+              transactionType === "SendMoney" || 
+              transactionType === "WithdrawMoney") && (
               <Button
                 className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"
                 style={{ backgroundColor: "#006400" }}
-                onClick={handlePayBill}
+                onClick={() => {
+                  switch(transactionType) {
+                    case "PayBill":
+                      return handlePayBill();
+                    case "BuyGoods":
+                      return handlePayTill();
+                    case "SendMoney":
+                      return handleSendMoney();
+                    case "WithdrawMoney":
+                      return handleWithdraw();
+                    default:
+                      return;
+                  }
+                }}
                 disabled={isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
-                PAY
-              </Button>            
-
-            )}
-            {isAwaitingPayment && (
-                <div className="text-yellow-600 text-sm mt-2 text-center">
-                  Awaiting MPESA PIN entry... {countdown}s remaining
-                </div>
-              )}
-
-            {transactionType === "BuyGoods" && (
-              <Button
-                className="font-bold w-full bg-green-700 text-white py-3 rounded-md shadow-md"
-                style={{ backgroundColor: "#006400" }}
-                onClick={handlePayTill}
-                disabled={isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
-              >
-                <HiOutlineCreditCard className="mr-2" />
-                PAY
+                {transactionType === "SendMoney" ? "SEND" : 
+                transactionType === "WithdrawMoney" ? "WITHDRAW" : "PAY"}
               </Button>
             )}
             {isAwaitingPayment && (
-                <div className="text-yellow-600 text-sm mt-2 text-center">
-                  Awaiting MPESA PIN entry... {countdown}s remaining
-                </div>
-              )}
-
-            {transactionType === "SendMoney" && (
-              <Button
-                className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"
-                style={{ backgroundColor: "#006400" }}
-                onClick={handleSendMoney}
-                disabled={isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
-              >
-                <HiOutlineCreditCard className="mr-2" />
-                SEND
-              </Button>
-            )}
-
-            {transactionType === "WithdrawMoney" && (
-              <Button
-                className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"
-                style={{ backgroundColor: "#006400" }}
-                onClick={handleWithdraw}
-                disabled={isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
-              >
-                <HiOutlineCreditCard className="mr-2" />
-                WITHDRAW
-              </Button>
+              <div className="text-yellow-600 text-sm mt-2 text-center">
+                Awaiting MPESA PIN entry... {countdown}s remaining
+              </div>
             )}
 
             {transactionType === "Contact" && (
