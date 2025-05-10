@@ -1,3 +1,4 @@
+//index.tsx
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { HiOutlineCreditCard, HiCalculator } from "react-icons/hi";
@@ -116,6 +117,10 @@ const HomeUI = () => {
   const [error, setError] = useState<string | null>(null); // Error message
   const [showCalculator, setShowCalculator] = useState(false);
 
+  const [isAwaitingPayment, setIsAwaitingPayment] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+  const [isPaying, setIsPaying] = useState(false); // Disable button during processing
+
   // Update phoneNumber when QR code data is decoded
   useEffect(() => {
     if (router.query.data) {
@@ -169,171 +174,115 @@ const HomeUI = () => {
     setAmount(value);
   };
 
+  const handlePayment = async (url: string, payload: any) => {
+  setIsPaying(true);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      toast.success("Payment initiated. Awaiting MPESA PIN...");
+
+      setIsAwaitingPayment(true);
+      let seconds = 60;
+
+      const intervalId = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(intervalId);
+            toast.error("Payment not completed in time.");
+            setIsAwaitingPayment(false);
+            setIsPaying(false);
+            return 60;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      const pollInterval = setInterval(async () => {
+        const checkRes = await fetch(`/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`);
+        const checkData = await checkRes.json();
+
+        if (checkData.status === "Success") {
+          clearInterval(intervalId);
+          clearInterval(pollInterval);
+          toast.success("Payment confirmed!");
+          router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
+        }
+      }, 5000);
+    } else {
+      toast.error(result?.message || "Something went wrong.");
+      setIsPaying(false);
+    }
+  } catch (error) {
+    toast.error("Network error.");
+    setIsPaying(false);
+  }
+};
+
+
   // ******PAYMENT METHODS******
-  const handlePayBill = async () => {
-    if (
-      !phoneNumber.trim() ||
-      !data.PaybillNumber?.trim() ||
-      !data.AccountNumber?.trim() ||
-      !amount ||
-      isNaN(Number(amount)) || Number(amount) <= 0
-    ) {
-      toast.error("Please fill in all the fields.");
-      return;
-    }
-  
-    try {
-      const response = await fetch("/api/stk_api/paybill_stk_api", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: phoneNumber.trim(),
-          amount: amount.toString(),
-          accountnumber: data.AccountNumber.trim(),
-        }),
-      });
-  
-      const result = await response.json();
-      if (response.ok) {
-        toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
-        // Add 3-second delay before redirecting
-      setTimeout(() => {
-        router.push(
-          `/ThankYouPage?data=${encodeURIComponent(
-            JSON.stringify({ ...data, Amount: amount }) // overwrite the amount from QR with user input
-          )}`
-        );
-      }, 10000);
-      } else {
-        toast.error(result?.message || "Something went wrong.");
-      }
-    } catch (error) {
-      toast.error("Network error: Unable to initiate payment.");
-    }
-  };
-
-  const handlePayTill = async () => {
-    if (
-      !phoneNumber.trim() ||
-      !data.TillNumber?.trim() ||
-      !amount ||
-      isNaN(Number(amount)) || Number(amount) <= 0
-    ) {
+  const handlePayBill = () => {
+    if (!phoneNumber.trim() || !data.PaybillNumber?.trim() || !data.AccountNumber?.trim() || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
       toast.error("Please fill in all the fields.");
       return;
     }
 
-    try {
-      const response = await fetch("/api/stk_api/till_stk_api", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: phoneNumber.trim(),
-          amount: amount.toString(),
-          accountnumber: data.TillNumber.trim(),
-        }),
-      });
+    handlePayment("/api/stk_api/paybill_stk_api", {
+      phone: phoneNumber.trim(),
+      amount: amount.toString(),
+      accountnumber: data.AccountNumber.trim(),
+    });
+  }; 
 
-      const result = await response.json();
-      if (response.ok) {
-        toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
-        // Add 3-second delay before redirecting
-        setTimeout(() => {
-          router.push(
-            `/ThankYouPage?data=${encodeURIComponent(
-              JSON.stringify({ ...data, Amount: amount }) // overwrite the amount from QR with user input
-            )}`
-          );
-        }, 10000);
-      } else {
-        toast.error(result?.message || "Something went wrong.");
-      }
-    } catch (error) {
-      toast.error("Network error: Unable to initiate payment.");
-    }
-  };
 
-  const handleSendMoney = async () => {
-    if (
-      !phoneNumber.trim() ||
-      !data.RecepientPhoneNumber?.trim() ||
-      !amount ||
-      isNaN(Number(amount)) || Number(amount) <= 0
-    ) {
+
+  const handlePayTill = () => {
+    if (!phoneNumber.trim() || !data.TillNumber?.trim() || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
       toast.error("Please fill in all the fields.");
       return;
     }
 
-    try {
-      const response = await fetch("/api/stk_api/sendmoney_stk_api", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: phoneNumber.trim(),
-          amount: amount.toString(),
-          accountnumber: data.RecepientPhoneNumber.trim(),
-        }),
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
-        // Add 3-second delay before redirecting
-        setTimeout(() => {
-          router.push(
-            `/ThankYouPage?data=${encodeURIComponent(
-              JSON.stringify({ ...data, Amount: amount }) // overwrite the amount from QR with user input
-            )}`
-          );
-        }, 10000);
-      } else {
-        toast.error(result?.message || "Something went wrong.");
-      }
-    } catch (error) {
-      toast.error("Network error: Unable to initiate payment.");
-    }
+    handlePayment("/api/stk_api/till_stk_api", {
+      phone: phoneNumber.trim(),
+      amount: amount.toString(),
+      accountnumber: data.TillNumber.trim(),
+    });
   };
 
-  const handleWithdraw = async () => {
-    if (
-      !phoneNumber.trim() ||
-      !data.AgentId?.trim() ||
-      !data.StoreNumber?.trim() ||
-      !amount ||
-      isNaN(Number(amount)) || Number(amount) <= 0
-    ) {
+
+  const handleSendMoney = () => {
+    if (!phoneNumber.trim() || !data.RecepientPhoneNumber?.trim() || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
       toast.error("Please fill in all the fields.");
       return;
     }
 
-    try {
-      const response = await fetch("/api/stk_api/agent_stk_api", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: phoneNumber.trim(),
-          amount: amount.toString(),
-          storenumber: data.StoreNumber.trim(),
-        }),
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        toast.success("Payment initiated successfully! Please enter your M-pesa PIN on your phone when prompted shortly");
-        setTimeout(() => {
-          router.push(
-            `/ThankYouPage?data=${encodeURIComponent(
-              JSON.stringify({ ...data, Amount: amount }) // overwrite the amount from QR with user input
-            )}`
-          );
-        }, 10000);
-      } else {
-        toast.error(result?.message || "Something went wrong.");
-      }
-    } catch (error) {
-      toast.error("Network error: Unable to initiate payment.");
-    }
+    handlePayment("/api/stk_api/sendmoney_stk_api", {
+      phone: phoneNumber.trim(),
+      amount: amount.toString(),
+      accountnumber: data.RecepientPhoneNumber.trim(),
+    });
   };
+
+  const handleWithdraw = () => {
+    if (!phoneNumber.trim() || !data.AgentId?.trim() || !data.StoreNumber?.trim() || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      toast.error("Please fill in all the fields.");
+      return;
+    }
+
+    handlePayment("/api/stk_api/agent_stk_api", {
+      phone: phoneNumber.trim(),
+      amount: amount.toString(),
+      storenumber: data.StoreNumber.trim(),
+    });
+  };
+
 
   // Save Contact Functionality 
   const handleSaveContact = () => {
@@ -588,31 +537,42 @@ const HomeUI = () => {
                 className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"
                 style={{ backgroundColor: "#006400" }}
                 onClick={handlePayBill}
-                disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
+                disabled={isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
                 PAY
-              </Button>
+              </Button>            
+
             )}
+            {isAwaitingPayment && (
+                <div className="text-yellow-600 text-sm mt-2 text-center">
+                  Awaiting MPESA PIN entry... {countdown}s remaining
+                </div>
+              )}
 
             {transactionType === "BuyGoods" && (
               <Button
                 className="font-bold w-full bg-green-700 text-white py-3 rounded-md shadow-md"
                 style={{ backgroundColor: "#006400" }}
                 onClick={handlePayTill}
-                disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
+                disabled={isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
                 PAY
               </Button>
             )}
+            {isAwaitingPayment && (
+                <div className="text-yellow-600 text-sm mt-2 text-center">
+                  Awaiting MPESA PIN entry... {countdown}s remaining
+                </div>
+              )}
 
             {transactionType === "SendMoney" && (
               <Button
                 className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"
                 style={{ backgroundColor: "#006400" }}
                 onClick={handleSendMoney}
-                disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
+                disabled={isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
                 SEND
@@ -624,7 +584,7 @@ const HomeUI = () => {
                 className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"
                 style={{ backgroundColor: "#006400" }}
                 onClick={handleWithdraw}
-                disabled={!!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
+                disabled={isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
                 WITHDRAW
