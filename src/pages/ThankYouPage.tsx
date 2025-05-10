@@ -10,6 +10,7 @@ import {
 import { FaWhatsapp } from "react-icons/fa";
 import { toPng } from "html-to-image";
 import { saveAs } from "file-saver";
+import { title } from "process";
 
 const ThankYouPage = () => {
   const router = useRouter();
@@ -202,6 +203,7 @@ const ThankYouPage = () => {
                 email: receiptData.businessEmail,
                 phone: receiptData.businessPhone,
                 address: receiptData.businessAddress,
+                title: receiptData.businessTitle,
               })} 
               size={200}
               style={{ height: "auto", maxWidth: "100%", width: "100%" }}
