@@ -220,7 +220,7 @@ const HomeUI = () => {
   const handlePayment = async (url: string, payload: any) => {
     setIsPaying(true);
     setIsAwaitingPayment(true);
-    setCountdown(60); // Reset countdown
+    setCountdown(20); // Reset countdown
 
     try {
       const response = await fetch(url, {
@@ -243,7 +243,7 @@ const HomeUI = () => {
               toast.error("Payment not completed in time.");
               setIsAwaitingPayment(false);
               setIsPaying(false);
-              return 60;
+              return 20;
             }
             return prev - 1;
           });
@@ -265,7 +265,7 @@ const HomeUI = () => {
             } else if (checkData.status === "Cancelled" || checkData.status === "Failed") {
               clearInterval(intervalId);
               clearInterval(pollInterval);
-              toast.error(checkData.status === "Cancelled" ? "Payment was cancelled by user." : "Payment failed.");
+              toast.error(checkData.status === "Cancelled" ? "Payment not completed by user." : "Payment failed.");
               setIsAwaitingPayment(false);
               setIsPaying(false);
             }
