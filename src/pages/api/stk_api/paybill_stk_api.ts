@@ -1,12 +1,13 @@
-// paybill_stk_api.tsx
+// /src/pages/api/stk_api/paybill_stk_api.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 import Cors from 'cors';
+import  db  from '@/lib/db';
 
 // Initialize the CORS middleware
 const cors = Cors({
-  origin: '*', // Allow all origins (for testing)
-  methods: ['POST', 'OPTIONS'], // Allowed methods
+  origin: '*',
+  methods: ['POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
 });
 
@@ -22,18 +23,9 @@ function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS'); // Allow POST and OPTIONS
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); // Allow Content-Type header
-
-
-    console.log("Handler started"); //debugging
   await runMiddleware(req, res, cors);
-    console.log("Middleware finished"); //debugging
 
   if (req.method === 'OPTIONS') {
-    console.log("Options request received"); //debugging
     return res.status(200).end();
   }
 
@@ -41,8 +33,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const { phone, amount, accountnumber } = req.body;
 
-      console.log("Payment details:", { phone, amount, accountnumber });
+      // Insert transaction into database
+      const stmt = db.prepare(
+        'INSERT INTO transactions (phone, account, amount, transaction_type) VALUES (?, ?, ?, ?)'
+      );
+      stmt.run(phone, accountnumber, amount, 'PayBill');
+      stmt.finalize();
 
+      // Rest of your STK push implementation...
       const consumerKey = 'JOugZC2lkqSZhy8eLeQMx8S0UbOXZ5A8Yzz26fCx9cyU1vqH';
       const consumerSecret = 'fqyZyrdW3QE3pDozsAcWNkVjwDADAL1dFMF3T9v65gJq8XZeyEeaTqBRXbC5RIvC';
       const BusinessShortCode = '174379';
@@ -52,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const access_token_url = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
       const initiate_url = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
-      const CallBackURL = 'https://morning-basin-87523.herokuapp.com/api/stk_api/callback_url';
+      const CallBackURL = 'https://yourdomain.com/api/stk_api/callback_url';
 
       const authResponse = await axios.get(access_token_url, {
         headers: {
@@ -81,14 +79,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
+      // Update transaction with checkout request ID
+      const checkoutRequestId = stkResponse.data.CheckoutRequestID;
+      db.run(
+        'UPDATE transactions SET checkout_request_id = ? WHERE phone = ? AND account = ? AND status = "Pending"',
+        [checkoutRequestId, phone, accountnumber]
+      );
+
       res.status(200).json(stkResponse.data);
     } catch (error) {
       console.error("Error in STK Push:", error);
       res.status(500).json({ message: 'Internal Server Error' });
     }
-   } else {
+  } else {
     res.status(405).json({ message: 'Method Not Allowed' });
   }
-  
-
 }
