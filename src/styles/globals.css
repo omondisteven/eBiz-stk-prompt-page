@@ -50,6 +50,28 @@ input:focus {
   border-color: #10b981;
 }
 
+@keyframes slide-in {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+      }
+      .animate-blink {
+        animation: blink 1s infinite;
+      }
+    
+
 @keyframes ping-once {
   0% {
     transform: scale(1);
