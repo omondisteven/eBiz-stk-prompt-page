@@ -125,15 +125,16 @@ const HomeUI = () => {
   useEffect(() => {
     if (router.query.data) {
       try {
-        const safeData = decodeURIComponent(router.query.data as string);
-        const parsedData = JSON.parse(safeData);
+        // First decode the URI component, then parse the JSON
+        const decodedData = decodeURIComponent(router.query.data as string);
+        const parsedData = JSON.parse(decodedData);
         setTransactionType(parsedData.TransactionType);
         setData(parsedData);
         setAmount(parsedData.Amount || "");
         setPhoneNumber(parsedData.PhoneNumber || "254");
-      } catch (e) {
-        console.error("Error decoding or parsing QR data:", e);
-        toast.error("Invalid QR code data. Please try again.");
+      } catch (error) {
+        console.error("Error parsing QR code data:", error);
+        toast.error("Invalid QR code data format");
       }
     }
   }, [router.query]);
