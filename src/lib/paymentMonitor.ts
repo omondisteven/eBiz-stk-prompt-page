@@ -36,17 +36,27 @@ export class PaymentMonitor {
   }
 
   private async checkStatus(): Promise<void> {
-    try {
-      if (!this.currentCheckoutId) return;
+  try {
+    if (!this.currentCheckoutId) return;
 
-      const row = this.db.prepare(`
-        SELECT status FROM transactions
-        WHERE checkout_request_id = ?
-      `).get(this.currentCheckoutId) as { status: Transaction['status'] } | undefined;
+    const response = await fetch(
+      `/api/stk_api/check_payment_status?checkoutRequestId=${this.currentCheckoutId}`
+    );
 
-      if (!row) return;
+    // First check if response is OK
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server error: ${response.status} - ${errorText}`);
+    }
 
-      switch (row.status) {
+    // Then try to parse as JSON
+    const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'Unknown error from server');
+      }
+
+      switch (data.status) {
         case 'Success':
           this.complete('Payment successful');
           break;
@@ -62,6 +72,7 @@ export class PaymentMonitor {
       }
     } catch (error) {
       console.error('Status check error:', error);
+      this.complete('Error checking payment status');
     }
   }
 
