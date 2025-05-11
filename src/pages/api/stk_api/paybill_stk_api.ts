@@ -1,14 +1,13 @@
 // /src/pages/api/stk_api/paybill_stk_api.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
+import db from '@/lib/db';
 import Cors from 'cors';
-import  db  from '@/lib/db';
 
-// Initialize the CORS middleware
+// Initialize CORS middleware
 const cors = Cors({
-  origin: '*',
   methods: ['POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
+  origin: process.env.NODE_ENV === 'development' ? '*' : process.env.DOMAIN,
 });
 
 function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
@@ -29,69 +28,115 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).end();
   }
 
-  if (req.method === 'POST') {
-    try {
-      const { phone, amount, accountnumber } = req.body;
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
 
-      // Insert transaction into database
-      const stmt = db.prepare(
-        'INSERT INTO transactions (phone, account, amount, transaction_type) VALUES (?, ?, ?, ?)'
-      );
-      stmt.run(phone, accountnumber, amount, 'PayBill');
-      stmt.finalize();
+  try {
+    const { phone, amount, accountnumber } = req.body;
 
-      // Rest of your STK push implementation...
-      const consumerKey = 'JOugZC2lkqSZhy8eLeQMx8S0UbOXZ5A8Yzz26fCx9cyU1vqH';
-      const consumerSecret = 'fqyZyrdW3QE3pDozsAcWNkVjwDADAL1dFMF3T9v65gJq8XZeyEeaTqBRXbC5RIvC';
-      const BusinessShortCode = '174379';
-      const Passkey = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
-      const Timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3);
-      const Password = Buffer.from(`${BusinessShortCode}${Passkey}${Timestamp}`).toString('base64');
+    // Validate input
+    if (!phone || !amount || !accountnumber) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
 
-      const access_token_url = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
-      const initiate_url = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
-      const CallBackURL = 'https://yourdomain.com/api/stk_api/callback_url';
+    // Create transaction record
+    const tx = db.prepare(`
+      INSERT INTO transactions 
+      (phone, account, amount, transaction_type) 
+      VALUES (?, ?, ?, ?)
+    `).run(phone, accountnumber, amount, 'PayBill');
 
-      const authResponse = await axios.get(access_token_url, {
+    // M-Pesa API credentials
+    const credentials = {
+      consumerKey: process.env.MPESA_CONSUMER_KEY || 'your_consumer_key',
+      consumerSecret: process.env.MPESA_CONSUMER_SECRET || 'your_consumer_secret',
+      businessShortCode: process.env.MPESA_BUSINESS_SHORTCODE || '174379',
+      passkey: process.env.MPESA_PASSKEY || 'your_passkey',
+    };
+
+    // Generate access token
+    const authResponse = await axios.get(
+      'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
+      {
         headers: {
-          Authorization: `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64')}`,
+          Authorization: `Basic ${Buffer.from(`${credentials.consumerKey}:${credentials.consumerSecret}`).toString('base64')}`,
         },
-      });
+      }
+    );
 
-      const access_token = authResponse.data.access_token;
+    const accessToken = authResponse.data.access_token;
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[^0-9]/g, '')
+      .slice(0, -3);
+    const password = Buffer.from(
+      `${credentials.businessShortCode}${credentials.passkey}${timestamp}`
+    ).toString('base64');
 
-      const stkResponse = await axios.post(initiate_url, {
-        BusinessShortCode,
-        Password,
-        Timestamp,
-        TransactionType: 'CustomerPayBillOnline',
-        Amount: amount,
-        PartyA: phone,
-        PartyB: BusinessShortCode,
-        PhoneNumber: phone,
-        CallBackURL,
-        AccountReference: accountnumber,
-        TransactionDesc: 'Bill Payment',
-      }, {
+    // Prepare STK push payload
+    const stkPayload = {
+      BusinessShortCode: credentials.businessShortCode,
+      Password: password,
+      Timestamp: timestamp,
+      TransactionType: 'CustomerPayBillOnline',
+      Amount: amount,
+      PartyA: phone,
+      PartyB: credentials.businessShortCode,
+      PhoneNumber: phone,
+      CallBackURL: `${process.env.BASE_URL}/api/stk_api/callback_url`,
+      AccountReference: accountnumber,
+      TransactionDesc: 'Payment via M-Poster',
+    };
+
+    // Initiate STK push
+    const stkResponse = await axios.post(
+      'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
+      stkPayload,
+      {
         headers: {
-          Authorization: `Bearer ${access_token}`,
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-      });
+      }
+    );
 
-      // Update transaction with checkout request ID
-      const checkoutRequestId = stkResponse.data.CheckoutRequestID;
-      db.run(
-        'UPDATE transactions SET checkout_request_id = ? WHERE phone = ? AND account = ? AND status = "Pending"',
-        [checkoutRequestId, phone, accountnumber]
-      );
+    // Update transaction with checkout request ID
+    db.prepare(`
+      UPDATE transactions 
+      SET checkout_request_id = ? 
+      WHERE id = ?
+    `).run(stkResponse.data.CheckoutRequestID, tx.lastInsertRowid);
 
-      res.status(200).json(stkResponse.data);
-    } catch (error) {
-      console.error("Error in STK Push:", error);
-      res.status(500).json({ message: 'Internal Server Error' });
+    return res.status(200).json({
+      success: true,
+      message: 'STK push initiated successfully',
+      data: stkResponse.data,
+    });
+  } catch (error: any) {
+    console.error('STK Push Error:', error);
+
+    // Update transaction status if it was created
+    if (error.config?.data) {
+      try {
+        const { phone } = JSON.parse(error.config.data);
+        db.prepare(`
+          UPDATE transactions 
+          SET status = 'Failed' 
+          WHERE phone = ? AND status = 'Pending'
+        `).run(phone);
+      } catch (dbError) {
+        console.error('Failed to update transaction status:', dbError);
+      }
     }
-  } else {
-    res.status(405).json({ message: 'Method Not Allowed' });
+
+    const errorMessage = error.response?.data?.errorMessage || 
+                        error.message || 
+                        'Failed to initiate payment';
+
+    return res.status(500).json({
+      success: false,
+      message: errorMessage,
+    });
   }
 }

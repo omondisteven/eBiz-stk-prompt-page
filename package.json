@@ -56,6 +56,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.17",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^20",
