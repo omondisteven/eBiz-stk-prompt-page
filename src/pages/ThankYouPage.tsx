@@ -30,7 +30,7 @@ const ThankYouPage = () => {
         let rawData = router.query.data as string;
         let decodedData;
 
-        // Try double decoding
+        // Attempt double decoding
         try {
           decodedData = decodeURIComponent(decodeURIComponent(rawData));
         } catch (doubleDecodeErr) {
@@ -75,11 +75,12 @@ const ThankYouPage = () => {
         setTimestamp(formatted);
 
       } catch (e) {
-        console.error("Error processing QR code data:", e);
+        console.error("Error processing QR code receipt data:", e);
         toast.error("Failed to process QR code. Please try again.");
       }
     }
   }, [router.query]);
+
 
   const handleDownload = async () => {
     const input = showContact ? contactRef.current : receiptRef.current;
