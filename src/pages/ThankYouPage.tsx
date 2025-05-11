@@ -229,12 +229,13 @@ const ThankYouPage = () => {
             maximumFractionDigits: 2,
           }).format(receiptData.Amount)}
         </p>
-
         <QRCode
           value={JSON.stringify({
             receiptNumber,
             businessName: receiptData.businessName,
             amount: receiptData.Amount,
+            description: receiptData.businessComment,
+            email: receiptData.businessEmail,
             timestamp,
           })}
           size={128}
