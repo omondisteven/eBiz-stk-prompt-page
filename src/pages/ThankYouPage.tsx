@@ -81,7 +81,6 @@ const ThankYouPage = () => {
   }
 }, [router.query]);
 
-
   const handleDownload = async () => {
     const input = showContact ? contactRef.current : receiptRef.current;
     if (!input) return;
