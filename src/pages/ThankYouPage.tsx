@@ -159,8 +159,14 @@ const ThankYouPage = () => {
         {/* Reduced size for "YOUR RECEIPT" heading */}
         {/* <h3 className="text-xl font-bold mb-4">YOUR RECEIPT</h3> */}
         <p className="text-3xl text-green-700 font-bold my-4">
-          Ksh {parseFloat(receiptData.Amount).toFixed(2)}
+          {new Intl.NumberFormat("en-KE", {
+            style: "currency",
+            currency: "KES",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }).format(receiptData.Amount)}
         </p>
+
         <QRCode
           value={JSON.stringify({
             receiptNumber,
@@ -197,9 +203,10 @@ const ThankYouPage = () => {
         <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
         {/* <hr className="my-4 border-gray-300" /> */}
         <br />
-        <div className="w-full bg-gray-900 text-yellow-300 font-semibold italic p-4 rounded-2xl shadow-lg animate-blink">
+        <div className="w-full bg-gray-900 text-yellow-300 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
           {receiptData.businessPromo1}
-        </div>        
+        </div>
+       
       </div>
       ) : (
         <div
