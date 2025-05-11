@@ -1,44 +1,40 @@
-// src/pages/api/stk_api/callback_url.ts
+// /src/pages/api/stk_api/callback_url.ts
 import { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
-import path from 'path';
+import  db  from '@/lib/db';
 
-// Temporary storage for payment statuses
-const paymentStatuses: Record<string, string> = {};
-
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     const mpesaResponse = req.body;
-
-    // Log the response to a file
-    const logFilePath = path.join(process.cwd(), 'M_PESAConfirmationResponse.txt');
-    fs.appendFileSync(logFilePath, JSON.stringify(mpesaResponse) + '\n');
-
-    // Extract relevant information from the callback
     const resultCode = mpesaResponse.Body?.stkCallback?.ResultCode;
-    const phone = mpesaResponse.Body?.stkCallback?.CallbackMetadata?.Item.find(
-      (item: any) => item.Name === "PhoneNumber"
-    )?.Value;
-    const account = mpesaResponse.Body?.stkCallback?.CallbackMetadata?.Item.find(
-      (item: any) => item.Name === "AccountReference"
-    )?.Value;
+    const checkoutRequestId = mpesaResponse.Body?.stkCallback?.CheckoutRequestID;
+    const resultDesc = mpesaResponse.Body?.stkCallback?.ResultDesc || '';
 
-    if (phone && account) {
-      const key = `${phone}-${account}`;
-      
-      if (resultCode === 0) {
-        paymentStatuses[key] = "Success";
-      } else {
-        paymentStatuses[key] = mpesaResponse.Body?.stkCallback?.ResultDesc?.includes("cancelled") 
-          ? "Cancelled" 
-          : "Failed";
+    try {
+      if (checkoutRequestId) {
+        let status = 'Failed';
+        if (resultCode === 0) {
+          status = 'Success';
+        } else if (resultDesc.toLowerCase().includes('cancelled')) {
+          status = 'Cancelled';
+        } else if (resultDesc.toLowerCase().includes('timeout')) {
+          status = 'Timeout';
+        }
+
+        // Update transaction status in database
+        db.run(
+          'UPDATE transactions SET status = ? WHERE checkout_request_id = ?',
+          [status, checkoutRequestId]
+        );
       }
-    }
 
-    res.status(200).json({
-      ResultCode: 0,
-      ResultDesc: "Confirmation Received Successfully",
-    });
+      res.status(200).json({
+        ResultCode: 0,
+        ResultDesc: "Confirmation Received Successfully",
+      });
+    } catch (error) {
+      console.error('Error processing callback:', error);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
   } else {
     res.status(405).json({ message: 'Method Not Allowed' });
   }
