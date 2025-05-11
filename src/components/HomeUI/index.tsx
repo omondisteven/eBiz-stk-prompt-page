@@ -220,7 +220,7 @@ const HomeUI = () => {
   const handlePayment = async (url: string, payload: any) => {
   setIsPaying(true);
   setIsAwaitingPayment(true);
-  setCountdown(60); // Reset countdown
+  setCountdown(20); // Reset countdown
 
   let countdownInterval: any;
   let pollingInterval: any;
