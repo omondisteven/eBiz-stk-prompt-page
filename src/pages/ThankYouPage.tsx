@@ -151,7 +151,7 @@ const ThankYouPage = () => {
         style={{color: "#2ecc71"}}>
           {receiptData.businessName || "BLTA Solutions Limited"}
         </h2>
-        <p className="text-2xl font-bold mt-2 mb-1"
+        <p className="font-bold mt-2 mb-1"
         style={{color: "#999999"}}>
           {receiptData.businessTitle || "SMS | Short Codes | Solutions"}
         </p>       
@@ -159,7 +159,7 @@ const ThankYouPage = () => {
         {/* Reduced size for "YOUR RECEIPT" heading */}
         {/* <h3 className="text-xl font-bold mb-4">YOUR RECEIPT</h3> */}
         <p className="text-3xl text-green-700 font-bold my-4">
-          Ksh {receiptData.Amount}
+          Ksh {parseFloat(receiptData.Amount).toFixed(2)}
         </p>
         <QRCode
           value={JSON.stringify({
