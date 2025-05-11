@@ -10,7 +10,9 @@ import {
 import { FaWhatsapp } from "react-icons/fa";
 import { toPng } from "html-to-image";
 import { saveAs } from "file-saver";
-import { title } from "process";
+// import { title } from "process";
+import { MousePointerClick } from "lucide-react";
+
 
 const ThankYouPage = () => {
   const router = useRouter();
@@ -123,21 +125,41 @@ const ThankYouPage = () => {
         ref={receiptRef}
         className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto border border-gray-400 border-dotted"
        >
+        <div className="flex flex-col items-center mb-6">
+          {/* Animated Tick Icon */}
+          <div className="animate-ping-once bg-green-500 rounded-full p-3 mb-2">
+            <svg
+              className="w-10 h-10 text-white animate-bounce"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={3}
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          {/* Swiping Success Text */}
+          <div className="overflow-hidden">
+            <p className="text-green-600 animate-slide-in">
+              Success!
+            </p>
+          </div>
+        </div>
 
         {/* Increased size for businessName */}
         <h2 className="text-2xl font-bold mt-2 mb-1"
-        style={{color: "d9d2e7"}}>
+        style={{color: "#2ecc71"}}>
           {receiptData.businessName || "BLTA Solutions Limited"}
         </h2>
-        <h4 className="text-2xl mt-2 mb-1"
-        style={{color: "#8373a5"}}>
+        <p className="text-2xl font-bold mt-2 mb-1"
+        style={{color: "#999999"}}>
           {receiptData.businessTitle || "SMS | Short Codes | Solutions"}
-        </h4>       
+        </p>       
         
         {/* Reduced size for "YOUR RECEIPT" heading */}
         {/* <h3 className="text-xl font-bold mb-4">YOUR RECEIPT</h3> */}
         <p className="text-3xl text-green-700 font-bold my-4">
-          KSHS {receiptData.Amount}
+          Ksh {receiptData.Amount}
         </p>
         <QRCode
           value={JSON.stringify({
@@ -175,8 +197,9 @@ const ThankYouPage = () => {
         <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
         {/* <hr className="my-4 border-gray-300" /> */}
         <br />
-        <h2>{receiptData.businessPromo1}</h2>
-        
+        <div className="w-full bg-gray-900 text-yellow-400 text-center font-semibold p-4 rounded-t-lg mt-4">
+          {receiptData.businessPromo1}
+        </div>        
       </div>
       ) : (
         <div
@@ -309,7 +332,7 @@ const ThankYouPage = () => {
           onClick={() => setShowContact(true)}
           className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
         >
-          <Contact className="w-6 h-6" />
+          <MousePointerClick  className="mr-2" />
           <p>{receiptData.businessPromo2}</p>
         </Button>
       </div>
