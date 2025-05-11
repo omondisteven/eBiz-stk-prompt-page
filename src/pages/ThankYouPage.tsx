@@ -32,22 +32,17 @@ const ThankYouPage = () => {
 
         let decodedData;
         try {
-          // First try Base64 decode then URI decode
-          decodedData = decodeURIComponent(atob(rawData));
-        } catch (firstTryErr) {
-          console.warn("Base64 decode failed, trying direct decode");
+          // First try Base64 decode
+          decodedData = decodeURIComponent(escape(atob(rawData)));
+        } catch (base64Err) {
+          console.warn("Base64 decode failed, trying URI decode");
           try {
-            // Fallback to direct double decode
-            decodedData = decodeURIComponent(decodeURIComponent(rawData));
-          } catch (doubleDecodeErr) {
-            console.warn("Double decode failed, falling back to single decode");
-            try {
-              decodedData = decodeURIComponent(rawData);
-            } catch (singleDecodeErr) {
-              console.error("All decode attempts failed:", singleDecodeErr);
-              toast.error("Invalid QR code format");
-              return;
-            }
+            // Fallback to URI decode
+            decodedData = decodeURIComponent(rawData);
+          } catch (uriErr) {
+            console.error("All decode attempts failed:", uriErr);
+            toast.error("Invalid QR code format");
+            return;
           }
         }
 
@@ -60,29 +55,26 @@ const ThankYouPage = () => {
           return;
         }
 
-        // Validate data structure
-        if (!parsedData || typeof parsedData !== 'object') {
-          toast.error("Invalid data structure");
+        // Validate required fields
+        if (!parsedData.TransactionType && !parsedData.businessName) {
+          toast.error("Missing required fields in QR data");
           return;
         }
 
         setReceiptData(parsedData);
+        setReceiptNumber("RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase());
+        
+        const now = new Date();
+        setTimestamp(now.toLocaleString("en-KE", {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }));
 
-          const randomRef = "RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
-          setReceiptNumber(randomRef);
-
-          const now = new Date();
-          const formatted = now.toLocaleString("en-KE", {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          });
-          setTimestamp(formatted);
-
-        } catch (e) {
+      } catch (e) {
         console.error("Error processing QR code data:", e);
         toast.error("Failed to process QR code");
       }
