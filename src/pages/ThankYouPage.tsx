@@ -204,7 +204,7 @@ const ThankYouPage = () => {
         {/* <hr className="my-4 border-gray-300" /> */}
         <br />
         <div className="w-full bg-gray-900 text-yellow-300 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
-          {receiptData.businessPromo1}
+          {receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}
         </div>
        
       </div>
@@ -339,7 +339,7 @@ const ThankYouPage = () => {
           onClick={() => setShowContact(true)}
           className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
         >          
-          <p>{receiptData.businessPromo2}</p>
+          <p>{receiptData.business || "Contact us for available Offers!"}</p>
           <MousePointerClick  className="mr-2" />
         </Button>
       </div>
