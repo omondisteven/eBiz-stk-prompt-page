@@ -124,13 +124,20 @@ const HomeUI = () => {
   // Update phoneNumber when QR code data is decoded
   useEffect(() => {
     if (router.query.data) {
-      const parsedData = JSON.parse(decodeURIComponent(router.query.data as string));
-      setTransactionType(parsedData.TransactionType);
-      setData(parsedData);
-      setAmount(parsedData.Amount || ""); // Initialize Amount from parsed data
-      setPhoneNumber(parsedData.PhoneNumber || "254"); // Initialize PhoneNumber from parsed data
+      try {
+        const safeData = decodeURIComponent(router.query.data as string);
+        const parsedData = JSON.parse(safeData);
+        setTransactionType(parsedData.TransactionType);
+        setData(parsedData);
+        setAmount(parsedData.Amount || "");
+        setPhoneNumber(parsedData.PhoneNumber || "254");
+      } catch (e) {
+        console.error("Error decoding or parsing QR data:", e);
+        toast.error("Invalid QR code data. Please try again.");
+      }
     }
   }, [router.query]);
+
 
   // Handle phone number input change
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
