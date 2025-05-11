@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import QRCode from "react-qr-code";
+import toast from "react-hot-toast";
 import {
   Mail, Phone, Globe, MapPin, Share2, Download, Copy, X, Contact, FileDown, Share
 } from "lucide-react";
@@ -12,7 +13,6 @@ import { toPng } from "html-to-image";
 import { saveAs } from "file-saver";
 // import { title } from "process";
 import { MousePointerClick } from "lucide-react";
-
 
 const ThankYouPage = () => {
   const router = useRouter();
@@ -27,7 +27,7 @@ const ThankYouPage = () => {
     if (router.query.data) {
       try {
         let rawData = router.query.data as string;
-        let decodedData;
+        let decodedData: string;
 
         // Try double decoding
         try {
@@ -38,7 +38,7 @@ const ThankYouPage = () => {
             decodedData = decodeURIComponent(rawData);
           } catch (singleDecodeErr) {
             console.error("Single decode also failed:", singleDecodeErr);
-            alert("Invalid QR code format. Please try again.");
+            toast.error("Invalid QR code format. Please try again.");
             return;
           }
         }
@@ -52,7 +52,7 @@ const ThankYouPage = () => {
             parsedData = JSON.parse(rawData);
           } catch (finalErr) {
             console.error("Final parse attempt failed:", finalErr);
-            alert("Invalid QR code data. Please try again.");
+            toast.error("Invalid QR code data. Please try again.");
             return;
           }
         }
