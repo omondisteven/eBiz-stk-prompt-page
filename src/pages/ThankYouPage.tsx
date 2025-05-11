@@ -28,42 +28,67 @@ const ThankYouPage = () => {
     if (router.query.data) {
       try {
         let rawData = router.query.data as string;
-        console.log("Raw thank you page data:", rawData); // Debug log
+        console.log("Raw data received:", rawData); // Debug log
 
         let decodedData;
+        let parsedData;
+
+        // Attempt 1: Direct Base64 decode (new format)
         try {
-          // First try Base64 decode
           decodedData = decodeURIComponent(escape(atob(rawData)));
+          parsedData = JSON.parse(decodedData);
+          console.log("Successfully decoded with Base64 method");
         } catch (base64Err) {
-          console.warn("Base64 decode failed, trying URI decode");
+          console.warn("Base64 decode failed, trying alternative methods:", base64Err);
+
+          // Attempt 2: Double URI decode (legacy format)
           try {
-            // Fallback to URI decode
-            decodedData = decodeURIComponent(rawData);
-          } catch (uriErr) {
-            console.error("All decode attempts failed:", uriErr);
-            toast.error("Invalid QR code format");
-            return;
+            decodedData = decodeURIComponent(decodeURIComponent(rawData));
+            parsedData = JSON.parse(decodedData);
+            console.log("Successfully decoded with double URI method");
+          } catch (doubleDecodeErr) {
+            console.warn("Double decode failed, trying single decode:", doubleDecodeErr);
+
+            // Attempt 3: Single URI decode
+            try {
+              decodedData = decodeURIComponent(rawData);
+              parsedData = JSON.parse(decodedData);
+              console.log("Successfully decoded with single URI method");
+            } catch (singleDecodeErr) {
+              console.warn("Single decode failed, trying raw JSON parse:", singleDecodeErr);
+
+              // Attempt 4: Direct JSON parse (might work for some legacy codes)
+              try {
+                parsedData = JSON.parse(rawData);
+                console.log("Successfully parsed raw data");
+              } catch (finalErr) {
+                console.error("All decode attempts failed:", finalErr);
+                toast.error("Invalid QR code format. Please try scanning again.");
+                return;
+              }
+            }
           }
         }
 
-        let parsedData;
-        try {
-          parsedData = JSON.parse(decodedData);
-        } catch (parseErr) {
-          console.error("JSON parse failed:", parseErr);
-          toast.error("Invalid QR code data");
+        // Validate the parsed data
+        if (!parsedData || typeof parsedData !== 'object') {
+          toast.error("Invalid QR data structure");
           return;
         }
 
-        // Validate required fields
+        // Ensure required fields exist
         if (!parsedData.TransactionType && !parsedData.businessName) {
-          toast.error("Missing required fields in QR data");
+          toast.error("QR code missing required data fields");
           return;
         }
 
+        // Set the data
         setReceiptData(parsedData);
-        setReceiptNumber("RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase());
         
+        // Generate receipt number
+        setReceiptNumber("RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase());
+
+        // Set timestamp
         const now = new Date();
         setTimestamp(now.toLocaleString("en-KE", {
           year: "numeric",
@@ -76,7 +101,7 @@ const ThankYouPage = () => {
 
       } catch (e) {
         console.error("Error processing QR code data:", e);
-        toast.error("Failed to process QR code");
+        toast.error("Failed to process QR code. Please try again.");
       }
     }
   }, [router.query]);
