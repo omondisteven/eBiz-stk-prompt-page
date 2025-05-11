@@ -153,7 +153,7 @@ const ThankYouPage = () => {
         </h2>
         <p className="font-bold mt-2 mb-1"
         style={{color: "#999999"}}>
-          {receiptData.businessTitle || "SMS | Short Codes | Solutions"}
+          {receiptData.businessComment || "SMS | Short Codes | Solutions"}
         </p>       
         
         {/* Reduced size for "YOUR RECEIPT" heading */}
@@ -193,7 +193,7 @@ const ThankYouPage = () => {
         <div className="mt-2 text-sm break-words space-y-1">
           {receiptData.businessAddress && <p>{receiptData.businessAddress}</p>}
           {receiptData.businessPhone && <p className="font-bold text-green-600">{receiptData.businessPhone}</p>}
-          <p>{receiptData.businessTitle}</p>
+          <p>{receiptData.businessComment}</p>
         </div>
 
         <br />
@@ -233,7 +233,7 @@ const ThankYouPage = () => {
                 email: receiptData.businessEmail,
                 phone: receiptData.businessPhone,
                 address: receiptData.businessAddress,
-                title: receiptData.businessTitle,
+                description: receiptData.businessComment,
               })} 
               size={200}
               style={{ height: "auto", maxWidth: "100%", width: "100%" }}
