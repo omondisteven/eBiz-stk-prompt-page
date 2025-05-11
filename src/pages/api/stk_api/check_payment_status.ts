@@ -16,6 +16,7 @@ interface DatabaseResult {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  res.setHeader('Content-Type', 'application/json');
   if (req.method !== 'GET') {
     return res.status(405).json({ 
       success: false,
