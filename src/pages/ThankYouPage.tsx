@@ -331,9 +331,9 @@ const ThankYouPage = () => {
         <Button
           onClick={() => setShowContact(true)}
           className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
-        >
-          <MousePointerClick  className="mr-2" />
+        >          
           <p>{receiptData.businessPromo2}</p>
+          <MousePointerClick  className="mr-2" />
         </Button>
       </div>
       
