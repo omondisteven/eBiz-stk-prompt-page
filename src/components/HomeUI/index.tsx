@@ -220,7 +220,7 @@ const HomeUI = () => {
   const handlePayment = async (url: string, payload: any) => {
     setIsPaying(true);
     setIsAwaitingPayment(true);
-    setCountdown(60);
+    setCountdown(20); // Reset countdown
 
     try {
       const response = await fetch(url, {
@@ -243,18 +243,7 @@ const HomeUI = () => {
               toast.error("Payment not completed in time.");
               setIsAwaitingPayment(false);
               setIsPaying(false);
-              
-              // Cancel expired transaction
-              fetch('/api/stk_api/cancel_expired', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  phone: payload.phone,
-                  account: payload.accountnumber || payload.storenumber
-                }),
-              });
-              
-              return 60;
+              return 20;
             }
             return prev - 1;
           });
@@ -263,9 +252,7 @@ const HomeUI = () => {
         // Poll for payment status
         const pollInterval = setInterval(async () => {
           try {
-            const checkRes = await fetch(
-              `/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`
-            );
+            const checkRes = await fetch(`/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`);
             const checkData = await checkRes.json();
 
             if (checkData.status === "Success") {
@@ -275,22 +262,21 @@ const HomeUI = () => {
               setIsAwaitingPayment(false);
               setIsPaying(false);
               router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
-            } else if (["Cancelled", "Failed", "Timeout"].includes(checkData.status)) {
+            } else if (checkData.status === "Cancelled" || checkData.status === "Failed") {
               clearInterval(intervalId);
               clearInterval(pollInterval);
-              toast.error(
-                checkData.status === "Cancelled" ? "Payment was cancelled by user." :
-                checkData.status === "Timeout" ? "Payment timed out." :
-                "Payment failed."
-              );
+              toast.error(checkData.status === "Cancelled" ? "Payment not completed by user." : "Payment failed.");
               setIsAwaitingPayment(false);
               setIsPaying(false);
             }
+            // If status is "Pending", do nothing and continue polling
           } catch (error) {
             console.error("Error checking payment status:", error);
+            // Don't clear intervals on network errors, continue trying
           }
         }, 5000);
 
+        // Cleanup intervals if component unmounts
         return () => {
           clearInterval(intervalId);
           clearInterval(pollInterval);
