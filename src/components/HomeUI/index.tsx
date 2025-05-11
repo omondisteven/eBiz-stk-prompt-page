@@ -125,45 +125,27 @@ const HomeUI = () => {
   // Replace the useEffect that decodes the QR data with:
 
   useEffect(() => {
-    if (router.query.data) {
-      try {
-        let decodedData;
-        
-        // First try to decode as double-encoded URL
-        try {
-          const firstPass = decodeURIComponent(router.query.data as string);
-          decodedData = decodeURIComponent(firstPass);
-        } catch (e) {
-          // If that fails, try single decode
-          decodedData = decodeURIComponent(router.query.data as string);
-        }
+  const rawData = router.query.data;
+  if (rawData && typeof rawData === 'string') {
+    try {
+      // Step 1: Try double-decode first
+      let decoded = decodeURIComponent(decodeURIComponent(rawData));
 
-        // Try to parse as JSON
-        let parsedData;
-        try {
-          parsedData = JSON.parse(decodedData);
-        } catch (e) {
-          // If parsing fails, it might be raw data without encoding
-          try {
-            parsedData = JSON.parse(router.query.data as string);
-          } catch (innerError) {
-            console.error("Failed to parse QR data:", innerError);
-            toast.error("Invalid QR code data format. Please try again.");
-            return;
-          }
-        }
+      // Step 2: Try to parse JSON
+      const parsed = JSON.parse(decoded);
 
-        setTransactionType(parsedData.TransactionType);
-        setData(parsedData);
-        setAmount(parsedData.Amount || "");
-        setPhoneNumber(parsedData.PhoneNumber || "254");
-        
-      } catch (e) {
-        console.error("Error processing QR data:", e);
-        toast.error("Invalid QR code data. Please try again.");
-      }
+      // Step 3: Set state
+      setTransactionType(parsed.TransactionType);
+      setData(parsed);
+      setAmount(parsed.Amount || "");
+      setPhoneNumber(parsed.PhoneNumber || "254");
+    } catch (err) {
+      console.error("QR code decoding error:", err);
+      toast.error("Invalid QR code data format. Please try again.");
     }
-  }, [router.query]);
+  }
+}, [router.query]);
+
 
   // Handle phone number input change
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
