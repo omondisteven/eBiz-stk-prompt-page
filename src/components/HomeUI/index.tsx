@@ -128,18 +128,20 @@ const HomeUI = () => {
     if (router.query.data) {
       try {
         let rawData = router.query.data as string;
-        let decodedData;
+        console.log("Raw data received:", rawData); // Debug log
 
-        // Try double decoding
+        let decodedData;
         try {
-          decodedData = decodeURIComponent(decodeURIComponent(rawData));
-        } catch (doubleDecodeErr) {
-          console.warn("Double decode failed, falling back to single decode");
+          // First try Base64 decode
+          decodedData = decodeURIComponent(escape(atob(rawData)));
+        } catch (base64Err) {
+          console.warn("Base64 decode failed, trying URI decode");
           try {
+            // Fallback to URI decode
             decodedData = decodeURIComponent(rawData);
-          } catch (singleDecodeErr) {
-            console.error("Single decode also failed:", singleDecodeErr);
-            toast.error("Invalid QR code format. Please try again.");
+          } catch (uriErr) {
+            console.error("All decode attempts failed:", uriErr);
+            toast.error("Invalid QR code format");
             return;
           }
         }
@@ -148,14 +150,15 @@ const HomeUI = () => {
         try {
           parsedData = JSON.parse(decodedData);
         } catch (parseErr) {
-          console.warn("Primary JSON parse failed, trying raw query string");
-          try {
-            parsedData = JSON.parse(rawData);
-          } catch (finalErr) {
-            console.error("Final parse attempt failed:", finalErr);
-            toast.error("Invalid QR code data. Please try again.");
-            return;
-          }
+          console.error("JSON parse failed:", parseErr);
+          toast.error("Invalid QR code data");
+          return;
+        }
+
+        // Validate required fields
+        if (!parsedData.TransactionType) {
+          toast.error("Missing transaction type in QR data");
+          return;
         }
 
         setTransactionType(parsedData.TransactionType);
@@ -165,7 +168,7 @@ const HomeUI = () => {
 
       } catch (e) {
         console.error("Error processing QR code data:", e);
-        toast.error("Failed to process QR code. Please try again.");
+        toast.error("Failed to process QR code");
       }
     }
   }, [router.query]);
