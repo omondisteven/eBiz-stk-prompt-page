@@ -125,26 +125,51 @@ const HomeUI = () => {
   // Replace the useEffect that decodes the QR data with:
 
   useEffect(() => {
-  const rawData = router.query.data;
-  if (rawData && typeof rawData === 'string') {
-    try {
-      // Step 1: Try double-decode first
-      let decoded = decodeURIComponent(decodeURIComponent(rawData));
+    if (router.query.data) {
+      try {
+        let rawData = router.query.data as string;
+        let decodedData;
 
-      // Step 2: Try to parse JSON
-      const parsed = JSON.parse(decoded);
+        // Try double decoding
+        try {
+          decodedData = decodeURIComponent(decodeURIComponent(rawData));
+        } catch (doubleDecodeErr) {
+          console.warn("Double decode failed, falling back to single decode");
+          try {
+            decodedData = decodeURIComponent(rawData);
+          } catch (singleDecodeErr) {
+            console.error("Single decode also failed:", singleDecodeErr);
+            toast.error("Invalid QR code format. Please try again.");
+            return;
+          }
+        }
 
-      // Step 3: Set state
-      setTransactionType(parsed.TransactionType);
-      setData(parsed);
-      setAmount(parsed.Amount || "");
-      setPhoneNumber(parsed.PhoneNumber || "254");
-    } catch (err) {
-      console.error("QR code decoding error:", err);
-      toast.error("Invalid QR code data format. Please try again.");
+        let parsedData;
+        try {
+          parsedData = JSON.parse(decodedData);
+        } catch (parseErr) {
+          console.warn("Primary JSON parse failed, trying raw query string");
+          try {
+            parsedData = JSON.parse(rawData);
+          } catch (finalErr) {
+            console.error("Final parse attempt failed:", finalErr);
+            toast.error("Invalid QR code data. Please try again.");
+            return;
+          }
+        }
+
+        setTransactionType(parsedData.TransactionType);
+        setData(parsedData);
+        setAmount(parsedData.Amount || "");
+        setPhoneNumber(parsedData.PhoneNumber || "254");
+
+      } catch (e) {
+        console.error("Error processing QR code data:", e);
+        toast.error("Failed to process QR code. Please try again.");
+      }
     }
-  }
-}, [router.query]);
+  }, [router.query]);
+
 
 
   // Handle phone number input change
