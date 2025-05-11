@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
 import { useAppContext } from "@/context/AppContext"; 
 import Link from "next/link";
+import { PaymentMonitor } from '@/lib/PaymentMonitor';
+import db from '@/lib/db';
 
 // Add this Calculator component near your other imports
 const Calculator = ({ onCalculate, onClose, onClear }: { 
@@ -222,6 +224,8 @@ const HomeUI = () => {
     setIsAwaitingPayment(true);
     setCountdown(60);
 
+    let paymentMonitor: PaymentMonitor | null = null;
+
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -229,113 +233,55 @@ const HomeUI = () => {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
+      if (!response.ok) throw new Error(await response.text());
 
       const result = await response.json();
       const checkoutRequestId = result.CheckoutRequestID;
 
-      toast.success("Payment initiated. Awaiting MPESA PIN...");
-
-      // Start monitoring
-      const monitor = new PaymentMonitor(
+      paymentMonitor = new PaymentMonitor(
         payload.phone,
         payload.accountnumber || payload.storenumber,
-        checkoutRequestId,
-        () => {
-          // Success callback
-          toast.success("Payment confirmed!");
-          router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
-        },
-        (error) => {
-          // Error callback
-          toast.error(error);
+        (status: string) => {
+          if (status.includes('success')) {
+            toast.success(status);
+            router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
+          } else {
+            toast.error(status);
+          }
         },
         () => {
-          // Cleanup callback
           setIsAwaitingPayment(false);
           setIsPaying(false);
-        }
+        },
+        db
       );
 
-      monitor.start();
+      paymentMonitor.start(checkoutRequestId);
 
-      return () => monitor.stop();
+      // Countdown timer
+      const countdownInterval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => {
+        clearInterval(countdownInterval);
+        paymentMonitor?.stop();
+      };
+
     } catch (error) {
+      paymentMonitor?.stop();
       console.error("Payment error:", error);
-      toast.error("Failed to initiate payment. Please try again.");
+      toast.error("Failed to initiate payment");
       setIsAwaitingPayment(false);
       setIsPaying(false);
     }
   };
-
-  class PaymentMonitor {
-    private intervalId: NodeJS.Timeout | null = null;
-    private timeoutId: NodeJS.Timeout | null = null;
-    private isComplete = false;
-
-    constructor(
-      private phone: string,
-      private account: string,
-      private checkoutRequestId: string,
-      private onSuccess: () => void,
-      private onError: (message: string) => void,
-      private onCleanup: () => void
-    ) {}
-
-    start() {
-      this.timeoutId = setTimeout(() => {
-        this.handleTimeout();
-      }, 60000);
-
-      this.intervalId = setInterval(() => {
-        this.checkStatus();
-      }, 5000);
-    }
-
-    stop() {
-      if (this.intervalId) clearInterval(this.intervalId);
-      if (this.timeoutId) clearTimeout(this.timeoutId);
-      if (!this.isComplete) this.onCleanup();
-    }
-
-    private async checkStatus() {
-      try {
-        const response = await fetch(
-          `/api/stk_api/check_payment_status?phone=${this.phone}&account=${this.account}`
-        );
-        const data = await response.json();
-
-        if (data.status === "Success") {
-          this.complete(true);
-        } else if (["Cancelled", "Failed", "Timeout"].includes(data.status)) {
-          this.complete(false, `Payment ${data.status.toLowerCase()}.`);
-        }
-      } catch (error) {
-        console.error("Status check error:", error);
-      }
-    }
-
-    private handleTimeout() {
-      this.complete(false, "Payment timed out. Please try again.");
-    }
-
-    private complete(success: boolean, errorMessage?: string) {
-      if (this.isComplete) return;
-      
-      this.isComplete = true;
-      this.stop();
-
-      if (success) {
-        this.onSuccess();
-      } else if (errorMessage) {
-        this.onError(errorMessage);
-      }
-
-      this.onCleanup();
-    }
-  }
 
   // ******PAYMENT METHODS******
   const handlePayBill = () => {
