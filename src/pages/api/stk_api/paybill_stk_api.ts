@@ -10,6 +10,7 @@ const cors = Cors({
   origin: process.env.NODE_ENV === 'development' ? '*' : process.env.DOMAIN,
 });
 
+// Helper to run middleware
 function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
   return new Promise((resolve, reject) => {
     fn(req, res, (result: any) => {
@@ -22,48 +23,77 @@ function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  await runMiddleware(req, res, cors);
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
   try {
-    const { phone, amount, accountnumber } = req.body;
+    // Run CORS middleware
+    await runMiddleware(req, res, cors);
 
-    // Validate input
-    if (!phone || !amount || !accountnumber) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    // Handle OPTIONS requests
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
     }
 
-    // Create transaction record
+    // Only allow POST requests
+    if (req.method !== 'POST') {
+      res.status(405).json({ 
+        success: false,
+        message: 'Method not allowed' 
+      });
+      return;
+    }
+
+    const { phone, amount, accountnumber } = req.body;
+
+    // Validate required fields
+    if (!phone?.trim() || !amount || !accountnumber?.trim()) {
+      res.status(400).json({
+        success: false,
+        message: 'Missing required fields (phone, amount, accountnumber)'
+      });
+      return;
+    }
+
+    // Validate amount is a number
+    if (isNaN(Number(amount))) {
+      res.status(400).json({
+        success: false,
+        message: 'Amount must be a valid number'
+      });
+      return;
+    }
+
+    // Create transaction record with 60s expiration
     const tx = db.prepare(`
       INSERT INTO transactions 
-      (phone, account, amount, transaction_type) 
-      VALUES (?, ?, ?, ?)
-    `).run(phone, accountnumber, amount, 'PayBill');
+      (phone, account, amount, transaction_type, expires_at) 
+      VALUES (?, ?, ?, ?, datetime('now', '+60 seconds'))
+    `).run(phone.trim(), accountnumber.trim(), amount, 'PayBill');
 
-    // M-Pesa API credentials
+    // Verify M-Pesa credentials
     const credentials = {
-      consumerKey: process.env.MPESA_CONSUMER_KEY || 'your_consumer_key',
-      consumerSecret: process.env.MPESA_CONSUMER_SECRET || 'your_consumer_secret',
-      businessShortCode: process.env.MPESA_BUSINESS_SHORTCODE || '174379',
-      passkey: process.env.MPESA_PASSKEY || 'your_passkey',
+      consumerKey: process.env.MPESA_CONSUMER_KEY,
+      consumerSecret: process.env.MPESA_CONSUMER_SECRET,
+      businessShortCode: process.env.MPESA_BUSINESS_SHORTCODE,
+      passkey: process.env.MPESA_PASSKEY,
     };
 
-    // Generate access token
+    if (!credentials.consumerKey || !credentials.consumerSecret) {
+      throw new Error('M-Pesa credentials not configured');
+    }
+
+    // Get access token with timeout
     const authResponse = await axios.get(
       'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
       {
         headers: {
           Authorization: `Basic ${Buffer.from(`${credentials.consumerKey}:${credentials.consumerSecret}`).toString('base64')}`,
         },
+        timeout: 10000 // 10 second timeout
       }
     );
+
+    if (!authResponse.data.access_token) {
+      throw new Error('Failed to get access token');
+    }
 
     const accessToken = authResponse.data.access_token;
     const timestamp = new Date()
@@ -89,7 +119,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       TransactionDesc: 'Payment via M-Poster',
     };
 
-    // Initiate STK push
+    // Initiate STK push with timeout
     const stkResponse = await axios.post(
       'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
       stkPayload,
@@ -98,45 +128,66 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
+        timeout: 15000 // 15 second timeout
       }
     );
+
+    if (!stkResponse.data?.CheckoutRequestID) {
+      throw new Error('Invalid response from M-Pesa API');
+    }
 
     // Update transaction with checkout request ID
     db.prepare(`
       UPDATE transactions 
-      SET checkout_request_id = ? 
+      SET checkout_request_id = ?, status = 'Pending'
       WHERE id = ?
     `).run(stkResponse.data.CheckoutRequestID, tx.lastInsertRowid);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: 'STK push initiated successfully',
-      data: stkResponse.data,
+      data: {
+        CheckoutRequestID: stkResponse.data.CheckoutRequestID,
+        phone: phone.trim(),
+        account: accountnumber.trim(),
+        amount: amount
+      }
     });
+    return;
+
   } catch (error: any) {
     console.error('STK Push Error:', error);
-
+    
     // Update transaction status if it was created
-    if (error.config?.data) {
-      try {
-        const { phone } = JSON.parse(error.config.data);
+    try {
+      if (req.body?.phone) {
         db.prepare(`
           UPDATE transactions 
           SET status = 'Failed' 
           WHERE phone = ? AND status = 'Pending'
-        `).run(phone);
-      } catch (dbError) {
-        console.error('Failed to update transaction status:', dbError);
+        `).run(req.body.phone.trim());
       }
+    } catch (dbError) {
+      console.error('Failed to update transaction status:', dbError);
     }
 
-    const errorMessage = error.response?.data?.errorMessage || 
-                        error.message || 
-                        'Failed to initiate payment';
+    // Determine appropriate error message
+    let errorMessage = 'Failed to initiate payment';
+    if (error.response) {
+      errorMessage = error.response.data?.errorMessage || 
+                    error.response.statusText ||
+                    `Server responded with ${error.response.status}`;
+    } else if (error.request) {
+      errorMessage = 'No response received from payment service';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
 
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+    return;
   }
 }

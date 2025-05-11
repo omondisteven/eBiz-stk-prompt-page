@@ -224,8 +224,6 @@ const HomeUI = () => {
     setIsAwaitingPayment(true);
     setCountdown(60);
 
-    let paymentMonitor: PaymentMonitor | null = null;
-
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -233,15 +231,33 @@ const HomeUI = () => {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error(await response.text());
+      // First check if the response is OK
+      if (!response.ok) {
+        let errorText = await response.text();
+        try {
+          // Try to parse as JSON if possible
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.message || 'Payment failed');
+        } catch {
+          // If not JSON, use raw text
+          throw new Error(errorText || 'Payment failed');
+        }
+      }
 
+      // Then try to parse the successful response
       const result = await response.json();
-      const checkoutRequestId = result.CheckoutRequestID;
+      
+      if (!result.success || !result.data?.CheckoutRequestID) {
+        throw new Error(result.message || 'Invalid response from server');
+      }
 
-      paymentMonitor = new PaymentMonitor(
+      const checkoutRequestId = result.data.CheckoutRequestID;
+
+      // Start payment monitoring
+      const paymentMonitor = new PaymentMonitor(
         payload.phone,
         payload.accountnumber || payload.storenumber,
-        (status: string) => {
+        (status) => {
           if (status.includes('success')) {
             toast.success(status);
             router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
@@ -260,24 +276,17 @@ const HomeUI = () => {
 
       // Countdown timer
       const countdownInterval = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(countdownInterval);
-            return 0;
-          }
-          return prev - 1;
-        });
+        setCountdown(prev => (prev <= 1 ? 0 : prev - 1));
       }, 1000);
 
       return () => {
         clearInterval(countdownInterval);
-        paymentMonitor?.stop();
+        paymentMonitor.stop();
       };
 
-    } catch (error) {
-      paymentMonitor?.stop();
+    } catch (error: any) {
       console.error("Payment error:", error);
-      toast.error("Failed to initiate payment");
+      toast.error(error.message || "Failed to initiate payment");
       setIsAwaitingPayment(false);
       setIsPaying(false);
     }
