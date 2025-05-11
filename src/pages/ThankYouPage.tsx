@@ -14,6 +14,7 @@ import { saveAs } from "file-saver";
 // import { title } from "process";
 import { MousePointerClick } from "lucide-react";
 
+
 const ThankYouPage = () => {
   const router = useRouter();
   const receiptRef = useRef<HTMLDivElement>(null);
@@ -24,61 +25,61 @@ const ThankYouPage = () => {
   const [showContact, setShowContact] = useState(false);
 
   useEffect(() => {
-    if (router.query.data) {
+  if (router.query.data) {
+    try {
+      let rawData = router.query.data as string;
+      let decodedData;
+
+      // Try double decoding
       try {
-        let rawData = router.query.data as string;
-        let decodedData: string;
-
-        // Try double decoding
+        decodedData = decodeURIComponent(decodeURIComponent(rawData));
+      } catch (doubleDecodeErr) {
+        console.warn("Double decode failed, falling back to single decode");
         try {
-          decodedData = decodeURIComponent(decodeURIComponent(rawData));
-        } catch (doubleDecodeErr) {
-          console.warn("Double decode failed, falling back to single decode");
-          try {
-            decodedData = decodeURIComponent(rawData);
-          } catch (singleDecodeErr) {
-            console.error("Single decode also failed:", singleDecodeErr);
-            toast.error("Invalid QR code format. Please try again.");
-            return;
-          }
+          decodedData = decodeURIComponent(rawData);
+        } catch (singleDecodeErr) {
+          console.error("Single decode also failed:", singleDecodeErr);
+          toast.error("Invalid QR code format. Please try again.");
+          return;
         }
-
-        let parsedData;
-        try {
-          parsedData = JSON.parse(decodedData);
-        } catch (parseErr) {
-          console.warn("Primary JSON parse failed, trying raw query string");
-          try {
-            parsedData = JSON.parse(rawData);
-          } catch (finalErr) {
-            console.error("Final parse attempt failed:", finalErr);
-            toast.error("Invalid QR code data. Please try again.");
-            return;
-          }
-        }
-
-        setReceiptData(parsedData);
-
-        const randomRef = "RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
-        setReceiptNumber(randomRef);
-
-        const now = new Date();
-        const formatted = now.toLocaleString("en-KE", {
-          year: "numeric",
-          month: "short",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        });
-        setTimestamp(formatted);
-
-      } catch (e) {
-        console.error("Error processing QR code data:", e);
-        alert("Failed to process QR code. Please try again.");
       }
+
+      let parsedData;
+      try {
+        parsedData = JSON.parse(decodedData);
+      } catch (parseErr) {
+        console.warn("Primary JSON parse failed, trying raw query string");
+        try {
+          parsedData = JSON.parse(rawData);
+        } catch (finalErr) {
+          console.error("Final parse attempt failed:", finalErr);
+          toast.error("Invalid QR code data. Please try again.");
+          return;
+        }
+      }
+
+      setReceiptData(parsedData);
+
+      const randomRef = "RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+      setReceiptNumber(randomRef);
+
+      const now = new Date();
+      const formatted = now.toLocaleString("en-KE", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+      setTimestamp(formatted);
+
+    } catch (e) {
+      console.error("Error processing QR code data:", e);
+      toast.error("Failed to process QR code. Please try again.");
     }
-  }, [router.query]);
+  }
+}, [router.query]);
 
 
   const handleDownload = async () => {
