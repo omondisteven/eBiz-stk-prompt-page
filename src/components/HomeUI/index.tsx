@@ -1,6 +1,6 @@
 //index.tsx
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HiOutlineCreditCard, HiCalculator } from "react-icons/hi";
 import { HiX } from "react-icons/hi";
 import { Input } from "@/components/ui/input";
@@ -121,6 +121,17 @@ const HomeUI = () => {
   const [countdown, setCountdown] = useState(30);
   const [isPaying, setIsPaying] = useState(false); // Disable button during processing
 
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
+
+
   // Update phoneNumber when QR code data is decoded
   // Replace the useEffect that decodes the QR data with:
 
@@ -235,21 +246,14 @@ const HomeUI = () => {
   const handlePayment = async (url: string, payload: any) => {
     setIsPaying(true);
     setIsAwaitingPayment(true);
-    setCountdown(30); // Reset countdown
+    setCountdown(30);
 
-    let intervalId: NodeJS.Timeout | null = null;
-    let pollInterval: NodeJS.Timeout | null = null;
-    let isComplete = false;
-
+    // Cleanup function
     const cleanup = () => {
-      if (intervalId) clearInterval(intervalId);
-      if (pollInterval) clearInterval(pollInterval);
-      intervalId = null;
-      pollInterval = null;
-      if (!isComplete) {
-        setIsAwaitingPayment(false);
-        setIsPaying(false);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      intervalRef.current = null;
+      pollIntervalRef.current = null;
     };
 
     try {
@@ -264,20 +268,22 @@ const HomeUI = () => {
       if (response.ok) {
         toast.success("Payment initiated. Awaiting MPESA PIN...");
 
-        // Start countdown timer
-        intervalId = setInterval(() => {
+        // Countdown timer
+        intervalRef.current = setInterval(() => {
           setCountdown(prev => {
             if (prev <= 1) {
               cleanup();
               toast.error("Payment not completed in time.");
+              setIsAwaitingPayment(false);
+              setIsPaying(false);
               return 30;
             }
             return prev - 1;
           });
         }, 1000);
 
-        // Poll for payment status
-        pollInterval = setInterval(async () => {
+        // Polling
+        pollIntervalRef.current = setInterval(async () => {
           try {
             const checkRes = await fetch(
               `/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`
@@ -287,38 +293,38 @@ const HomeUI = () => {
             if (!checkRes.ok) throw new Error(checkData.message || "Failed to check payment status");
 
             if (checkData.status === "Success") {
-              isComplete = true;
               cleanup();
               toast.success("Payment confirmed!");
-              router.push(
-                `/ThankYouPage?data=${encodeURIComponent(
-                  JSON.stringify({ ...data, Amount: amount })
-                )}`
-              );
+              router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
             } else if (checkData.status === "Cancelled" || checkData.status === "Failed") {
-              isComplete = true;
               cleanup();
               toast.error(`Payment was ${checkData.status.toLowerCase()}.`);
+              setIsAwaitingPayment(false);
+              setIsPaying(false);
             }
           } catch (error) {
             console.error("Error checking payment status:", error);
             cleanup();
             toast.error("Error checking payment status.");
+            setIsAwaitingPayment(false);
+            setIsPaying(false);
           }
         }, 8000);
 
       } else {
         toast.error(result?.message || "Failed to initiate payment.");
-        cleanup();
+        setIsAwaitingPayment(false);
+        setIsPaying(false);
       }
     } catch (error) {
       console.error("Payment error:", error);
       toast.error("Network error while initiating payment.");
       cleanup();
+      setIsAwaitingPayment(false);
+      setIsPaying(false);
     }
-
-    return cleanup;
   };
+
 
 
   // ******PAYMENT METHODS******
