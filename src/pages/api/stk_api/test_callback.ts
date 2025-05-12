@@ -1,3 +1,4 @@
+// Add this test endpoint to check if your callback URL is publicly accessible
 // pages/api/stk_api/test_callback.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 
