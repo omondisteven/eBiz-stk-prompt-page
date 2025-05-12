@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
 import { useAppContext } from "@/context/AppContext"; 
 import Link from "next/link";
-import { PaymentMonitor } from '@/lib/PaymentMonitor';
-import db from '@/lib/db';
 
 // Add this Calculator component near your other imports
 const Calculator = ({ onCalculate, onClose, onClear }: { 
@@ -120,7 +118,7 @@ const HomeUI = () => {
   const [showCalculator, setShowCalculator] = useState(false);
 
   const [isAwaitingPayment, setIsAwaitingPayment] = useState(false);
-  const [countdown, setCountdown] = useState(20);
+  const [countdown, setCountdown] = useState(60);
   const [isPaying, setIsPaying] = useState(false); // Disable button during processing
 
   // Update phoneNumber when QR code data is decoded
@@ -222,7 +220,10 @@ const HomeUI = () => {
   const handlePayment = async (url: string, payload: any) => {
     setIsPaying(true);
     setIsAwaitingPayment(true);
-    setCountdown(60);
+    setCountdown(60); // Reset countdown
+
+    let intervalId: NodeJS.Timeout;
+    let pollInterval: NodeJS.Timeout;
 
     try {
       const response = await fetch(url, {
@@ -236,31 +237,28 @@ const HomeUI = () => {
       if (response.ok) {
         toast.success("Payment initiated. Awaiting MPESA PIN...");
 
-        let paymentCompleted = false;
-
-        const intervalId = setInterval(() => {
+        // Start countdown timer
+        intervalId = setInterval(() => {
           setCountdown(prev => {
             if (prev <= 1) {
               clearInterval(intervalId);
               clearInterval(pollInterval);
-              if (!paymentCompleted) {
-                toast.error("Payment not completed in time.");
-                setIsAwaitingPayment(false);
-                setIsPaying(false);
-              }
+              toast.error("Payment not completed in time.");
+              setIsAwaitingPayment(false);
+              setIsPaying(false);
               return 60;
             }
             return prev - 1;
           });
         }, 1000);
 
-        const pollInterval = setInterval(async () => {
+        // Poll for payment status
+        pollInterval = setInterval(async () => {
           try {
             const checkRes = await fetch(`/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`);
             const checkData = await checkRes.json();
 
             if (checkData.status === "Success") {
-              paymentCompleted = true;
               clearInterval(intervalId);
               clearInterval(pollInterval);
               toast.success("Payment confirmed!");
@@ -268,19 +266,20 @@ const HomeUI = () => {
             } else if (checkData.status === "Cancelled" || checkData.status === "Failed") {
               clearInterval(intervalId);
               clearInterval(pollInterval);
-              toast.error("Payment was cancelled or failed.");
+              toast.error(`Payment was ${checkData.status.toLowerCase()}.`);
               setIsAwaitingPayment(false);
               setIsPaying(false);
             }
+            // If status is pending or other, do nothing and keep polling
           } catch (error) {
             console.error("Error checking payment status:", error);
+            clearInterval(intervalId);
+            clearInterval(pollInterval);
+            toast.error("Error checking payment status.");
+            setIsAwaitingPayment(false);
+            setIsPaying(false);
           }
         }, 5000);
-
-        return () => {
-          clearInterval(intervalId);
-          clearInterval(pollInterval);
-        };
 
       } else {
         toast.error(result?.message || "Failed to initiate payment.");
@@ -290,9 +289,17 @@ const HomeUI = () => {
     } catch (error) {
       console.error("Payment error:", error);
       toast.error("Network error while initiating payment.");
+      clearInterval(intervalId!);
+      clearInterval(pollInterval!);
       setIsAwaitingPayment(false);
       setIsPaying(false);
     }
+
+    // Cleanup function
+    return () => {
+      clearInterval(intervalId!);
+      clearInterval(pollInterval!);
+    };
   };
 
 
