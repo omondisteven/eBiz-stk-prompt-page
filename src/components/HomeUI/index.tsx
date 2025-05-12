@@ -220,7 +220,7 @@ const HomeUI = () => {
   const handlePayment = async (url: string, payload: any) => {
     setIsPaying(true);
     setIsAwaitingPayment(true);
-    setCountdown(30); // Reset countdown
+    setCountdown(20); // Reset countdown
 
     try {
       const response = await fetch(url, {
@@ -240,10 +240,10 @@ const HomeUI = () => {
             if (prev <= 1) {
               clearInterval(intervalId);
               clearInterval(pollInterval);
-              toast.error("Payment not completed in time.");
+              toast.error("Payment timed out. Please try again.");
               setIsAwaitingPayment(false);
               setIsPaying(false);
-              return 30;
+              return 20;
             }
             return prev - 1;
           });
@@ -252,7 +252,9 @@ const HomeUI = () => {
         // Poll for payment status
         const pollInterval = setInterval(async () => {
           try {
-            const checkRes = await fetch(`/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`);
+            const checkRes = await fetch(
+              `/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`
+            );
             const checkData = await checkRes.json();
 
             if (checkData.status === "Success") {
@@ -261,11 +263,18 @@ const HomeUI = () => {
               toast.success("Payment confirmed!");
               setIsAwaitingPayment(false);
               setIsPaying(false);
+              // Only navigate after successful confirmation
               router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
-            } else if (checkData.status === "Cancelled" || checkData.status === "Failed") {
+            } else if (checkData.status === "Cancelled") {
               clearInterval(intervalId);
               clearInterval(pollInterval);
-              toast.error(checkData.status === "Cancelled" ? "Payment not completed by user." : "Payment failed.");
+              toast.error("Payment was cancelled by user.");
+              setIsAwaitingPayment(false);
+              setIsPaying(false);
+            } else if (checkData.status === "Failed") {
+              clearInterval(intervalId);
+              clearInterval(pollInterval);
+              toast.error("Payment failed. Please try again.");
               setIsAwaitingPayment(false);
               setIsPaying(false);
             }
@@ -274,7 +283,7 @@ const HomeUI = () => {
             console.error("Error checking payment status:", error);
             // Don't clear intervals on network errors, continue trying
           }
-        }, 5000);
+        }, 3000); // Check every 3 seconds
 
         // Cleanup intervals if component unmounts
         return () => {
