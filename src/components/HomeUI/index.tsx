@@ -218,13 +218,15 @@ const HomeUI = () => {
   };
 
   const handlePayment = async (url: string, payload: any) => {
+    console.log('Initiating payment with:', payload);
     setIsPaying(true);
     setIsAwaitingPayment(true);
-    setCountdown(120); // 2 minutes timeout
+    setCountdown(120);
 
     try {
-      // Clear any previous status for this payment
-      await fetch(`/api/stk_api/clear_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`);
+      // Clear previous status
+      await fetch(`/api/stk_api/clear_status?phone=${payload.phone}&account=${payload.accountnumber}`);
+      console.log('Cleared previous status');
 
       const response = await fetch(url, {
         method: "POST",
@@ -233,24 +235,35 @@ const HomeUI = () => {
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const errorText = await response.text();
+        console.error('Payment initiation failed:', errorText);
+        throw new Error(errorText);
       }
 
+      const result = await response.json();
+      console.log('STK Push response:', result);
       toast.success("Payment initiated. Please enter your M-PESA PIN.");
 
-      // Start polling for status
+      // Start polling
       const pollInterval = setInterval(async () => {
         try {
+          console.log('Checking payment status...');
           const checkRes = await fetch(
-            `/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`
+            `/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber}`
           );
-          const checkData = await checkRes.json();
+          
+          if (!checkRes.ok) {
+            console.error('Status check failed:', await checkRes.text());
+            return;
+          }
 
+          const checkData = await checkRes.json();
           console.log('Polling status:', checkData.status);
 
           if (checkData.status === "Success") {
             clearInterval(pollInterval);
             clearInterval(timeoutInterval);
+            console.log('Payment successful, navigating...');
             toast.success("Payment confirmed!");
             setIsAwaitingPayment(false);
             setIsPaying(false);
@@ -259,6 +272,7 @@ const HomeUI = () => {
           else if (checkData.status === "Cancelled") {
             clearInterval(pollInterval);
             clearInterval(timeoutInterval);
+            console.log('Payment cancelled by user');
             toast.error("Payment was cancelled.");
             setIsAwaitingPayment(false);
             setIsPaying(false);
@@ -266,14 +280,15 @@ const HomeUI = () => {
           else if (checkData.status === "Failed") {
             clearInterval(pollInterval);
             clearInterval(timeoutInterval);
+            console.log('Payment failed');
             toast.error("Payment failed. Please try again.");
             setIsAwaitingPayment(false);
             setIsPaying(false);
           }
         } catch (error) {
-          console.error("Polling error:", error);
+          console.error("Polling error:", error instanceof Error ? error.message : String(error));
         }
-      }, 3000); // Check every 3 seconds
+      }, 3000);
 
       // Timeout handler
       const timeoutInterval = setInterval(() => {
@@ -281,6 +296,7 @@ const HomeUI = () => {
           if (prev <= 1) {
             clearInterval(pollInterval);
             clearInterval(timeoutInterval);
+            console.log('Payment timed out');
             toast.error("Payment timed out. Please try again.");
             setIsAwaitingPayment(false);
             setIsPaying(false);
@@ -295,12 +311,20 @@ const HomeUI = () => {
         clearInterval(timeoutInterval);
       };
     } catch (error) {
-      console.error("Payment initiation failed:", error);
-      toast.error("Failed to initiate payment. Please try again.");
+      let errorMessage = "Failed to initiate payment.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      console.error("Payment error:", error);
+      toast.error(errorMessage);
       setIsAwaitingPayment(false);
       setIsPaying(false);
     }
   };
+
   // ******PAYMENT METHODS******
   const handlePayBill = () => {
     if (!phoneNumber.trim() || !data.PaybillNumber?.trim() || !data.AccountNumber?.trim() || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
