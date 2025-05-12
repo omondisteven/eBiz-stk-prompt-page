@@ -1,11 +1,14 @@
+// /src/lib/db.ts (updated)
 import Database from 'better-sqlite3';
 import path from 'path';
 
-const dbPath = path.join(process.cwd(), 'transactions.db');
+const dbPath = process.env.NODE_ENV === 'production' 
+  ? '/tmp/transactions.db' 
+  : path.join(process.cwd(), 'transactions.db');
 
 const db = new Database(dbPath, { verbose: console.log });
 
-// Initialize tables with better error handling
+// Initialize tables
 function initializeDB() {
   try {
     db.pragma('journal_mode = WAL');
@@ -37,6 +40,14 @@ function initializeDB() {
   } catch (error) {
     console.error('Database initialization error:', error);
     throw error;
+  }
+
+  // Additional check for Vercel
+  if (process.env.NODE_ENV === 'production') {
+    const fs = require('fs');
+    if (!fs.existsSync('/tmp')) {
+      fs.mkdirSync('/tmp');
+    }
   }
 }
 
