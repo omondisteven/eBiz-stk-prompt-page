@@ -217,6 +217,21 @@ const HomeUI = () => {
     setAmount(value);
   };
 
+  useEffect(() => {
+    let cleanup: () => void;
+
+    if (isAwaitingPayment) {
+      // This is just for type safety - actual cleanup is assigned in handlePayment
+      cleanup = () => {};
+    }
+
+    return () => {
+      if (cleanup) {
+        cleanup();
+      }
+    };
+  }, [isAwaitingPayment]);
+
   const handlePayment = async (url: string, payload: any) => {
     setIsPaying(true);
     setIsAwaitingPayment(true);
@@ -224,93 +239,84 @@ const HomeUI = () => {
 
     let intervalId: NodeJS.Timeout | null = null;
     let pollInterval: NodeJS.Timeout | null = null;
+    let isComplete = false;
 
-    // Cleanup function
     const cleanup = () => {
-        if (intervalId) clearInterval(intervalId);
-        if (pollInterval) clearInterval(pollInterval);
-        intervalId = null;
-        pollInterval = null;
+      if (intervalId) clearInterval(intervalId);
+      if (pollInterval) clearInterval(pollInterval);
+      intervalId = null;
+      pollInterval = null;
+      if (!isComplete) {
+        setIsAwaitingPayment(false);
+        setIsPaying(false);
+      }
     };
 
     try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        });
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-        const result = await response.json();
+      const result = await response.json();
 
-        if (response.ok) {
-            toast.success("Payment initiated. Awaiting MPESA PIN...");
+      if (response.ok) {
+        toast.success("Payment initiated. Awaiting MPESA PIN...");
 
-            // Start countdown timer
-            intervalId = setInterval(() => {
-                setCountdown(prev => {
-                    if (prev <= 1) {
-                        cleanup();
-                        toast.error("Payment not completed in time.");
-                        setIsAwaitingPayment(false);
-                        setIsPaying(false);
-                        return 30;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
+        // Start countdown timer
+        intervalId = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              cleanup();
+              toast.error("Payment not completed in time.");
+              return 30;
+            }
+            return prev - 1;
+          });
+        }, 1000);
 
-            // Poll for payment status
-            pollInterval = setInterval(async () => {
-                try {
-                    const checkRes = await fetch(
-                        `/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`
-                    );
-                    const checkData = await checkRes.json();
+        // Poll for payment status
+        pollInterval = setInterval(async () => {
+          try {
+            const checkRes = await fetch(
+              `/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`
+            );
+            const checkData = await checkRes.json();
 
-                    if (!checkRes.ok) {
-                        throw new Error(checkData.message || "Failed to check payment status");
-                    }
+            if (!checkRes.ok) throw new Error(checkData.message || "Failed to check payment status");
 
-                    if (checkData.status === "Success") {
-                        cleanup();
-                        toast.success("Payment confirmed!");
-                        router.push(
-                            `/ThankYouPage?data=${encodeURIComponent(
-                                JSON.stringify({ ...data, Amount: amount })
-                            )}`
-                        );
-                        return;
-                    } else if (checkData.status === "Cancelled" || checkData.status === "Failed") {
-                        cleanup();
-                        toast.error(`Payment was ${checkData.status.toLowerCase()}.`);
-                        setIsAwaitingPayment(false);
-                        setIsPaying(false);
-                        return;
-                    }
-                    // If status is pending or other, continue polling
-                } catch (error) {
-                    console.error("Error checking payment status:", error);
-                    cleanup();
-                    toast.error("Error checking payment status.");
-                    setIsAwaitingPayment(false);
-                    setIsPaying(false);
-                }
-            }, 8000); // Increased polling interval
+            if (checkData.status === "Success") {
+              isComplete = true;
+              cleanup();
+              toast.success("Payment confirmed!");
+              router.push(
+                `/ThankYouPage?data=${encodeURIComponent(
+                  JSON.stringify({ ...data, Amount: amount })
+                )}`
+              );
+            } else if (checkData.status === "Cancelled" || checkData.status === "Failed") {
+              isComplete = true;
+              cleanup();
+              toast.error(`Payment was ${checkData.status.toLowerCase()}.`);
+            }
+          } catch (error) {
+            console.error("Error checking payment status:", error);
+            cleanup();
+            toast.error("Error checking payment status.");
+          }
+        }, 8000);
 
-        } else {
-            toast.error(result?.message || "Failed to initiate payment.");
-            setIsAwaitingPayment(false);
-            setIsPaying(false);
-        }
-    } catch (error) {
-        console.error("Payment error:", error);
-        toast.error("Network error while initiating payment.");
+      } else {
+        toast.error(result?.message || "Failed to initiate payment.");
         cleanup();
-        setIsAwaitingPayment(false);
-        setIsPaying(false);
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error("Network error while initiating payment.");
+      cleanup();
     }
 
-    // Cleanup on component unmount
     return cleanup;
   };
 
