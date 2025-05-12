@@ -220,7 +220,7 @@ const HomeUI = () => {
   const handlePayment = async (url: string, payload: any) => {
     setIsPaying(true);
     setIsAwaitingPayment(true);
-    setCountdown(20); // Reset countdown
+    setCountdown(40); // Reset countdown
 
     try {
       const response = await fetch(url, {
@@ -243,7 +243,7 @@ const HomeUI = () => {
               toast.error("Payment timed out. Please try again.");
               setIsAwaitingPayment(false);
               setIsPaying(false);
-              return 20;
+              return 40;
             }
             return prev - 1;
           });
