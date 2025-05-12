@@ -246,93 +246,116 @@ const HomeUI = () => {
   const handlePayment = async (url: string, payload: any) => {
     setIsPaying(true);
     setIsAwaitingPayment(true);
-    setCountdown(30); // Reset countdown
+    setCountdown(30);
 
-    let countdownInterval: NodeJS.Timeout | null = null;
-    let pollInterval: NodeJS.Timeout | null = null;
-    let stopped = false;
-
-    // Cleanup function
-    const cleanup = () => {
-      if (countdownInterval) clearInterval(countdownInterval);
-      if (pollInterval) clearInterval(pollInterval);
-      countdownInterval = null;
-      pollInterval = null;
-      stopped = true;
-      setIsAwaitingPayment(false);
-      setIsPaying(false);
-    };
+    const controller = new AbortController();
+    const signal = controller.signal;
 
     try {
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal,
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        toast.error(result?.message || "Failed to initiate payment.");
-        cleanup();
-        return;
+        throw new Error(result?.message || "Failed to initiate payment");
       }
 
       toast.success("Payment initiated. Awaiting MPESA PIN...");
 
       // Countdown timer
-      countdownInterval = setInterval(() => {
-        setCountdown((prev) => {
+      const countdownInterval = setInterval(() => {
+        setCountdown(prev => {
           if (prev <= 1) {
-            toast.error("Payment not completed in time.");
-            cleanup();
+            controller.abort();
+            setIsAwaitingPayment(false);
+            setIsPaying(false);
+            toast.error("Payment timed out");
             return 30;
           }
           return prev - 1;
         });
       }, 1000);
 
-      // Polling
-      pollInterval = setInterval(async () => {
-        if (stopped) return; // Skip polling if already stopped
-
+      // Polling function
+      const pollPaymentStatus = async () => {
         try {
           const checkRes = await fetch(
-            `/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`
+            `/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`,
+            { signal }
           );
           const checkData = await checkRes.json();
+
+          if (signal.aborted) return;
 
           if (!checkRes.ok) {
             throw new Error(checkData.message || "Failed to check payment status");
           }
 
           if (checkData.status === "Success") {
-            cleanup();
+            clearInterval(countdownInterval);
+            controller.abort();
+            setIsAwaitingPayment(false);
+            setIsPaying(false);
             toast.success("Payment confirmed!");
             router.push(
               `/ThankYouPage?data=${encodeURIComponent(
                 JSON.stringify({ ...data, Amount: amount })
               )}`
             );
-          } else if (["Cancelled", "Failed", "Rejected"].includes(checkData.status)) {
-            cleanup();
-            toast.error(`Payment ${checkData.status.toLowerCase()}.`);
+          } else if (checkData.status === "Cancelled" || checkData.status === "Failed") {
+            clearInterval(countdownInterval);
+            controller.abort();
+            setIsAwaitingPayment(false);
+            setIsPaying(false);
+            toast.error(`Payment was ${checkData.status.toLowerCase()}.`);
           }
-          // Else continue polling
         } catch (error) {
-          console.error("Polling error:", error);
-          cleanup();
-          toast.error("Error checking payment status.");
+          if (error instanceof Error) {
+            if (error.name !== 'AbortError') {
+              console.error("Error checking payment status:", error);
+              clearInterval(countdownInterval);
+              setIsAwaitingPayment(false);
+              setIsPaying(false);
+              toast.error("Error checking payment status.");
+            }
+          } else {
+            console.error("Unknown error checking payment status:", error);
+          }
         }
-      }, 6000); // Faster polling
-    } catch (error) {
-      console.error("Payment error:", error);
-      toast.error("Network error while initiating payment.");
-      cleanup();
-    }
+      };
 
-    // Optional: return cleanup function for useEffect
-    return cleanup;
+      // Start polling
+      const pollInterval = setInterval(pollPaymentStatus, 5000);
+
+      // Cleanup
+      return () => {
+        clearInterval(countdownInterval);
+        clearInterval(pollInterval);
+        controller.abort();
+      };
+
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name !== 'AbortError') {
+          console.error("Payment error:", error);
+          toast.error(error.message || "Payment initiation failed");
+          setIsAwaitingPayment(false);
+          setIsPaying(false);
+          setCountdown(30);
+        }
+      } else {
+        console.error("Unknown payment error:", error);
+        toast.error("An unknown error occurred during payment initiation");
+        setIsAwaitingPayment(false);
+        setIsPaying(false);
+        setCountdown(30);
+      }
+    }
   };
 
   // ******PAYMENT METHODS******
