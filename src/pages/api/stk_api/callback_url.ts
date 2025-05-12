@@ -1,45 +1,38 @@
+// src/pages/api/stk_api/callback_url.ts
 import { NextApiRequest, NextApiResponse } from 'next';
-import db from '@/lib/db';
+import fs from 'fs';
+import path from 'path';
+import { setPaymentStatus } from '@/utils/paymentStatusStore'; // adjust import as needed
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { Body: body } = req.body;
-    
-    try {
-      if (!body?.stkCallback) {
-        throw new Error('Invalid callback format');
-      }
+    const mpesaResponse = req.body;
 
-      const { ResultCode, CheckoutRequestID, ResultDesc = '' } = body.stkCallback;
-      
-      let status: 'Success' | 'Cancelled' | 'Failed';
-      if (ResultCode === 0) {
-        status = 'Success';
-      } else if (/cancelled/i.test(ResultDesc)) {
-        status = 'Cancelled';
-      } else {
-        status = 'Failed';
-      }
+    // Extract identifiers
+    const phone = mpesaResponse?.Body?.stkCallback?.CallbackMetadata?.Item?.find((item: any) => item.Name === "PhoneNumber")?.Value;
+    const account = mpesaResponse?.Body?.stkCallback?.MerchantRequestID || "unknown";
 
-      // Immediately update database
-      db.prepare(`
-        UPDATE transactions 
-        SET status = ?, updated_at = CURRENT_TIMESTAMP 
-        WHERE checkout_request_id = ?
-      `).run(status, CheckoutRequestID);
+    // Determine result status
+    const resultCode = mpesaResponse?.Body?.stkCallback?.ResultCode;
 
-      return res.status(200).json({
-        ResultCode: 0,
-        ResultDesc: "Callback processed successfully"
-      });
-
-    } catch (error) {
-      console.error('Callback processing error:', error);
-      return res.status(500).json({
-        ResultCode: 1,
-        ResultDesc: "Error processing callback"
-      });
+    const key = `${phone}-${account}`;
+    if (resultCode === 0) {
+      setPaymentStatus(key, "Success");
+    } else if (resultCode === 1032) {
+      setPaymentStatus(key, "Cancelled");
+    } else {
+      setPaymentStatus(key, "Failed");
     }
+
+    // Log for debugging
+    const logFilePath = path.join(process.cwd(), 'M_PESAConfirmationResponse.txt');
+    fs.appendFileSync(logFilePath, JSON.stringify(mpesaResponse) + '\n');
+
+    res.status(200).json({
+      ResultCode: 0,
+      ResultDesc: "Confirmation Received Successfully",
+    });
+  } else {
+    res.status(405).json({ message: 'Method Not Allowed' });
   }
-  return res.status(405).json({ message: 'Method not allowed' });
 }
