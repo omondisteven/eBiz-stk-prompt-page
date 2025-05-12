@@ -3,18 +3,34 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
-// Temporary storage for payment statuses
-export  const paymentStatuses: Record<string, string> = {};
+const storagePath = path.join(process.cwd(), 'tmp', 'paymentStatuses.json');
+
+// Initialize storage file if it doesn't exist
+if (!fs.existsSync(path.dirname(storagePath))) {
+  fs.mkdirSync(path.dirname(storagePath), { recursive: true });
+}
+if (!fs.existsSync(storagePath)) {
+  fs.writeFileSync(storagePath, '{}');
+}
+
+function readStatuses() {
+  try {
+    return JSON.parse(fs.readFileSync(storagePath, 'utf-8'));
+  } catch (e) {
+    return {};
+  }
+}
+
+function writeStatuses(statuses: Record<string, string>) {
+  fs.writeFileSync(storagePath, JSON.stringify(statuses, null, 2));
+}
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     const mpesaResponse = req.body;
-
-    // Log the response to a file
     const logFilePath = path.join(process.cwd(), 'M_PESAConfirmationResponse.txt');
     fs.appendFileSync(logFilePath, JSON.stringify(mpesaResponse) + '\n');
 
-    // Extract relevant information from the callback
     const resultCode = mpesaResponse.Body?.stkCallback?.ResultCode;
     const phone = mpesaResponse.Body?.stkCallback?.CallbackMetadata?.Item?.find(
       (item: any) => item.Name === "PhoneNumber"
@@ -24,18 +40,17 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     )?.Value;
 
     if (phone && account) {
+      const statuses = readStatuses();
       const key = `${phone}-${account}`;
       
       if (resultCode === 0) {
-        paymentStatuses[key] = "Success";
+        statuses[key] = "Success";
       } else {
         const resultDesc = mpesaResponse.Body?.stkCallback?.ResultDesc || '';
-        if (resultDesc.includes("cancelled") || resultDesc.includes("Cancelled")) {
-          paymentStatuses[key] = "Cancelled";
-        } else {
-          paymentStatuses[key] = "Failed";
-        }
+        statuses[key] = resultDesc.includes("cancelled") ? "Cancelled" : "Failed";
       }
+      
+      writeStatuses(statuses);
     }
 
     res.status(200).json({
