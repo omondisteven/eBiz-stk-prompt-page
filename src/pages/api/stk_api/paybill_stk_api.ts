@@ -1,21 +1,15 @@
-// /src/pages/api/stk_api/paybill_stk_api.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
-import db from '@/lib/db';
 import Cors from 'cors';
 
-// Initialize CORS middleware
+// Initialize the CORS middleware
 const cors = Cors({
-  methods: ['POST', 'OPTIONS'],
-  origin: [
-    'https://e-biz-stk-prompt-page.vercel.app',
-    'http://localhost:3000',
-    ...(process.env.NODE_ENV === 'development' ? ['*'] : [])
-  ]
+  origin: '*', // Allow all origins (for testing)
+  methods: ['POST', 'OPTIONS'], // Allowed methods
+  allowedHeaders: ['Content-Type'],
 });
 
-// Helper to run middleware
-async function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
+function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
   return new Promise((resolve, reject) => {
     fn(req, res, (result: any) => {
       if (result instanceof Error) {
@@ -27,185 +21,73 @@ async function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any)
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  try {
-    // Run CORS middleware
-    await runMiddleware(req, res, cors);
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS'); // Allow POST and OPTIONS
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); // Allow Content-Type header
 
-    // Handle OPTIONS requests
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
 
-    // Only allow POST requests
-    if (req.method !== 'POST') {
-      res.setHeader('Allow', ['POST']);
-      return res.status(405).json({ 
-        success: false,
-        message: `Method ${req.method} not allowed`
-      });
-    }
+    console.log("Handler started"); //debugging
+  await runMiddleware(req, res, cors);
+    console.log("Middleware finished"); //debugging
 
-    // Validate content type
-    const contentType = req.headers['content-type'];
-    if (!contentType || !contentType.includes('application/json')) {
-      return res.status(400).json({
-        success: false,
-        message: 'Content-Type must be application/json'
-      });
-    }
+  if (req.method === 'OPTIONS') {
+    console.log("Options request received"); //debugging
+    return res.status(200).end();
+  }
 
-    const { phone, amount, accountnumber } = req.body;
+  if (req.method === 'POST') {
+    try {
+      const { phone, amount, accountnumber } = req.body;
 
-    // Validate required fields
-    if (!phone?.trim() || !amount || !accountnumber?.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required fields (phone, amount, accountnumber)'
-      });
-    }
+      console.log("Payment details:", { phone, amount, accountnumber });
 
-    // Validate phone number format
-    if (!/^254\d{9}$/.test(phone.trim())) {
-      return res.status(400).json({
-        success: false,
-        message: 'Phone number must be in format 254XXXXXXXXX'
-      });
-    }
+      const consumerKey = 'JOugZC2lkqSZhy8eLeQMx8S0UbOXZ5A8Yzz26fCx9cyU1vqH';
+      const consumerSecret = 'fqyZyrdW3QE3pDozsAcWNkVjwDADAL1dFMF3T9v65gJq8XZeyEeaTqBRXbC5RIvC';
+      const BusinessShortCode = '174379';
+      const Passkey = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
+      const Timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3);
+      const Password = Buffer.from(`${BusinessShortCode}${Passkey}${Timestamp}`).toString('base64');
 
-    // Validate amount is a positive number
-    const amountNum = Number(amount);
-    if (isNaN(amountNum) || amountNum <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Amount must be a positive number'
-      });
-    }
+      const access_token_url = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
+      const initiate_url = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
+      const CallBackURL = 'https://morning-basin-87523.herokuapp.com/api/stk_api/callback_url';
 
-    // Create transaction record with 60s expiration
-    const tx = db.prepare(`
-      INSERT INTO transactions 
-      (phone, account, amount, transaction_type, expires_at) 
-      VALUES (?, ?, ?, ?, datetime('now', '+60 seconds'))
-    `).run(phone.trim(), accountnumber.trim(), amountNum, 'PayBill');
-
-    // Verify M-Pesa credentials
-    const credentials = {
-      consumerKey: process.env.MPESA_CONSUMER_KEY,
-      consumerSecret: process.env.MPESA_CONSUMER_SECRET,
-      businessShortCode: process.env.MPESA_BUSINESS_SHORTCODE,
-      passkey: process.env.MPESA_PASSKEY,
-    };
-
-    if (!credentials.consumerKey || !credentials.consumerSecret) {
-      throw new Error('M-Pesa credentials not configured');
-    }
-
-    // Get access token with timeout
-    const authResponse = await axios.get(
-      'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
-      {
+      const authResponse = await axios.get(access_token_url, {
         headers: {
-          Authorization: `Basic ${Buffer.from(`${credentials.consumerKey}:${credentials.consumerSecret}`).toString('base64')}`,
+          Authorization: `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64')}`,
         },
-        timeout: 10000 // 10 second timeout
-      }
-    );
+      });
 
-    if (!authResponse.data.access_token) {
-      throw new Error('Failed to get access token');
-    }
+      const access_token = authResponse.data.access_token;
 
-    const accessToken = authResponse.data.access_token;
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[^0-9]/g, '')
-      .slice(0, -3);
-    const password = Buffer.from(
-      `${credentials.businessShortCode}${credentials.passkey}${timestamp}`
-    ).toString('base64');
-
-    // Prepare STK push payload
-    const stkPayload = {
-      BusinessShortCode: credentials.businessShortCode,
-      Password: password,
-      Timestamp: timestamp,
-      TransactionType: 'CustomerPayBillOnline',
-      Amount: amountNum,
-      PartyA: phone,
-      PartyB: credentials.businessShortCode,
-      PhoneNumber: phone,
-      CallBackURL: `${process.env.BASE_URL}/api/stk_api/callback_url`,
-      AccountReference: accountnumber,
-      TransactionDesc: 'Payment via M-Poster',
-    };
-
-    // Initiate STK push with timeout
-    const stkResponse = await axios.post(
-      'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
-      stkPayload,
-      {
+      const stkResponse = await axios.post(initiate_url, {
+        BusinessShortCode,
+        Password,
+        Timestamp,
+        TransactionType: 'CustomerPayBillOnline',
+        Amount: amount,
+        PartyA: phone,
+        PartyB: BusinessShortCode,
+        PhoneNumber: phone,
+        CallBackURL,
+        AccountReference: accountnumber,
+        TransactionDesc: 'Bill Payment',
+      }, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${access_token}`,
           'Content-Type': 'application/json',
         },
-        timeout: 15000 // 15 second timeout
-      }
-    );
+      });
 
-    if (!stkResponse.data?.CheckoutRequestID) {
-      throw new Error('Invalid response from M-Pesa API');
+      res.status(200).json(stkResponse.data);
+    } catch (error) {
+      console.error("Error in STK Push:", error);
+      res.status(500).json({ message: 'Internal Server Error' });
     }
-
-    // Update transaction with checkout request ID
-    db.prepare(`
-      UPDATE transactions 
-      SET checkout_request_id = ?, status = 'Pending'
-      WHERE id = ?
-    `).run(stkResponse.data.CheckoutRequestID, tx.lastInsertRowid);
-
-    return res.status(200).json({
-      success: true,
-      message: 'STK push initiated successfully',
-      data: {
-        CheckoutRequestID: stkResponse.data.CheckoutRequestID,
-        phone: phone.trim(),
-        account: accountnumber.trim(),
-        amount: amountNum
-      }
-    });
-
-  } catch (error: any) {
-    console.error('STK Push Error:', error);
-    
-    // Update transaction status if it was created
-    try {
-      if (req.body?.phone) {
-        db.prepare(`
-          UPDATE transactions 
-          SET status = 'Failed' 
-          WHERE phone = ? AND status = 'Pending'
-        `).run(req.body.phone.trim());
-      }
-    } catch (dbError) {
-      console.error('Failed to update transaction status:', dbError);
-    }
-
-    // Determine appropriate error message
-    let errorMessage = 'Failed to initiate payment';
-    if (error.response) {
-      errorMessage = error.response.data?.errorMessage || 
-                    error.response.statusText ||
-                    `Server responded with ${error.response.status}`;
-    } else if (error.request) {
-      errorMessage = 'No response received from payment service';
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: errorMessage,
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+   } else {
+    res.status(405).json({ message: 'Method Not Allowed' });
   }
+  
+
 }
