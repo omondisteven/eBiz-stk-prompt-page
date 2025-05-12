@@ -222,8 +222,16 @@ const HomeUI = () => {
     setIsAwaitingPayment(true);
     setCountdown(30); // Reset countdown
 
-    let intervalId: NodeJS.Timeout;
-    let pollInterval: NodeJS.Timeout;
+    let intervalId: NodeJS.Timeout | null = null;
+    let pollInterval: NodeJS.Timeout | null = null;
+
+    // Cleanup function
+    const cleanup = () => {
+      if (intervalId) clearInterval(intervalId);
+      if (pollInterval) clearInterval(pollInterval);
+      intervalId = null;
+      pollInterval = null;
+    };
 
     try {
       const response = await fetch(url, {
@@ -241,8 +249,7 @@ const HomeUI = () => {
         intervalId = setInterval(() => {
           setCountdown(prev => {
             if (prev <= 1) {
-              clearInterval(intervalId);
-              clearInterval(pollInterval);
+              cleanup();
               toast.error("Payment not completed in time.");
               setIsAwaitingPayment(false);
               setIsPaying(false);
@@ -255,26 +262,33 @@ const HomeUI = () => {
         // Poll for payment status
         pollInterval = setInterval(async () => {
           try {
-            const checkRes = await fetch(`/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`);
+            const checkRes = await fetch(
+              `/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`
+            );
             const checkData = await checkRes.json();
 
+            if (!checkRes.ok) {
+              throw new Error(checkData.message || "Failed to check payment status");
+            }
+
             if (checkData.status === "Success") {
-              clearInterval(intervalId);
-              clearInterval(pollInterval);
+              cleanup();
               toast.success("Payment confirmed!");
-              router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
+              router.push(
+                `/ThankYouPage?data=${encodeURIComponent(
+                  JSON.stringify({ ...data, Amount: amount })
+                )}`
+              );
             } else if (checkData.status === "Cancelled" || checkData.status === "Failed") {
-              clearInterval(intervalId);
-              clearInterval(pollInterval);
+              cleanup();
               toast.error(`Payment was ${checkData.status.toLowerCase()}.`);
               setIsAwaitingPayment(false);
               setIsPaying(false);
             }
-            // If status is pending or other, do nothing and keep polling
+            // If status is pending or other, continue polling
           } catch (error) {
             console.error("Error checking payment status:", error);
-            clearInterval(intervalId);
-            clearInterval(pollInterval);
+            cleanup();
             toast.error("Error checking payment status.");
             setIsAwaitingPayment(false);
             setIsPaying(false);
@@ -289,17 +303,13 @@ const HomeUI = () => {
     } catch (error) {
       console.error("Payment error:", error);
       toast.error("Network error while initiating payment.");
-      clearInterval(intervalId!);
-      clearInterval(pollInterval!);
+      cleanup();
       setIsAwaitingPayment(false);
       setIsPaying(false);
     }
 
-    // Cleanup function
-    return () => {
-      clearInterval(intervalId!);
-      clearInterval(pollInterval!);
-    };
+    // Cleanup on component unmount
+    return cleanup;
   };
 
 
