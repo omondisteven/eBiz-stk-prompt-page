@@ -3,43 +3,39 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
-// Temporary storage for payment statuses
+// Store payment status persistently (you can later replace this with SQLite, Redis, etc.)
 const paymentStatuses: Record<string, string> = {};
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     const mpesaResponse = req.body;
 
-    // Log the response to a file
+    // Log the full response
     const logFilePath = path.join(process.cwd(), 'M_PESAConfirmationResponse.txt');
     fs.appendFileSync(logFilePath, JSON.stringify(mpesaResponse) + '\n');
 
-    // Extract relevant information from the callback
-    const resultCode = mpesaResponse.Body?.stkCallback?.ResultCode;
-    const phone = mpesaResponse.Body?.stkCallback?.CallbackMetadata?.Item.find(
-      (item: any) => item.Name === "PhoneNumber"
-    )?.Value;
-    const account = mpesaResponse.Body?.stkCallback?.CallbackMetadata?.Item.find(
-      (item: any) => item.Name === "AccountReference"
-    )?.Value;
+    const callback = mpesaResponse.Body?.stkCallback;
+    const resultCode = callback?.ResultCode;
+    const phone = callback?.CallbackMetadata?.Item?.find((item: any) => item.Name === 'PhoneNumber')?.Value;
+    const account = callback?.MerchantRequestID || 'unknown';
 
-    if (phone && account) {
-      const key = `${phone}-${account}`;
-      
+    if (phone) {
       if (resultCode === 0) {
-        paymentStatuses[key] = "Success";
+        paymentStatuses[`${phone}_${account}`] = 'Success';
+      } else if (resultCode === 1032) {
+        paymentStatuses[`${phone}_${account}`] = 'Cancelled'; // User dismissed prompt
       } else {
-        paymentStatuses[key] = mpesaResponse.Body?.stkCallback?.ResultDesc?.includes("cancelled") 
-          ? "Cancelled" 
-          : "Failed";
+        paymentStatuses[`${phone}_${account}`] = 'Failed'; // Other failure
       }
     }
 
-    res.status(200).json({
-      ResultCode: 0,
-      ResultDesc: "Confirmation Received Successfully",
-    });
+    res.status(200).json({ message: 'Callback received' });
   } else {
-    res.status(405).json({ message: 'Method Not Allowed' });
+    res.status(405).json({ message: 'Method not allowed' });
   }
 }
+
+// Expose status for polling (optional: move to separate /check_payment_status route file)
+export const getPaymentStatus = (phone: string, account: string): string => {
+  return paymentStatuses[`${phone}_${account}`] || 'Pending';
+};
