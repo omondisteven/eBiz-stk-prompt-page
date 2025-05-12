@@ -118,7 +118,7 @@ const HomeUI = () => {
   const [showCalculator, setShowCalculator] = useState(false);
 
   const [isAwaitingPayment, setIsAwaitingPayment] = useState(false);
-  const [countdown, setCountdown] = useState(20);
+  const [countdown, setCountdown] = useState(30);
   const [isPaying, setIsPaying] = useState(false); // Disable button during processing
 
   // Update phoneNumber when QR code data is decoded
@@ -220,7 +220,7 @@ const HomeUI = () => {
   const handlePayment = async (url: string, payload: any) => {
     setIsPaying(true);
     setIsAwaitingPayment(true);
-    setCountdown(20); // Reset countdown
+    setCountdown(30); // Reset countdown
 
     try {
       const response = await fetch(url, {
@@ -243,7 +243,7 @@ const HomeUI = () => {
               toast.error("Payment not completed in time.");
               setIsAwaitingPayment(false);
               setIsPaying(false);
-              return 20;
+              return 30;
             }
             return prev - 1;
           });
