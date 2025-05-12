@@ -7,11 +7,15 @@ import Cors from 'cors';
 // Initialize CORS middleware
 const cors = Cors({
   methods: ['POST', 'OPTIONS'],
-  origin: process.env.NODE_ENV === 'development' ? '*' : process.env.DOMAIN,
+  origin: [
+    'https://e-biz-stk-prompt-page.vercel.app',
+    'http://localhost:3000',
+    ...(process.env.NODE_ENV === 'development' ? ['*'] : [])
+  ]
 });
 
 // Helper to run middleware
-function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
+async function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
   return new Promise((resolve, reject) => {
     fn(req, res, (result: any) => {
       if (result instanceof Error) {
@@ -34,31 +38,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Only allow POST requests
     if (req.method !== 'POST') {
-      res.status(405).json({ 
+      res.setHeader('Allow', ['POST']);
+      return res.status(405).json({ 
         success: false,
-        message: 'Method not allowed' 
+        message: `Method ${req.method} not allowed`
       });
-      return;
+    }
+
+    // Validate content type
+    const contentType = req.headers['content-type'];
+    if (!contentType || !contentType.includes('application/json')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Content-Type must be application/json'
+      });
     }
 
     const { phone, amount, accountnumber } = req.body;
 
     // Validate required fields
     if (!phone?.trim() || !amount || !accountnumber?.trim()) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: 'Missing required fields (phone, amount, accountnumber)'
       });
-      return;
     }
 
-    // Validate amount is a number
-    if (isNaN(Number(amount))) {
-      res.status(400).json({
+    // Validate phone number format
+    if (!/^254\d{9}$/.test(phone.trim())) {
+      return res.status(400).json({
         success: false,
-        message: 'Amount must be a valid number'
+        message: 'Phone number must be in format 254XXXXXXXXX'
       });
-      return;
+    }
+
+    // Validate amount is a positive number
+    const amountNum = Number(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Amount must be a positive number'
+      });
     }
 
     // Create transaction record with 60s expiration
@@ -66,7 +86,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       INSERT INTO transactions 
       (phone, account, amount, transaction_type, expires_at) 
       VALUES (?, ?, ?, ?, datetime('now', '+60 seconds'))
-    `).run(phone.trim(), accountnumber.trim(), amount, 'PayBill');
+    `).run(phone.trim(), accountnumber.trim(), amountNum, 'PayBill');
 
     // Verify M-Pesa credentials
     const credentials = {
@@ -110,7 +130,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Password: password,
       Timestamp: timestamp,
       TransactionType: 'CustomerPayBillOnline',
-      Amount: amount,
+      Amount: amountNum,
       PartyA: phone,
       PartyB: credentials.businessShortCode,
       PhoneNumber: phone,
@@ -143,17 +163,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       WHERE id = ?
     `).run(stkResponse.data.CheckoutRequestID, tx.lastInsertRowid);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'STK push initiated successfully',
       data: {
         CheckoutRequestID: stkResponse.data.CheckoutRequestID,
         phone: phone.trim(),
         account: accountnumber.trim(),
-        amount: amount
+        amount: amountNum
       }
     });
-    return;
 
   } catch (error: any) {
     console.error('STK Push Error:', error);
@@ -183,11 +202,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       errorMessage = error.message;
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: errorMessage,
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
-    return;
   }
 }
