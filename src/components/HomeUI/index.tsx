@@ -418,7 +418,7 @@ const HomeUI = () => {
               {transactionType === 'Contact' ? (
                 <>You are viewing the Contact Details for <strong>{data.FirstName}</strong>.</>
               ) : (
-                <>You are about to perform a <strong style={{color: "#3CB371"}}>{transactionType}</strong> transaction to <br /> {data.businessName ? <strong style={{color: "#3CB371"}}>{data.businessName}</strong> : <strong style={{color: "#3CB371"}}>BLTA SOLUTIONS LTD</strong>}.</>
+                <>You are about to perform a <strong>{transactionType}</strong> transaction to <br /> {data.businessName ? <strong style={{color: "#3CB371"}}>{data.businessName}</strong> : <strong style={{color: "#3CB371"}}>BLTA SOLUTIONS LTD</strong>}.</>
               )}
             </p>
             </div>            
