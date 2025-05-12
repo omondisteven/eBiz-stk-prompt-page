@@ -220,89 +220,87 @@ const HomeUI = () => {
   const handlePayment = async (url: string, payload: any) => {
     setIsPaying(true);
     setIsAwaitingPayment(true);
-    setCountdown(40); // Reset countdown
+    setCountdown(120); // 2 minutes timeout
 
     try {
+      // Clear any previous status for this payment
+      await fetch(`/api/stk_api/clear_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`);
+
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        toast.success("Payment initiated. Awaiting MPESA PIN...");
-
-        // Start countdown timer
-        const intervalId = setInterval(() => {
-          setCountdown(prev => {
-            if (prev <= 1) {
-              clearInterval(intervalId);
-              clearInterval(pollInterval);
-              toast.error("Payment timed out. Please try again.");
-              setIsAwaitingPayment(false);
-              setIsPaying(false);
-              return 40;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-
-        // Poll for payment status
-        const pollInterval = setInterval(async () => {
-          try {
-            const checkRes = await fetch(
-              `/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`
-            );
-            const checkData = await checkRes.json();
-
-            if (checkData.status === "Success") {
-              clearInterval(intervalId);
-              clearInterval(pollInterval);
-              toast.success("Payment confirmed!");
-              setIsAwaitingPayment(false);
-              setIsPaying(false);
-              // Only navigate after successful confirmation
-              router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
-            } else if (checkData.status === "Cancelled") {
-              clearInterval(intervalId);
-              clearInterval(pollInterval);
-              toast.error("Payment was cancelled by user.");
-              setIsAwaitingPayment(false);
-              setIsPaying(false);
-            } else if (checkData.status === "Failed") {
-              clearInterval(intervalId);
-              clearInterval(pollInterval);
-              toast.error("Payment failed. Please try again.");
-              setIsAwaitingPayment(false);
-              setIsPaying(false);
-            }
-            // If status is "Pending", do nothing and continue polling
-          } catch (error) {
-            console.error("Error checking payment status:", error);
-            // Don't clear intervals on network errors, continue trying
-          }
-        }, 3000); // Check every 3 seconds
-
-        // Cleanup intervals if component unmounts
-        return () => {
-          clearInterval(intervalId);
-          clearInterval(pollInterval);
-        };
-      } else {
-        toast.error(result?.message || "Failed to initiate payment.");
-        setIsAwaitingPayment(false);
-        setIsPaying(false);
+      if (!response.ok) {
+        throw new Error(await response.text());
       }
+
+      toast.success("Payment initiated. Please enter your M-PESA PIN.");
+
+      // Start polling for status
+      const pollInterval = setInterval(async () => {
+        try {
+          const checkRes = await fetch(
+            `/api/stk_api/check_payment_status?phone=${payload.phone}&account=${payload.accountnumber || payload.storenumber}`
+          );
+          const checkData = await checkRes.json();
+
+          console.log('Polling status:', checkData.status);
+
+          if (checkData.status === "Success") {
+            clearInterval(pollInterval);
+            clearInterval(timeoutInterval);
+            toast.success("Payment confirmed!");
+            setIsAwaitingPayment(false);
+            setIsPaying(false);
+            router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
+          } 
+          else if (checkData.status === "Cancelled") {
+            clearInterval(pollInterval);
+            clearInterval(timeoutInterval);
+            toast.error("Payment was cancelled.");
+            setIsAwaitingPayment(false);
+            setIsPaying(false);
+          }
+          else if (checkData.status === "Failed") {
+            clearInterval(pollInterval);
+            clearInterval(timeoutInterval);
+            toast.error("Payment failed. Please try again.");
+            setIsAwaitingPayment(false);
+            setIsPaying(false);
+          }
+        } catch (error) {
+          console.error("Polling error:", error);
+        }
+      }, 3000); // Check every 3 seconds
+
+      // Timeout handler
+      const timeoutInterval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(pollInterval);
+            clearInterval(timeoutInterval);
+            toast.error("Payment timed out. Please try again.");
+            setIsAwaitingPayment(false);
+            setIsPaying(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => {
+        clearInterval(pollInterval);
+        clearInterval(timeoutInterval);
+      };
     } catch (error) {
-      console.error("Payment error:", error);
-      toast.error("Network error while initiating payment.");
+      console.error("Payment initiation failed:", error);
+      toast.error("Failed to initiate payment. Please try again.");
       setIsAwaitingPayment(false);
       setIsPaying(false);
     }
   };
-
   // ******PAYMENT METHODS******
   const handlePayBill = () => {
     if (!phoneNumber.trim() || !data.PaybillNumber?.trim() || !data.AccountNumber?.trim() || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
