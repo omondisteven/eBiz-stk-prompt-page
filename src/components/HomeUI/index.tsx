@@ -222,12 +222,17 @@ const HomeUI = () => {
   const handlePayment = async (url: string, payload: any) => {
     setIsPaying(true);
     setIsAwaitingPayment(true);
-    setCountdown(60);
+    setCountdown(60); // Reset countdown to 60 seconds
+
+    let paymentMonitor: PaymentMonitor | null = null;
+    let countdownInterval: NodeJS.Timeout | null = null;
 
     try {
       const response = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(payload),
       });
 
@@ -237,10 +242,10 @@ const HomeUI = () => {
         try {
           // Try to parse as JSON if possible
           const errorJson = JSON.parse(errorText);
-          throw new Error(errorJson.message || 'Payment failed');
+          throw new Error(errorJson.message || 'Payment initiation failed');
         } catch {
           // If not JSON, use raw text
-          throw new Error(errorText || 'Payment failed');
+          throw new Error(errorText || 'Payment initiation failed');
         }
       }
 
@@ -254,13 +259,15 @@ const HomeUI = () => {
       const checkoutRequestId = result.data.CheckoutRequestID;
 
       // Start payment monitoring
-      const paymentMonitor = new PaymentMonitor(
+      paymentMonitor = new PaymentMonitor(
         payload.phone,
         payload.accountnumber || payload.storenumber,
-        (status) => {
+        (status: string) => {
           if (status.includes('success')) {
             toast.success(status);
-            router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
+            router.push(`/ThankYouPage?data=${encodeURIComponent(
+              JSON.stringify({ ...data, Amount: amount })
+            )}`);
           } else {
             toast.error(status);
           }
@@ -274,21 +281,28 @@ const HomeUI = () => {
 
       paymentMonitor.start(checkoutRequestId);
 
-      // Countdown timer
-      const countdownInterval = setInterval(() => {
-        setCountdown(prev => (prev <= 1 ? 0 : prev - 1));
+      // Start countdown timer
+      countdownInterval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
-
-      return () => {
-        clearInterval(countdownInterval);
-        paymentMonitor.stop();
-      };
 
     } catch (error: any) {
       console.error("Payment error:", error);
       toast.error(error.message || "Failed to initiate payment");
       setIsAwaitingPayment(false);
       setIsPaying(false);
+    } finally {
+      // Cleanup function to be called when component unmounts
+      return () => {
+        if (countdownInterval) clearInterval(countdownInterval);
+        if (paymentMonitor) paymentMonitor.stop();
+      };
     }
   };
 

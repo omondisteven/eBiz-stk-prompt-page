@@ -1,13 +1,6 @@
 // /src/lib/paymentMonitor.ts
 import { Database } from 'better-sqlite3';
 
-interface Transaction {
-  checkout_request_id: string;
-  phone: string;
-  account: string;
-  status: 'Pending' | 'Success' | 'Failed' | 'Cancelled' | 'Timeout';
-}
-
 export class PaymentMonitor {
   private intervalId: NodeJS.Timeout | null = null;
   private timeoutId: NodeJS.Timeout | null = null;
@@ -36,32 +29,22 @@ export class PaymentMonitor {
   }
 
   private async checkStatus(): Promise<void> {
-  try {
-    if (!this.currentCheckoutId) return;
+    try {
+      if (!this.currentCheckoutId) return;
 
-    const response = await fetch(
-      `/api/stk_api/check_payment_status?checkoutRequestId=${this.currentCheckoutId}`
-    );
+      const row = this.db.prepare(`
+        SELECT status FROM transactions
+        WHERE checkout_request_id = ?
+      `).get(this.currentCheckoutId) as { status: string } | undefined;
 
-    // First check if response is OK
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Server error: ${response.status} - ${errorText}`);
-    }
+      if (!row) return;
 
-    // Then try to parse as JSON
-    const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message || 'Unknown error from server');
-      }
-
-      switch (data.status) {
+      switch (row.status) {
         case 'Success':
-          this.complete('Payment successful');
+          this.complete('Payment successful!');
           break;
         case 'Cancelled':
-          this.complete('Payment cancelled by user');
+          this.complete('Payment was cancelled by user');
           break;
         case 'Failed':
           this.complete('Payment failed');
@@ -78,11 +61,17 @@ export class PaymentMonitor {
 
   private handleTimeout(): void {
     if (!this.isComplete) {
-      this.db.prepare(`
-        UPDATE transactions
-        SET status = 'Timeout'
-        WHERE checkout_request_id = ?
-      `).run(this.currentCheckoutId);
+      try {
+        if (this.currentCheckoutId) {
+          this.db.prepare(`
+            UPDATE transactions
+            SET status = 'Timeout'
+            WHERE checkout_request_id = ?
+          `).run(this.currentCheckoutId);
+        }
+      } catch (error) {
+        console.error('Failed to update transaction status:', error);
+      }
       this.complete('Payment timed out');
     }
   }
