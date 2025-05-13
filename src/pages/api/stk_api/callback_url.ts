@@ -40,23 +40,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     try {
       const callback = req.body?.Body?.stkCallback;
+
       if (!callback) {
         return res.status(400).json({ ResultCode: 1, ResultDesc: "Invalid callback format" });
       }
 
-      const checkoutId = callback.CheckoutRequestID;
-      const resultCode = callback.ResultCode;
-      const resultDesc = callback.ResultDesc || '';
-      let status = resultCode === 0 ? 'Success' : /cancel/i.test(resultDesc) ? 'Cancelled' : 'Failed';
+      const { CheckoutRequestID, ResultCode, ResultDesc, CallbackMetadata } = callback;
 
-      if (!checkoutId) {
+      if (!CheckoutRequestID) {
         logCallback('Missing CheckoutRequestID');
         return res.status(400).json({ ResultCode: 1, ResultDesc: "Missing CheckoutRequestID" });
       }
 
-      updateStatus(checkoutId, status);
+      // Determine the payment status
+      let status = ResultCode === 0 ? 'Success' : /cancel/i.test(ResultDesc) ? 'Cancelled' : 'Failed';
+
+      // Save the status
+      updateStatus(CheckoutRequestID, status);
+
+      if (ResultCode === 0 && CallbackMetadata?.Item) {
+        const transactionDetails = CallbackMetadata.Item;
+        logCallback(`Payment successful. Transaction details: ${JSON.stringify(transactionDetails, null, 2)}`);
+      } else {
+        logCallback(`Payment failed: ${ResultDesc}`);
+      }
 
       return res.status(200).json({ ResultCode: 0, ResultDesc: "Callback processed successfully" });
+
     } catch (error: any) {
       logCallback(`Callback error: ${error.message}`);
       return res.status(500).json({ ResultCode: 1, ResultDesc: "Internal server error" });
