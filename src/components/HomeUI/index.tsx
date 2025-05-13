@@ -3,11 +3,11 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { HiOutlineCreditCard, HiCalculator } from "react-icons/hi";
 import { HiX } from "react-icons/hi";
-import { Input } from "@/components/ui/input";
+import { Input } from "../../components/ui/input";
 import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
-import { useAppContext } from "@/context/AppContext"; 
+import { useAppContext } from "../../context/AppContext"; 
 import Link from "next/link";
 
 // Add this Calculator component near your other imports
