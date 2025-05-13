@@ -429,7 +429,7 @@ const ThankYouPage = () => {
           onClick={() => setShowContact(true)}
           className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
         >          
-          <p>{receiptData.business || "Contact us for available Offers!"}</p>
+          <p>{receiptData.businessPromo2 || "Contact us for available Offers!"}</p>
           <MousePointerClick  className="mr-2" />
         </Button>
       </div>
