@@ -28,13 +28,13 @@ type CallbackData = {
   CheckoutRequestID?: string;
 };
 
-const logDir = path.join(process.cwd(), 'logs');
-const statusPath = path.join(logDir, 'payment_statuses.json');
-const callbackLogPath = path.join(logDir, 'mpesa_callbacks.log');
+const tmpDir = path.join('/tmp', 'logs'); // works both locally and on Vercel
+const statusPath = path.join(tmpDir, 'payment_statuses.json');
+const callbackLogPath = path.join(tmpDir, 'mpesa_callbacks.log');
 
 // Ensure log directory exists
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+if (!fs.existsSync(tmpDir)) {
+  fs.mkdirSync(tmpDir, { recursive: true });
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
