@@ -295,6 +295,7 @@ const handlePayment = async (url: string, payload: any) => {
 
           // Construct data for ThankYouPage
           const paymentDetails = {
+            ...data, // Include all fields from the decoded QR data
             TransactionType,
             Amount: payload.amount || 'N/A',
             Receipt: receipt,

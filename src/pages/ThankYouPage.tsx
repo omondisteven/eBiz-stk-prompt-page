@@ -25,86 +25,94 @@ const ThankYouPage = () => {
   const [showContact, setShowContact] = useState(false);
 
   useEffect(() => {
-    if (router.query.data) {
+  if (router.query.data) {
+    try {
+      let rawData = router.query.data as string;
+      console.log("✅ Raw data received from QR:", rawData);
+
+      let decodedData;
+      let parsedData;
+
+      // Attempt 1: Direct Base64 decode (new format)
       try {
-        let rawData = router.query.data as string;
-        console.log("Raw data received:", rawData); // Debug log
+        decodedData = decodeURIComponent(escape(atob(rawData)));
+        parsedData = JSON.parse(decodedData);
+        console.log("✅ Successfully decoded with Base64 method");
+      } catch (base64Err) {
+        console.warn("⚠️ Base64 decode failed, trying alternative methods:", base64Err);
 
-        let decodedData;
-        let parsedData;
-
-        // Attempt 1: Direct Base64 decode (new format)
+        // Attempt 2: Double URI decode (legacy format)
         try {
-          decodedData = decodeURIComponent(escape(atob(rawData)));
+          decodedData = decodeURIComponent(decodeURIComponent(rawData));
           parsedData = JSON.parse(decodedData);
-          console.log("Successfully decoded with Base64 method");
-        } catch (base64Err) {
-          console.warn("Base64 decode failed, trying alternative methods:", base64Err);
+          console.log("✅ Successfully decoded with double URI method");
+        } catch (doubleDecodeErr) {
+          console.warn("⚠️ Double decode failed, trying single decode:", doubleDecodeErr);
 
-          // Attempt 2: Double URI decode (legacy format)
+          // Attempt 3: Single URI decode
           try {
-            decodedData = decodeURIComponent(decodeURIComponent(rawData));
+            decodedData = decodeURIComponent(rawData);
             parsedData = JSON.parse(decodedData);
-            console.log("Successfully decoded with double URI method");
-          } catch (doubleDecodeErr) {
-            console.warn("Double decode failed, trying single decode:", doubleDecodeErr);
+            console.log("✅ Successfully decoded with single URI method");
+          } catch (singleDecodeErr) {
+            console.warn("⚠️ Single decode failed, trying raw JSON parse:", singleDecodeErr);
 
-            // Attempt 3: Single URI decode
+            // Attempt 4: Direct JSON parse (might work for some legacy codes)
             try {
-              decodedData = decodeURIComponent(rawData);
-              parsedData = JSON.parse(decodedData);
-              console.log("Successfully decoded with single URI method");
-            } catch (singleDecodeErr) {
-              console.warn("Single decode failed, trying raw JSON parse:", singleDecodeErr);
-
-              // Attempt 4: Direct JSON parse (might work for some legacy codes)
-              try {
-                parsedData = JSON.parse(rawData);
-                console.log("Successfully parsed raw data");
-              } catch (finalErr) {
-                console.error("All decode attempts failed:", finalErr);
-                toast.error("Invalid QR code format. Please try scanning again.");
-                return;
-              }
+              parsedData = JSON.parse(rawData);
+              console.log("✅ Successfully parsed raw JSON");
+            } catch (finalErr) {
+              console.error("❌ All decode attempts failed:", finalErr);
+              toast.error("Invalid QR code format. Please try scanning again.");
+              return;
             }
           }
         }
-
-        // Validate the parsed data
-        if (!parsedData || typeof parsedData !== 'object') {
-          toast.error("Invalid QR data structure");
-          return;
-        }
-
-        // Ensure required fields exist
-        if (!parsedData.TransactionType && !parsedData.businessName) {
-          toast.error("QR code missing required data fields");
-          return;
-        }
-
-        // Set the data
-        setReceiptData(parsedData);
-        
-        // Generate receipt number
-        setReceiptNumber("RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase());
-
-        // Set timestamp
-        const now = new Date();
-        setTimestamp(now.toLocaleString("en-KE", {
-          year: "numeric",
-          month: "short",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }));
-
-      } catch (e) {
-        console.error("Error processing QR code data:", e);
-        toast.error("Failed to process QR code. Please try again.");
       }
+
+      // Validate the parsed data
+      if (!parsedData || typeof parsedData !== 'object') {
+        console.error("❌ Parsed data is not an object:", parsedData);
+        toast.error("Invalid QR data structure");
+        return;
+      }
+
+      if (!parsedData.TransactionType && !parsedData.businessName) {
+        console.error("❌ Required fields missing from parsed data:", parsedData);
+        toast.error("QR code missing required data fields");
+        return;
+      }
+
+      console.log("✅ Final parsed data object:", parsedData);
+
+      // Set the data
+      setReceiptData(parsedData);
+      
+      // Generate receipt number
+      const generatedReceiptNumber = "RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+      setReceiptNumber(generatedReceiptNumber);
+      console.log("📄 Generated Receipt Number:", generatedReceiptNumber);
+
+      // Set timestamp
+      const now = new Date();
+      const formattedTimestamp = now.toLocaleString("en-KE", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+      setTimestamp(formattedTimestamp);
+      console.log("🕒 Timestamp:", formattedTimestamp);
+
+    } catch (e) {
+      console.error("❌ Error processing QR code data:", e);
+      toast.error("Failed to process QR code. Please try again.");
     }
-  }, [router.query]);
+  }
+}, [router.query]);
+
 
 
   const handleDownload = async () => {
