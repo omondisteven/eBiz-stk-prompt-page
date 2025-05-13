@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const access_token_url = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
     const initiate_url = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
-    const CallBackURL = 'https://morning-basin-87523.herokuapp.com/api/stk_api/callback_url';
+    const CallBackURL = 'https://e-biz-stk-prompt-page.vercel.app/api/stk_api/callback_url';
 
     try {
       // Get access token
