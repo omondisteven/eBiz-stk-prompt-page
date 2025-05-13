@@ -3,17 +3,20 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
-type TransactionDetails = {
-  [key: string]: CallbackMetadataItem[] | undefined;
-};
-
-type PaymentStatuses = {
-  [key: string]: string;
-};
-
+// Define types for the callback data structure
 type CallbackMetadataItem = {
   Name: string;
   Value: string | number;
+};
+
+type PaymentStatus = {
+  timestamp: string;
+  status: 'Pending' | 'Success' | 'Failed' | 'Cancelled';
+  details: CallbackMetadataItem[] | string;
+};
+
+type PaymentStatuses = {
+  [checkoutId: string]: PaymentStatus; // Explicit string index signature
 };
 
 type CallbackData = {
@@ -27,96 +30,76 @@ type CallbackData = {
 
 const logDir = path.join(process.cwd(), 'logs');
 const statusPath = path.join(logDir, 'payment_statuses.json');
-const callbackLogPath = path.join(logDir, 'callbacks.log');
-const transactionDetailsPath = path.join(logDir, 'transaction_details.json');
+const callbackLogPath = path.join(logDir, 'mpesa_callbacks.log');
 
+// Ensure log directory exists
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
 
-function logCallback(data: string) {
-  fs.appendFileSync(callbackLogPath, `${new Date().toISOString()}: ${data}\n`);
-}
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Immediate response to M-Pesa
+  res.status(200).json({ ResultCode: 0, ResultDesc: "Callback received" });
 
-function updateStatus(key: string, status: string, metadata?: CallbackMetadataItem[]) {
-  let statuses: PaymentStatuses = {};
+  // Async processing
   try {
-    if (fs.existsSync(statusPath)) {
-      statuses = JSON.parse(fs.readFileSync(statusPath, 'utf-8'));
-    }
-  } catch (e) {
-    console.error('Error reading status file:', e);
-  }
+    const timestamp = new Date().toISOString();
+    const rawBody = JSON.stringify(req.body, null, 2);
+    
+    // Log raw callback
+    fs.appendFileSync(callbackLogPath, `\n==== ${timestamp} ====\n${rawBody}\n`);
 
-  statuses[key] = status;
-  fs.writeFileSync(statusPath, JSON.stringify(statuses, null, 2));
-  
-  // Store transaction details if available
-  if (metadata) {
-    let transactions: TransactionDetails = {};
-    try {
-      if (fs.existsSync(transactionDetailsPath)) {
-        transactions = JSON.parse(fs.readFileSync(transactionDetailsPath, 'utf-8'));
+    const callbackData: CallbackData = req.body?.Body?.stkCallback;
+    if (!callbackData) {
+      fs.appendFileSync(callbackLogPath, `ERROR: Invalid callback format\n`);
+      return;
+    }
+
+    const { ResultCode, ResultDesc, CheckoutRequestID, CallbackMetadata } = callbackData;
+    
+    if (!CheckoutRequestID) {
+      fs.appendFileSync(callbackLogPath, `ERROR: Missing CheckoutRequestID\n`);
+      return;
+    }
+
+    // Process status
+    let status: PaymentStatus['status'];
+    let details: PaymentStatus['details'];
+    
+    if (ResultCode === 0) {
+      status = 'Success';
+      details = CallbackMetadata?.Item || 'No transaction details';
+      fs.appendFileSync(callbackLogPath, `SUCCESS: ${CheckoutRequestID}\n`);
+    } else {
+      status = /cancel/i.test(ResultDesc) ? 'Cancelled' : 'Failed';
+      details = ResultDesc;
+      fs.appendFileSync(callbackLogPath, `FAILURE: ${ResultCode} - ${ResultDesc}\n`);
+    }
+
+    // Update status file
+    const statusUpdate: PaymentStatus = {
+      timestamp,
+      status,
+      details
+    };
+
+    // Initialize with proper type
+    let statuses: PaymentStatuses = {};
+    if (fs.existsSync(statusPath)) {
+      try {
+        statuses = JSON.parse(fs.readFileSync(statusPath, 'utf-8')) as PaymentStatuses;
+      } catch (e) {
+        console.error('Error parsing status file:', e);
+        statuses = {};
       }
-    } catch (e) {
-      console.error('Error reading transaction details file:', e);
     }
     
-    transactions[key] = metadata;
-    fs.writeFileSync(transactionDetailsPath, JSON.stringify(transactions, null, 2));
+    // Now TypeScript knows statuses can be indexed with string
+    statuses[CheckoutRequestID] = statusUpdate;
+    fs.writeFileSync(statusPath, JSON.stringify(statuses, null, 2));
+
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    fs.appendFileSync(callbackLogPath, `EXCEPTION: ${errorMsg}\n`);
   }
-
-  logCallback(`Status updated: ${key} => ${status}`);
-}
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log('Callback received - Headers:', req.headers);
-  console.log('Callback received - Body:', req.body);
-  logCallback(`Incoming request headers: ${JSON.stringify(req.headers)}`);
-  logCallback(`Incoming request body: ${JSON.stringify(req.body, null, 2)}`);
-
-  if (req.method === 'POST') {
-    try {
-      console.log('Processing callback...');
-      const callbackData: CallbackData = req.body?.Body?.stkCallback;
-      
-      if (!callbackData) {
-        console.error('Invalid callback format - missing stkCallback');
-        return res.status(400).json({ ResultCode: 1, ResultDesc: "Invalid callback format" });
-      }
-
-      const checkoutId = callbackData.CheckoutRequestID;
-      const resultCode = callbackData.ResultCode;
-      const resultDesc = callbackData.ResultDesc || '';
-      
-      console.log(`Processing callback for CheckoutID: ${checkoutId}, ResultCode: ${resultCode}, Desc: ${resultDesc}`);
-
-      if (!checkoutId) {
-        console.error('Missing CheckoutRequestID in callback');
-        logCallback('Missing CheckoutRequestID');
-        return res.status(400).json({ ResultCode: 1, ResultDesc: "Missing CheckoutRequestID" });
-      }
-
-      if (resultCode === 0) {
-        const transactionDetails = callbackData.CallbackMetadata?.Item;
-        console.log('Successful payment with details:', transactionDetails);
-        updateStatus(checkoutId, 'Success', transactionDetails);
-      } else {
-        console.log(`Payment failed with code ${resultCode}: ${resultDesc}`);
-        // Determine if it's a cancellation
-        const status = /cancel/i.test(resultDesc) ? 'Cancelled' : 'Failed';
-        updateStatus(checkoutId, status);
-      }
-
-      console.log('Callback processed successfully');
-      return res.status(200).json({ ResultCode: 0, ResultDesc: "Callback processed successfully" });
-    } catch (error: any) {
-      console.error('Callback processing error:', error);
-      logCallback(`Callback error: ${error.stack || error.message}`);
-      return res.status(500).json({ ResultCode: 1, ResultDesc: "Internal server error" });
-    }
-  }
-
-  console.log('Method not allowed - received:', req.method);
-  return res.status(405).json({ message: 'Method Not Allowed' });
 }
