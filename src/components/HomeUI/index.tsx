@@ -220,166 +220,116 @@ const HomeUI = () => {
   // Updated handlePayment function with correct toast methods
 // Enhanced handlePayment with detailed logging
 const handlePayment = async (url: string, payload: any) => {
-  console.log('[1] Starting payment process with payload:', payload);
+  console.log('[1] Starting payment process');
   const transactionId = `tx_${Date.now()}`;
   setIsPaying(true);
   setIsAwaitingPayment(true);
   setCountdown(60);
 
-  // Track timing for debugging
-  const startTime = Date.now();
-  let lastPollTime = 0;
+  // Track active intervals
+  const activeIntervals = new Set<NodeJS.Timeout>();
+  let isComplete = false;
 
   const cleanup = () => {
+    if (isComplete) return;
+    isComplete = true;
+    
     console.log(`[${transactionId}] Cleaning up intervals`);
     setIsPaying(false);
     setIsAwaitingPayment(false);
-    if (pollInterval) clearInterval(pollInterval);
-    if (timeoutInterval) clearInterval(timeoutInterval);
+    activeIntervals.forEach(interval => clearInterval(interval));
+    activeIntervals.clear();
   };
-
-  let pollInterval: NodeJS.Timeout;
-  let timeoutInterval: NodeJS.Timeout;
 
   try {
     // 1. STK Push Initiation
-    console.log(`[${transactionId}] Initiating STK Push to ${url}`);
-    const initStart = Date.now();
-    
+    console.log(`[${transactionId}] Initiating STK Push`);
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
-    const initTime = Date.now() - initStart;
-    console.log(`[${transactionId}] STK Initiation took ${initTime}ms`);
-
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[${transactionId}] STK Push failed:`, errorText);
-      throw new Error(errorText);
+      throw new Error(await response.text());
     }
 
     const result = await response.json();
     console.log(`[${transactionId}] STK Response:`, result);
 
     if (!result.CheckoutRequestID) {
-      console.error(`[${transactionId}] Missing CheckoutRequestID in response`);
       throw new Error('No CheckoutRequestID received');
     }
 
     const mpesaCheckoutId = result.CheckoutRequestID;
-    console.log(`[${transactionId}] M-Pesa CheckoutID: ${mpesaCheckoutId}`);
     toast.success('Enter your M-PESA PIN when prompted');
 
     // 2. Polling System
     let attempts = 0;
     const maxAttempts = 20;
     const baseDelay = 3000;
-    let lastStatus = 'Pending';
 
-    pollInterval = setInterval(async () => {
-      attempts++;
-      lastPollTime = Date.now();
-      const pollId = `${transactionId}_poll${attempts}`;
+    const pollInterval = setInterval(async () => {
+      if (isComplete) return;
       
+      attempts++;
+      console.log(`[${transactionId}] Polling attempt ${attempts}`);
+
       try {
-        console.log(`[${pollId}] Checking status (attempt ${attempts})`);
-        const checkStart = Date.now();
-        
         const checkRes = await fetch(
           `/api/stk_api/check_payment_status?checkout_id=${mpesaCheckoutId}`
         );
         
-        const checkTime = Date.now() - checkStart;
-        console.log(`[${pollId}] Status check took ${checkTime}ms`);
-
-        if (!checkRes.ok) {
-          const errorText = await checkRes.text();
-          console.error(`[${pollId}] Status check failed:`, errorText);
-          return;
-        }
-
         const { status, details } = await checkRes.json();
-        console.log(`[${pollId}] Received status:`, status, 'Details:', details);
-
-        if (status !== lastStatus) {
-          console.log(`[${pollId}] Status changed from ${lastStatus} to ${status}`);
-          lastStatus = status;
-        }
+        console.log(`[${transactionId}] Poll response:`, status);
 
         if (status === 'Success') {
-          console.log(`[${pollId}] Payment successful!`, details);
+          console.log(`[${transactionId}] Payment success`);
           cleanup();
           toast.success('Payment confirmed!');
-          router.push(`/thank-you?receipt=${encodeURIComponent(details.MpesaReceiptNumber)}`);
+          router.push(`/thank-you?receipt=${details.MpesaReceiptNumber}`);
         } 
-        else if (status === 'Failed') {
-          console.log(`[${pollId}] Payment failed:`, details);
+        else if (status === 'Failed' || status === 'Cancelled') {
+          console.log(`[${transactionId}] Payment ${status.toLowerCase()}`);
           cleanup();
-          toast.error(`Payment failed: ${details}`);
-        }
-        else if (status === 'Cancelled') {
-          console.log(`[${pollId}] Payment cancelled`);
-          cleanup();
-          toast.error('Payment was cancelled');
+          toast.error(`Payment ${status.toLowerCase()}`);
         }
         else if (attempts >= maxAttempts) {
-          console.log(`[${pollId}] Max attempts reached without resolution`);
+          console.log(`[${transactionId}] Max polling attempts reached`);
           cleanup();
-          toast('Payment verification timeout', { 
-            icon: '⚠️',
-            duration: 5000
-          });
+          toast('Payment verification timeout', { icon: '⚠️' });
         }
 
       } catch (error) {
-        console.error(`[${pollId}] Polling error:`, error);
+        console.error(`[${transactionId}] Polling error:`, error);
         if (attempts >= maxAttempts) {
           cleanup();
-          toast.error('Could not verify payment status');
+          toast.error('Payment verification failed');
         }
       }
     }, baseDelay);
 
+    activeIntervals.add(pollInterval);
+
     // 3. Timeout System
-    timeoutInterval = setInterval(() => {
+    const timeoutInterval = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
-          console.log(`[${transactionId}] System timeout reached`);
+          console.log(`[${transactionId}] Global timeout reached`);
           cleanup();
-          toast('Payment process timed out', {
-            icon: '⏱️',
-            duration: 5000
-          });
+          toast('Payment process timed out', { icon: '⏱️' });
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
 
-    // 4. Diagnostic logging
-    const logInterval = setInterval(() => {
-      console.log(`[${transactionId}] System status:`, {
-        elapsed: Date.now() - startTime,
-        lastPoll: lastPollTime ? Date.now() - lastPollTime : 'Never',
-        attempts,
-        currentStatus: lastStatus
-      });
-    }, 5000);
-
-    // Clean up diagnostic logging
-    timeoutInterval = setInterval(() => {
-      clearInterval(logInterval);
-    }, 60000);
+    activeIntervals.add(timeoutInterval);
 
   } catch (error) {
-    console.error(`[${transactionId}] Payment process error:`, error);
+    console.error(`[${transactionId}] Payment error:`, error);
     cleanup();
-    toast.error(
-      error instanceof Error ? error.message : 'Payment failed'
-    );
+    toast.error(error instanceof Error ? error.message : 'Payment failed');
   }
 };
   // ******PAYMENT METHODS******
