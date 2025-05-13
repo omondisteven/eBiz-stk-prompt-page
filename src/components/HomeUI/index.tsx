@@ -226,24 +226,25 @@ const handlePayment = async (url: string, payload: any) => {
   setIsAwaitingPayment(true);
   setCountdown(60);
 
-  // Track active intervals
   const activeIntervals = new Set<NodeJS.Timeout>();
   let isComplete = false;
 
-  const cleanup = () => {
+  const cleanup = (skipStateReset = false) => {
     if (isComplete) return;
     isComplete = true;
     
     console.log(`[${transactionId}] Cleaning up intervals`);
-    setIsPaying(false);
-    setIsAwaitingPayment(false);
-    setCountdown(0);
     activeIntervals.forEach(interval => clearInterval(interval));
     activeIntervals.clear();
+    
+    if (!skipStateReset) {
+      setIsPaying(false);
+      setIsAwaitingPayment(false);
+      setCountdown(0);
+    }
   };
 
   try {
-    // 1. STK Push Initiation
     console.log(`[${transactionId}] Initiating STK Push`);
     const response = await fetch(url, {
       method: 'POST',
@@ -265,7 +266,7 @@ const handlePayment = async (url: string, payload: any) => {
     const mpesaCheckoutId = result.CheckoutRequestID;
     toast.success('Enter your M-PESA PIN when prompted');
 
-    // 2. Polling System
+    // Polling System
     let attempts = 0;
     const maxAttempts = 20;
     const baseDelay = 3000;
@@ -286,9 +287,14 @@ const handlePayment = async (url: string, payload: any) => {
 
         if (status === 'Success') {
           console.log(`[${transactionId}] Payment success`);
-          cleanup();
           toast.success('Payment confirmed!');
-          router.push(`/thank-you?receipt=${details.MpesaReceiptNumber}`);
+          try {
+            await router.push(`/thank-you?receipt=${details.MpesaReceiptNumber}`);
+            cleanup(true); // Skip state reset as we've navigated away
+          } catch (error) {
+            console.error(`[${transactionId}] Navigation failed:`, error);
+            cleanup();
+          }
           return;
         } 
         else if (status === 'Failed') {
@@ -321,7 +327,7 @@ const handlePayment = async (url: string, payload: any) => {
 
     activeIntervals.add(pollInterval);
 
-    // 3. Timeout System
+    // Timeout System
     const timeoutInterval = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
