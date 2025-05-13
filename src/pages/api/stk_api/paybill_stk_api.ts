@@ -53,6 +53,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const access_token_url = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
       const initiate_url = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
       const CallBackURL = 'https://e-biz-stk-prompt-page.vercel.app/api/stk_api/callback_url';
+
+      // First verify the callback URL is accessible
+      try {
+        const testResponse = await axios.get(CallBackURL.replace('callback_url', 'callback_test'));
+        console.log('Callback URL test response:', testResponse.data);
+      } catch (error) {
+        console.error('Callback URL verification failed!', error);
+        throw new Error('Callback URL is not accessible from M-Pesa servers');
+      }
       console.log('Using callback URL:', CallBackURL);
 
       const authResponse = await axios.get(access_token_url, {
