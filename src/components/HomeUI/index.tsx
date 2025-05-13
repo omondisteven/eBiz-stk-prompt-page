@@ -229,19 +229,16 @@ const handlePayment = async (url: string, payload: any) => {
   const activeIntervals = new Set<NodeJS.Timeout>();
   let isComplete = false;
 
-  const cleanup = (skipStateReset = false) => {
+  const cleanup = () => {
     if (isComplete) return;
     isComplete = true;
-    
+
     console.log(`[${transactionId}] Cleaning up intervals`);
-    activeIntervals.forEach(interval => clearInterval(interval));
+    setIsPaying(false);
+    setIsAwaitingPayment(false);
+    setCountdown(0);
+    activeIntervals.forEach(clearInterval);
     activeIntervals.clear();
-    
-    if (!skipStateReset) {
-      setIsPaying(false);
-      setIsAwaitingPayment(false);
-      setCountdown(0);
-    }
   };
 
   try {
@@ -266,72 +263,53 @@ const handlePayment = async (url: string, payload: any) => {
     const mpesaCheckoutId = result.CheckoutRequestID;
     toast.success('Enter your M-PESA PIN when prompted');
 
-    // Polling System
+    // Polling for payment confirmation
     let attempts = 0;
     const maxAttempts = 20;
-    const baseDelay = 3000;
-
     const pollInterval = setInterval(async () => {
       if (isComplete) return;
-      
       attempts++;
-      console.log(`[${transactionId}] Polling attempt ${attempts}`);
 
       try {
         const checkRes = await fetch(
           `/api/stk_api/check_payment_status?checkout_id=${mpesaCheckoutId}`
         );
-        
+
+        if (!checkRes.ok) throw new Error('Failed to fetch payment status');
         const { status, details } = await checkRes.json();
-        console.log(`[${transactionId}] Poll response:`, status);
+        console.log(`[${transactionId}] Poll ${attempts}:`, status);
 
         if (status === 'Success') {
-          console.log(`[${transactionId}] Payment success`);
+          console.log(`[${transactionId}] Payment confirmed!`);
+          cleanup();
           toast.success('Payment confirmed!');
-          try {
-            await router.push("ThankYouPage");
-            cleanup(true); // Skip state reset as we've navigated away
-          } catch (error) {
-            console.error(`[${transactionId}] Navigation failed:`, error);
-            cleanup();
-          }
-          return;
-        } 
-        else if (status === 'Failed') {
-          console.log(`[${transactionId}] Payment failed`);
+          const receipt = details.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value || 'N/A';
+          // router.push(`/thank-you?receipt=${receipt}`);
+          router.push("ThankYouPage");
+        } else if (status === 'Failed') {
           cleanup();
           toast.error('Payment failed. Please try again.');
-          return;
-        }
-        else if (status === 'Cancelled') {
-          console.log(`[${transactionId}] Payment cancelled`);
+        } else if (status === 'Cancelled') {
           cleanup();
           toast.error('Payment was cancelled by user');
-          return;
-        }
-        else if (attempts >= maxAttempts) {
-          console.log(`[${transactionId}] Max polling attempts reached`);
+        } else if (attempts >= maxAttempts) {
           cleanup();
           toast('Payment verification timeout', { icon: '⚠️' });
-          return;
         }
-
       } catch (error) {
-        console.error(`[${transactionId}] Polling error:`, error);
+        console.error(`[${transactionId}] Poll error:`, error);
         if (attempts >= maxAttempts) {
           cleanup();
           toast.error('Payment verification failed');
         }
       }
-    }, baseDelay);
-
+    }, 3000);
     activeIntervals.add(pollInterval);
 
-    // Timeout System
-    const timeoutInterval = setInterval(() => {
+    // Countdown timeout
+    const countdownTimer = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
-          console.log(`[${transactionId}] Global timeout reached`);
           cleanup();
           toast('Payment process timed out', { icon: '⏱️' });
           return 0;
@@ -339,8 +317,7 @@ const handlePayment = async (url: string, payload: any) => {
         return prev - 1;
       });
     }, 1000);
-
-    activeIntervals.add(timeoutInterval);
+    activeIntervals.add(countdownTimer);
 
   } catch (error) {
     console.error(`[${transactionId}] Payment error:`, error);
@@ -348,6 +325,7 @@ const handlePayment = async (url: string, payload: any) => {
     toast.error(error instanceof Error ? error.message : 'Payment failed');
   }
 };
+
   // ******PAYMENT METHODS******
   const handlePayBill = () => {
     if (!phoneNumber.trim() || !data.PaybillNumber?.trim() || !data.AccountNumber?.trim() || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
