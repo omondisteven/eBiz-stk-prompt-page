@@ -9,7 +9,8 @@ const nextConfig = {
       '@': path.resolve(__dirname),
       '@/lib': path.resolve(__dirname, 'lib'),
       '@/components': path.resolve(__dirname, 'src/components'),
-      '@/pages': path.resolve(__dirname, 'pages')
+      '@/pages': path.resolve(__dirname, 'pages'),
+      '@/context': path.resolve(__dirname, 'src/context')
     };
     return config;
   }
