@@ -285,7 +285,7 @@ const handlePayment = async (url: string, payload: any) => {
           toast.success('Payment confirmed!');
           const receipt = details.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value || 'N/A';
           // router.push(`/thank-you?receipt=${receipt}`);
-          router.push("ThankYouPage");
+          router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
         } else if (status === 'Failed') {
           cleanup();
           toast.error('Payment failed. Please try again.');
