@@ -221,7 +221,7 @@ const HomeUI = () => {
   console.log('Initiating payment with:', payload);
   setIsPaying(true);
   setIsAwaitingPayment(true);
-  setCountdown(120);
+  setCountdown(40);
 
   try {
     // Clear previous status
