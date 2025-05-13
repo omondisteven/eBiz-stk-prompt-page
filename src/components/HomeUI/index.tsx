@@ -222,6 +222,9 @@ const HomeUI = () => {
 const handlePayment = async (url: string, payload: any) => {
   console.log('[1] Starting payment process');
   const transactionId = `tx_${Date.now()}`;
+  console.log(`[${transactionId}] Payload:`, payload);
+  console.log(`[${transactionId}] URL:`, url);
+
   setIsPaying(true);
   setIsAwaitingPayment(true);
   setCountdown(60);
@@ -242,25 +245,31 @@ const handlePayment = async (url: string, payload: any) => {
   };
 
   try {
-    console.log(`[${transactionId}] Initiating STK Push`);
+    console.log(`[${transactionId}] Initiating STK Push request`);
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
+    console.log(`[${transactionId}] Raw response:`, response);
+
     if (!response.ok) {
-      throw new Error(await response.text());
+      const errorText = await response.text();
+      console.error(`[${transactionId}] STK Push failed response:`, errorText);
+      throw new Error(errorText);
     }
 
     const result = await response.json();
-    console.log(`[${transactionId}] STK Response:`, result);
+    console.log(`[${transactionId}] STK Response JSON:`, result);
 
     if (!result.CheckoutRequestID) {
+      console.error(`[${transactionId}] Missing CheckoutRequestID in response`);
       throw new Error('No CheckoutRequestID received');
     }
 
     const mpesaCheckoutId = result.CheckoutRequestID;
+    console.log(`[${transactionId}] CheckoutRequestID: ${mpesaCheckoutId}`);
     toast.success('Enter your M-PESA PIN when prompted');
 
     // Polling for payment confirmation
@@ -269,33 +278,38 @@ const handlePayment = async (url: string, payload: any) => {
     const pollInterval = setInterval(async () => {
       if (isComplete) return;
       attempts++;
+      console.log(`[${transactionId}] Polling attempt ${attempts}...`);
 
       try {
         const checkRes = await fetch(
           `/api/stk_api/check_payment_status?checkout_id=${mpesaCheckoutId}`
         );
+        console.log(`[${transactionId}] Status check response:`, checkRes);
 
-        if (!checkRes.ok) throw new Error('Failed to fetch payment status');
+        if (!checkRes.ok) {
+          const text = await checkRes.text();
+          console.error(`[${transactionId}] Status check failed:`, text);
+          throw new Error(text);
+        }
+
         const { status, details } = await checkRes.json();
-        console.log(`[${transactionId}] Poll ${attempts}:`, status);
+        console.log(`[${transactionId}] Poll ${attempts} status:`, status, 'details:', details);
 
         if (status === 'Success') {
-          console.log(`[${transactionId}] Payment confirmed!`);
+          console.log(`[${transactionId}] Payment confirmed successfully`);
           cleanup();
           toast.success('Payment confirmed!');
 
           const receipt = details.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value || 'N/A';
 
-          // Determine TransactionType from URL
           let TransactionType = '';
           if (url.includes('paybill')) TransactionType = 'Paybill';
           else if (url.includes('till')) TransactionType = 'Pay with Till Number';
           else if (url.includes('sendmoney')) TransactionType = 'Send Money';
           else if (url.includes('agent')) TransactionType = 'Withdraw from Agent';
 
-          // Construct data for ThankYouPage
           const paymentDetails = {
-            ...data, // Include all fields from the decoded QR data
+            ...data, // assuming data is in scope
             TransactionType,
             Amount: payload.amount || 'N/A',
             Receipt: receipt,
@@ -304,19 +318,23 @@ const handlePayment = async (url: string, payload: any) => {
             Timestamp: new Date().toISOString(),
           };
 
+          console.log(`[${transactionId}] Redirecting to ThankYouPage with data:`, paymentDetails);
           router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify(paymentDetails))}`);
         } else if (status === 'Failed') {
+          console.warn(`[${transactionId}] Payment failed`);
           cleanup();
           toast.error('Payment failed. Please try again.');
         } else if (status === 'Cancelled') {
+          console.warn(`[${transactionId}] Payment was cancelled`);
           cleanup();
           toast.error('Payment was cancelled by user');
         } else if (attempts >= maxAttempts) {
+          console.warn(`[${transactionId}] Payment verification timeout`);
           cleanup();
           toast('Payment verification timeout', { icon: '⚠️' });
         }
       } catch (error) {
-        console.error(`[${transactionId}] Poll error:`, error);
+        console.error(`[${transactionId}] Poll error during payment status check:`, error);
         if (attempts >= maxAttempts) {
           cleanup();
           toast.error('Payment verification failed');
@@ -325,10 +343,10 @@ const handlePayment = async (url: string, payload: any) => {
     }, 3000);
     activeIntervals.add(pollInterval);
 
-    // Countdown timeout
     const countdownTimer = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
+          console.warn(`[${transactionId}] Countdown timer expired`);
           cleanup();
           toast('Payment process timed out', { icon: '⏱️' });
           return 0;
@@ -339,11 +357,12 @@ const handlePayment = async (url: string, payload: any) => {
     activeIntervals.add(countdownTimer);
 
   } catch (error) {
-    console.error(`[${transactionId}] Payment error:`, error);
+    console.error(`[${transactionId}] Unexpected error during payment:`, error);
     cleanup();
     toast.error(error instanceof Error ? error.message : 'Payment failed');
   }
 };
+
 
   // ******PAYMENT METHODS******
   const handlePayBill = () => {
