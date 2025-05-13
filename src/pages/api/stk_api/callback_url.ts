@@ -70,12 +70,18 @@ function updateStatus(key: string, status: string, metadata?: CallbackMetadataIt
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  logCallback(`Incoming request: ${JSON.stringify(req.body, null, 2)}`);
+  console.log('Callback received - Headers:', req.headers);
+  console.log('Callback received - Body:', req.body);
+  logCallback(`Incoming request headers: ${JSON.stringify(req.headers)}`);
+  logCallback(`Incoming request body: ${JSON.stringify(req.body, null, 2)}`);
 
   if (req.method === 'POST') {
     try {
+      console.log('Processing callback...');
       const callbackData: CallbackData = req.body?.Body?.stkCallback;
+      
       if (!callbackData) {
+        console.error('Invalid callback format - missing stkCallback');
         return res.status(400).json({ ResultCode: 1, ResultDesc: "Invalid callback format" });
       }
 
@@ -83,35 +89,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const resultCode = callbackData.ResultCode;
       const resultDesc = callbackData.ResultDesc || '';
       
+      console.log(`Processing callback for CheckoutID: ${checkoutId}, ResultCode: ${resultCode}, Desc: ${resultDesc}`);
+
       if (!checkoutId) {
+        console.error('Missing CheckoutRequestID in callback');
         logCallback('Missing CheckoutRequestID');
         return res.status(400).json({ ResultCode: 1, ResultDesc: "Missing CheckoutRequestID" });
       }
 
-      // Process the callback data as shown in the first code snippet
       if (resultCode === 0) {
-        // Payment successful
         const transactionDetails = callbackData.CallbackMetadata?.Item;
-        if (transactionDetails) {
-          // Process the successful payment
-          console.log('Payment successful', transactionDetails);
-          updateStatus(checkoutId, 'Success', transactionDetails);
-        } else {
-          console.log('Payment successful but no transaction details');
-          updateStatus(checkoutId, 'Success');
-        }
+        console.log('Successful payment with details:', transactionDetails);
+        updateStatus(checkoutId, 'Success', transactionDetails);
       } else {
-        // Payment failed
-        console.log('Payment failed:', resultDesc);
-        updateStatus(checkoutId, 'Failed');
+        console.log(`Payment failed with code ${resultCode}: ${resultDesc}`);
+        // Determine if it's a cancellation
+        const status = /cancel/i.test(resultDesc) ? 'Cancelled' : 'Failed';
+        updateStatus(checkoutId, status);
       }
 
+      console.log('Callback processed successfully');
       return res.status(200).json({ ResultCode: 0, ResultDesc: "Callback processed successfully" });
     } catch (error: any) {
-      logCallback(`Callback error: ${error.message}`);
+      console.error('Callback processing error:', error);
+      logCallback(`Callback error: ${error.stack || error.message}`);
       return res.status(500).json({ ResultCode: 1, ResultDesc: "Internal server error" });
     }
   }
 
+  console.log('Method not allowed - received:', req.method);
   return res.status(405).json({ message: 'Method Not Allowed' });
 }
