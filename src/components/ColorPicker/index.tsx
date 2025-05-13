@@ -7,9 +7,9 @@ import {
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppContext, AppContextType } from "@/context/AppContext";
-// import { cn } from "../../lib/utils";
+import { cn } from "@/lib/utils";
 import { Paintbrush } from "lucide-react";
-// import Link from "next/link";
+import Link from "next/link";
 import { useContext, useMemo, useState } from "react";
 import colors from "tailwindcss/colors";
 
