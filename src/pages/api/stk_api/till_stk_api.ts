@@ -1,4 +1,4 @@
-// src/pages/api/stk_api/paybill_stk_api.ts
+// src/pages/api/stk_api/till_stk_api.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 
@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Initiate STK push
       const stkResponse = await axios.post(initiate_url, {
-        BusinessShortCode,
+        BusinessShortCode: accountnumber,
         Password,
         Timestamp,
         TransactionType: 'CustomerBuyGoodsOnline',
