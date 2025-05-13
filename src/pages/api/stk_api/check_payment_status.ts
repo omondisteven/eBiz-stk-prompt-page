@@ -1,14 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import kv, { getPaymentKey } from '../../../lib/kv';
+import fs from 'fs';
+import path from 'path';
 
-// Define the expected shape of our payment data in KV
-interface PaymentData {
-  status?: string;
-  details?: string;
-  updatedAt?: string;
-}
+const tmpDir = path.join('/tmp', 'logs');
+const statusPath = path.join(tmpDir, 'payment_statuses.json');
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -20,39 +17,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const paymentKey = getPaymentKey(checkout_id);
-    const paymentData = (await kv.hgetall(paymentKey)) as PaymentData;
+    let statusData = { status: 'Pending', details: null };
 
-    if (!paymentData?.status) {
-      return res.status(200).json({ 
-        status: 'Pending', 
-        details: 'Waiting for payment confirmation' 
-      });
-    }
+    if (fs.existsSync(statusPath)) {
+      const rawData = fs.readFileSync(statusPath, 'utf-8');
+      const allStatuses = JSON.parse(rawData);
 
-    // Safely parse details if they exist
-    let parsedDetails: any = null;
-    if (paymentData.details) {
-      try {
-        parsedDetails = JSON.parse(paymentData.details);
-      } catch (e) {
-        console.error('Error parsing payment details:', e);
-        parsedDetails = paymentData.details; // Fallback to raw string
+      if (allStatuses[checkout_id]) {
+        statusData = {
+          status: allStatuses[checkout_id].status,
+          details: allStatuses[checkout_id].details
+        };
       }
     }
 
-    return res.status(200).json({
-      status: paymentData.status,
-      details: parsedDetails,
-      updatedAt: paymentData.updatedAt || null
-    });
+    return res.status(200).json(statusData);
 
   } catch (error) {
     console.error('Status check error:', error);
     return res.status(500).json({ 
       status: 'Error',
-      details: 'Failed to check status',
-      error: error instanceof Error ? error.message : String(error)
+      details: 'Failed to check status' 
     });
   }
 }
