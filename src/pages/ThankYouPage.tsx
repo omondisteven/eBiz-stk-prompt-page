@@ -89,22 +89,40 @@ const ThankYouPage = () => {
       setReceiptData(parsedData);
       
       // Generate receipt number
-      const generatedReceiptNumber = "RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
-      setReceiptNumber(generatedReceiptNumber);
-      console.log("📄 Generated Receipt Number:", generatedReceiptNumber);
+      // const generatedReceiptNumber = "RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+      // setReceiptNumber(generatedReceiptNumber);
+      // console.log("📄 Generated Receipt Number:", generatedReceiptNumber);
 
-      // Set timestamp
-      const now = new Date();
-      const formattedTimestamp = now.toLocaleString("en-KE", {
-        year: "numeric",
-        month: "short",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
-      setTimestamp(formattedTimestamp);
-      console.log("🕒 Timestamp:", formattedTimestamp);
+      // // Set timestamp
+      // const now = new Date();
+      // const formattedTimestamp = now.toLocaleString("en-KE", {
+      //   year: "numeric",
+      //   month: "short",
+      //   day: "2-digit",
+      //   hour: "2-digit",
+      //   minute: "2-digit",
+      //   second: "2-digit",
+      // });
+      // setTimestamp(formattedTimestamp);
+
+      setReceiptNumber(parsedData.Receipt || 'N/A');
+
+      if (parsedData.Timestamp) {
+        const parsedDate = new Date(parsedData.Timestamp);
+        const formattedTimestamp = parsedDate.toLocaleString("en-KE", {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+        setTimestamp(formattedTimestamp);
+      } else {
+        setTimestamp('N/A');
+      }
+
+      // console.log("🕒 Timestamp:", formattedTimestamp);
 
     } catch (e) {
       console.error("❌ Error processing QR code data:", e);
@@ -271,7 +289,7 @@ const ThankYouPage = () => {
         <br />
         <p>{receiptData.TransactionType}</p>  
         <br />
-        <p className="text-sm text-gray-500 mb-1">Transaction ID: {receiptNumber}</p>
+        <p className="text-sm text-gray-500 mb-1">MPESA REF#: {receiptNumber}</p>
         <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
         {/* <hr className="my-4 border-gray-300" /> */}
         <br />
