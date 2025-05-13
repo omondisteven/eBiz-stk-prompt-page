@@ -38,27 +38,32 @@ if (!fs.existsSync(logDir)) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Immediate response to M-Pesa
+  const callbackId = `cb_${Date.now()}`;
+  console.log(`[${callbackId}] Callback received`);
+  
+  // Immediate response
   res.status(200).json({ ResultCode: 0, ResultDesc: "Callback received" });
 
-  // Async processing
   try {
-    const timestamp = new Date().toISOString();
-    const rawBody = JSON.stringify(req.body, null, 2);
-    
-    // Log raw callback
-    fs.appendFileSync(callbackLogPath, `\n==== ${timestamp} ====\n${rawBody}\n`);
+    console.log(`[${callbackId}] Headers:`, req.headers);
+    console.log(`[${callbackId}] Raw body:`, req.body);
 
     const callbackData: CallbackData = req.body?.Body?.stkCallback;
     if (!callbackData) {
-      fs.appendFileSync(callbackLogPath, `ERROR: Invalid callback format\n`);
+      console.error(`[${callbackId}] Invalid callback format`);
       return;
     }
 
     const { ResultCode, ResultDesc, CheckoutRequestID, CallbackMetadata } = callbackData;
-    
+    console.log(`[${callbackId}] Callback data:`, {
+      ResultCode,
+      ResultDesc,
+      CheckoutRequestID,
+      HasMetadata: !!CallbackMetadata
+    });
+
     if (!CheckoutRequestID) {
-      fs.appendFileSync(callbackLogPath, `ERROR: Missing CheckoutRequestID\n`);
+      console.error(`[${callbackId}] Missing CheckoutRequestID`);
       return;
     }
 
@@ -69,37 +74,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (ResultCode === 0) {
       status = 'Success';
       details = CallbackMetadata?.Item || 'No transaction details';
-      fs.appendFileSync(callbackLogPath, `SUCCESS: ${CheckoutRequestID}\n`);
+      console.log(`[${callbackId}] Payment success:`, details);
     } else {
       status = /cancel/i.test(ResultDesc) ? 'Cancelled' : 'Failed';
       details = ResultDesc;
-      fs.appendFileSync(callbackLogPath, `FAILURE: ${ResultCode} - ${ResultDesc}\n`);
+      console.log(`[${callbackId}] Payment failed:`, ResultDesc);
     }
 
-    // Update status file
+    // Update status
     const statusUpdate: PaymentStatus = {
-      timestamp,
+      timestamp: new Date().toISOString(),
       status,
       details
     };
 
-    // Initialize with proper type
+    console.log(`[${callbackId}] Writing status update:`, statusUpdate);
+    
     let statuses: PaymentStatuses = {};
     if (fs.existsSync(statusPath)) {
       try {
         statuses = JSON.parse(fs.readFileSync(statusPath, 'utf-8')) as PaymentStatuses;
+        console.log(`[${callbackId}] Loaded existing statuses`);
       } catch (e) {
-        console.error('Error parsing status file:', e);
-        statuses = {};
+        console.error(`[${callbackId}] Error parsing status file:`, e);
       }
     }
     
-    // Now TypeScript knows statuses can be indexed with string
     statuses[CheckoutRequestID] = statusUpdate;
     fs.writeFileSync(statusPath, JSON.stringify(statuses, null, 2));
+    console.log(`[${callbackId}] Status updated successfully`);
 
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    fs.appendFileSync(callbackLogPath, `EXCEPTION: ${errorMsg}\n`);
+    console.error(`[${callbackId}] Callback processing error:`, error);
   }
 }
