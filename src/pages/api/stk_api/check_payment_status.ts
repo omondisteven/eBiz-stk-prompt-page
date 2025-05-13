@@ -3,55 +3,41 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
-type PaymentStatuses = {
-  [key: string]: string;
-};
-
-type TransactionDetails = {
-  [key: string]: any; // Or use a more specific type for your transaction details
-};
-
 const statusPath = path.join(process.cwd(), 'logs', 'payment_statuses.json');
-const transactionDetailsPath = path.join(process.cwd(), 'logs', 'transaction_details.json');
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { checkout_id } = req.query;
 
   if (!checkout_id || typeof checkout_id !== 'string') {
-    return res.status(400).json({ message: 'Missing or invalid checkout_id' });
+    return res.status(400).json({ error: 'Invalid checkout_id' });
   }
 
   try {
-    // Read payment status
-    const statuses: PaymentStatuses = fs.existsSync(statusPath)
-      ? JSON.parse(fs.readFileSync(statusPath, 'utf-8'))
-      : {};
-
-    const status = statuses[checkout_id] || 'Pending';
-
-    // Read transaction details if they exist
-    let transactionDetails = null;
-    if (fs.existsSync(transactionDetailsPath)) {
-      const allTransactions: TransactionDetails = JSON.parse(
-        fs.readFileSync(transactionDetailsPath, 'utf-8')
-      );
-      transactionDetails = allTransactions[checkout_id] || null;
+    let statusData = { status: 'Pending', details: null };
+    
+    if (fs.existsSync(statusPath)) {
+      const rawData = fs.readFileSync(statusPath, 'utf-8');
+      const allStatuses = JSON.parse(rawData);
+      
+      if (allStatuses[checkout_id]) {
+        statusData = {
+          status: allStatuses[checkout_id].status,
+          details: allStatuses[checkout_id].details
+        };
+      }
     }
 
-    return res.status(200).json({ 
-      status,
-      transactionDetails 
-    });
+    return res.status(200).json(statusData);
+
   } catch (error) {
-    console.error("Status check error:", error);
+    console.error('Status check error:', error);
     return res.status(500).json({ 
-      status: 'Error', 
-      message: 'Failed to check status',
-      transactionDetails: null
+      status: 'Error',
+      details: 'Failed to check status' 
     });
   }
 }
