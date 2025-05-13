@@ -283,9 +283,18 @@ const handlePayment = async (url: string, payload: any) => {
           console.log(`[${transactionId}] Payment confirmed!`);
           cleanup();
           toast.success('Payment confirmed!');
+
           const receipt = details.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value || 'N/A';
-          // router.push(`/thank-you?receipt=${receipt}`);
-          router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...data, Amount: amount }))}`);
+
+          const paymentDetails = {
+            ...payload,
+            Amount: payload.amount || 'N/A',
+            Receipt: receipt,
+            Status: status,
+            Timestamp: new Date().toISOString(),
+          };
+
+          router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify(paymentDetails))}`);
         } else if (status === 'Failed') {
           cleanup();
           toast.error('Payment failed. Please try again.');
@@ -325,6 +334,7 @@ const handlePayment = async (url: string, payload: any) => {
     toast.error(error instanceof Error ? error.message : 'Payment failed');
   }
 };
+
 
   // ******PAYMENT METHODS******
   const handlePayBill = () => {
