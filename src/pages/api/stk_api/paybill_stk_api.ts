@@ -1,94 +1,106 @@
-// paybill_stk_api.tsx
-import { NextApiRequest, NextApiResponse } from 'next';
+// pages/api/stk_api/paybill_stk_api.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
-import Cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 
-// Initialize the CORS middleware
-const cors = Cors({
-  origin: '*', // Allow all origins (for testing)
-  methods: ['POST', 'OPTIONS'], // Allowed methods
-  allowedHeaders: ['Content-Type'],
-});
+const logDir = path.join(process.cwd(), 'logs');
+const statusPath = path.join(logDir, 'payment_statuses.json');
+if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
 
-function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result: any) => {
-      if (result instanceof Error) {
-        return reject(result);
-      }
-      return resolve(result);
-    });
+const shortcode = process.env.MPESA_SHORTCODE!;
+const passkey = process.env.MPESA_PASSKEY!;
+const consumerKey = process.env.MPESA_CONSUMER_KEY!;
+const consumerSecret = process.env.MPESA_CONSUMER_SECRET!;
+const callbackUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/stk_api/callback_url`;
+
+async function getAccessToken(): Promise<string> {
+  const url = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
+  const credentials = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
+
+  const res = await axios.get(url, {
+    headers: {
+      Authorization: `Basic ${credentials}`
+    }
   });
+
+  return res.data.access_token;
+}
+
+function generatePassword(timestamp: string): string {
+  const raw = `${shortcode}${passkey}${timestamp}`;
+  return Buffer.from(raw).toString('base64');
+}
+
+function getTimestamp(): string {
+  const now = new Date();
+  return now.toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
+}
+
+function storeInitialStatus(checkoutId: string) {
+  let statuses = {};
+  if (fs.existsSync(statusPath)) {
+    statuses = JSON.parse(fs.readFileSync(statusPath, 'utf-8'));
+  }
+  (statuses as any)[checkoutId] = 'Pending';
+  fs.writeFileSync(statusPath, JSON.stringify(statuses, null, 2));
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS'); // Allow POST and OPTIONS
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); // Allow Content-Type header
-
-
-    console.log("Handler started"); //debugging
-  await runMiddleware(req, res, cors);
-    console.log("Middleware finished"); //debugging
-
-  if (req.method === 'OPTIONS') {
-    console.log("Options request received"); //debugging
-    return res.status(200).end();
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  if (req.method === 'POST') {
-    try {
-      const { phone, amount, accountnumber } = req.body;
+  try {
+    const { phone, accountnumber, amount } = req.body;
 
-      console.log("Payment details:", { phone, amount, accountnumber });
-
-      const consumerKey = 'JOugZC2lkqSZhy8eLeQMx8S0UbOXZ5A8Yzz26fCx9cyU1vqH';
-      const consumerSecret = 'fqyZyrdW3QE3pDozsAcWNkVjwDADAL1dFMF3T9v65gJq8XZeyEeaTqBRXbC5RIvC';
-      const BusinessShortCode = '174379';
-      const Passkey = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
-      const Timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3);
-      const Password = Buffer.from(`${BusinessShortCode}${Passkey}${Timestamp}`).toString('base64');
-
-      const access_token_url = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
-      const initiate_url = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
-      const CallBackURL = 'https://e-biz-stk-prompt-page.vercel.app/api/stk_api/callback_url';
-      console.log('Using callback URL:', CallBackURL);
-
-      const authResponse = await axios.get(access_token_url, {
-        headers: {
-          Authorization: `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64')}`,
-        },
-      });
-
-      const access_token = authResponse.data.access_token;
-
-      const stkResponse = await axios.post(initiate_url, {
-        BusinessShortCode,
-        Password,
-        Timestamp,
-        TransactionType: 'CustomerPayBillOnline',
-        Amount: amount,
-        PartyA: phone,
-        PartyB: BusinessShortCode,
-        PhoneNumber: phone,
-        CallBackURL,
-        AccountReference: accountnumber,
-        TransactionDesc: 'Bill Payment',
-      }, {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });      
-
-      res.status(200).json(stkResponse.data);
-    } catch (error) {
-      console.error("Error in STK Push:", error);
-      res.status(500).json({ message: 'Internal Server Error' });
+    if (!phone || !accountnumber || !amount) {
+      return res.status(400).json({ message: 'Missing required fields' });
     }
-   } else {
-    res.status(405).json({ message: 'Method Not Allowed' });
-  } 
 
+    const timestamp = getTimestamp();
+    const password = generatePassword(timestamp);
+    const accessToken = await getAccessToken();
+
+    const payload = {
+      BusinessShortCode: shortcode,
+      Password: password,
+      Timestamp: timestamp,
+      TransactionType: "CustomerPayBillOnline",
+      Amount: amount,
+      PartyA: phone,
+      PartyB: shortcode,
+      PhoneNumber: phone,
+      CallBackURL: callbackUrl,
+      AccountReference: accountnumber,
+      TransactionDesc: "Payment"
+    };
+
+    const response = await axios.post(
+      'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    const checkoutId = response.data.CheckoutRequestID;
+    storeInitialStatus(checkoutId);
+
+    return res.status(200).json({
+      message: "STK Push initiated",
+      CheckoutRequestID: checkoutId,
+      CustomerMessage: response.data.CustomerMessage,
+      MerchantRequestID: response.data.MerchantRequestID
+    });
+  } catch (error: any) {
+    console.error('STK Push error:', error.response?.data || error.message);
+    return res.status(500).json({
+      message: 'Failed to initiate STK Push',
+      details: error.response?.data || error.message
+    });
+  }
 }
