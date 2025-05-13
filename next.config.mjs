@@ -1,4 +1,5 @@
-/** @type {import('next').NextConfig} */
+import path from 'path';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -14,6 +15,4 @@ const nextConfig = {
   }
 };
 
-const path = require('path');
-
-module.exports = nextConfig;
+export default nextConfig;
