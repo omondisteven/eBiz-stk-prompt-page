@@ -128,7 +128,7 @@ const HomeUI = () => {
     if (router.query.data) {
       try {
         let rawData = router.query.data as string;
-        console.log("Raw data received:", rawData); // Debug log
+        // console.log("Raw data received:", rawData); // Debug log
 
         let decodedData;
         try {
@@ -237,6 +237,7 @@ const handlePayment = async (url: string, payload: any) => {
     console.log(`[${transactionId}] Cleaning up intervals`);
     setIsPaying(false);
     setIsAwaitingPayment(false);
+    setCountdown(0);
     activeIntervals.forEach(interval => clearInterval(interval));
     activeIntervals.clear();
   };
@@ -288,16 +289,25 @@ const handlePayment = async (url: string, payload: any) => {
           cleanup();
           toast.success('Payment confirmed!');
           router.push(`/thank-you?receipt=${details.MpesaReceiptNumber}`);
+          return;
         } 
-        else if (status === 'Failed' || status === 'Cancelled') {
-          console.log(`[${transactionId}] Payment ${status.toLowerCase()}`);
+        else if (status === 'Failed') {
+          console.log(`[${transactionId}] Payment failed`);
           cleanup();
-          toast.error(`Payment ${status.toLowerCase()}`);
+          toast.error('Payment failed. Please try again.');
+          return;
+        }
+        else if (status === 'Cancelled') {
+          console.log(`[${transactionId}] Payment cancelled`);
+          cleanup();
+          toast.error('Payment was cancelled by user');
+          return;
         }
         else if (attempts >= maxAttempts) {
           console.log(`[${transactionId}] Max polling attempts reached`);
           cleanup();
           toast('Payment verification timeout', { icon: '⚠️' });
+          return;
         }
 
       } catch (error) {

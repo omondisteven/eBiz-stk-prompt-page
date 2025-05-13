@@ -16,7 +16,7 @@ type PaymentStatus = {
 };
 
 type PaymentStatuses = {
-  [checkoutId: string]: PaymentStatus; // Explicit string index signature
+  [checkoutId: string]: PaymentStatus;
 };
 
 type CallbackData = {
@@ -42,13 +42,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log(`[${callbackId}] Callback received`);
   
   // Immediate response
-  res.status(200).json({ ResultCode: 0, ResultDesc: "Callback received" });
+  res.status(200).json({ ResultCode: 0, ResultDesc: "Callback received successfully" });
 
   try {
-    console.log(`[${callbackId}] Headers:`, req.headers);
-    console.log(`[${callbackId}] Raw body:`, req.body);
-
-    const callbackData: CallbackData = req.body?.Body?.stkCallback;
+    const callbackData: CallbackData = req.body?.Body?.stkCallback || req.body?.stkCallback;
     if (!callbackData) {
       console.error(`[${callbackId}] Invalid callback format`);
       return;
@@ -67,7 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    // Process status
+    // Process status based on MPESA documentation
     let status: PaymentStatus['status'];
     let details: PaymentStatus['details'];
     
@@ -75,8 +72,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status = 'Success';
       details = CallbackMetadata?.Item || 'No transaction details';
       console.log(`[${callbackId}] Payment success:`, details);
+    } else if (ResultCode === 1032) {
+      status = 'Cancelled';
+      details = 'User cancelled the payment';
+      console.log(`[${callbackId}] Payment cancelled by user`);
     } else {
-      status = /cancel/i.test(ResultDesc) ? 'Cancelled' : 'Failed';
+      status = 'Failed';
       details = ResultDesc;
       console.log(`[${callbackId}] Payment failed:`, ResultDesc);
     }
@@ -88,13 +89,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       details
     };
 
-    console.log(`[${callbackId}] Writing status update:`, statusUpdate);
-    
+    // Log the callback for debugging
+    fs.appendFileSync(callbackLogPath, 
+      `${new Date().toISOString()} - ${CheckoutRequestID} - ${status}\n${JSON.stringify(callbackData, null, 2)}\n\n`
+    );
+
     let statuses: PaymentStatuses = {};
     if (fs.existsSync(statusPath)) {
       try {
         statuses = JSON.parse(fs.readFileSync(statusPath, 'utf-8')) as PaymentStatuses;
-        console.log(`[${callbackId}] Loaded existing statuses`);
       } catch (e) {
         console.error(`[${callbackId}] Error parsing status file:`, e);
       }
@@ -106,5 +109,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   } catch (error) {
     console.error(`[${callbackId}] Callback processing error:`, error);
+    fs.appendFileSync(callbackLogPath, 
+      `${new Date().toISOString()} - ERROR\n${error instanceof Error ? error.stack : String(error)}\n\n`
+    );
   }
 }
