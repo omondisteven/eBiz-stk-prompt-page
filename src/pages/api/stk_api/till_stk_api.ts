@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         PartyB: accountnumber, // 💡 This must be the Till Number
         PhoneNumber: phone,
         CallBackURL,
-        AccountReference: 'BuyGoods',
+        AccountReference: accountnumber,
         TransactionDesc: 'Buy Goods Till Payment',
       }, {
         headers: {
