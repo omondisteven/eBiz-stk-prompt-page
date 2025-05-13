@@ -226,7 +226,6 @@ const handlePayment = async (url: string, payload: any) => {
   setIsAwaitingPayment(true);
   setCountdown(60);
 
-  // Track active intervals
   const activeIntervals = new Set<NodeJS.Timeout>();
   let isComplete = false;
 
@@ -265,7 +264,7 @@ const handlePayment = async (url: string, payload: any) => {
     const mpesaCheckoutId = result.CheckoutRequestID;
     toast.success('Enter your M-PESA PIN when prompted');
 
-    // 2. Polling System
+    // 2. Enhanced Polling System with KV
     let attempts = 0;
     const maxAttempts = 20;
     const baseDelay = 3000;
@@ -274,47 +273,61 @@ const handlePayment = async (url: string, payload: any) => {
       if (isComplete) return;
       
       attempts++;
-      console.log(`[${transactionId}] Polling attempt ${attempts}`);
+      console.log(`[${transactionId}] Polling attempt ${attempts}/${maxAttempts}`);
 
       try {
         const checkRes = await fetch(
-          `/api/stk_api/check_payment_status?checkout_id=${mpesaCheckoutId}`
+          `/api/stk_api/check_payment_status?checkout_id=${encodeURIComponent(mpesaCheckoutId)}&_t=${Date.now()}`
         );
         
-        const { status, details } = await checkRes.json();
-        console.log(`[${transactionId}] Poll response:`, status);
+        if (!checkRes.ok) {
+          throw new Error(`Status check failed with HTTP ${checkRes.status}`);
+        }
+        
+        const result = await checkRes.json();
+        console.log(`[${transactionId}] Poll response:`, result);
 
-        if (status === 'Success') {
-          console.log(`[${transactionId}] Payment success`);
-          cleanup();
-          toast.success('Payment confirmed!');
-          router.push(`/thank-you?receipt=${details.MpesaReceiptNumber}`);
-          return;
-        } 
-        else if (status === 'Failed') {
-          console.log(`[${transactionId}] Payment failed`);
-          cleanup();
-          toast.error('Payment failed. Please try again.');
-          return;
+        switch (result.status) {
+          case 'Success':
+            console.log(`[${transactionId}] Payment success with details:`, result.details);
+            cleanup();
+            toast.success('Payment confirmed!');
+            router.push(`/thank-you?receipt=${result.details?.MpesaReceiptNumber || 'unknown'}`);
+            return;
+            
+          case 'Failed':
+            console.log(`[${transactionId}] Payment failed:`, result.details);
+            cleanup();
+            toast.error(typeof result.details === 'string' ? result.details : 'Payment failed');
+            return;
+            
+          case 'Cancelled':
+            console.log(`[${transactionId}] Payment cancelled:`, result.details);
+            cleanup();
+            toast.error('Payment was cancelled');
+            return;
+            
+          case 'Error':
+            console.log(`[${transactionId}] Status check error:`, result.details);
+            if (attempts >= maxAttempts) {
+              cleanup();
+              toast.error('Payment verification error');
+            }
+            return;
+            
+          default:
+            if (attempts >= maxAttempts) {
+              console.log(`[${transactionId}] Max polling attempts reached`);
+              cleanup();
+              toast('Payment verification timeout', { icon: '⚠️' });
+              return;
+            }
         }
-        else if (status === 'Cancelled') {
-          console.log(`[${transactionId}] Payment cancelled`);
-          cleanup();
-          toast.error('Payment was cancelled by user');
-          return;
-        }
-        else if (attempts >= maxAttempts) {
-          console.log(`[${transactionId}] Max polling attempts reached`);
-          cleanup();
-          toast('Payment verification timeout', { icon: '⚠️' });
-          return;
-        }
-
       } catch (error) {
         console.error(`[${transactionId}] Polling error:`, error);
         if (attempts >= maxAttempts) {
           cleanup();
-          toast.error('Payment verification failed');
+          toast.error('Failed to verify payment status');
         }
       }
     }, baseDelay);
