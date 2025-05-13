@@ -218,88 +218,165 @@ const HomeUI = () => {
   };
 
   const handlePayment = async (url: string, payload: any) => {
-  console.log('Initiating payment with:', payload);
-  setIsPaying(true);
-  setIsAwaitingPayment(true);
-  setCountdown(40);
+    console.log('Initiating payment with:', payload);
+    setIsPaying(true);
+    setIsAwaitingPayment(true);
+    setCountdown(40);
 
-  try {
-    // Clear previous status
-    await fetch(`/api/stk_api/clear_status?checkout_id=${payload.phone}-${payload.accountnumber}`);
-    console.log('Cleared previous status');
+    // Generate a unique checkout ID for this transaction
+    const localCheckoutId = `${payload.phone}-${payload.accountnumber}-${Date.now()}`;
+    console.log('Generated local checkout ID:', localCheckoutId);
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    // Track intervals for cleanup
+    let pollInterval: NodeJS.Timeout;
+    let timeoutInterval: NodeJS.Timeout;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText);
-    }
+    // Function to clean up intervals and reset state
+    const cleanup = () => {
+      clearInterval(pollInterval);
+      clearInterval(timeoutInterval);
+      setIsAwaitingPayment(false);
+      setIsPaying(false);
+    };
 
-    const result = await response.json();
-    console.log('STK Push response:', result);
-
-    const checkoutId = result.CheckoutRequestID;
-    if (!checkoutId) {
-      throw new Error("Missing CheckoutRequestID");
-    }
-
-    toast.success("Payment initiated. Please enter your M-PESA PIN.");
-
-    const pollInterval = setInterval(async () => {
+    try {
+      // 1. Clear previous status
       try {
-        console.log('Checking payment status...');
-        const checkRes = await fetch(`/api/stk_api/check_payment_status?checkout_id=${checkoutId}`);
-        const checkData = await checkRes.json();
-
-        if (checkData.status === "Success") {
-          clearInterval(pollInterval);
-          clearInterval(timeoutInterval);
-          toast.success("Payment confirmed!");
-          setIsAwaitingPayment(false);
-          setIsPaying(false);
-          router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify({ ...payload, Amount: payload.amount }))}`);
-        } else if (checkData.status === "Cancelled") {
-          clearInterval(pollInterval);
-          clearInterval(timeoutInterval);
-          toast.error("Payment was cancelled.");
-          setIsAwaitingPayment(false);
-          setIsPaying(false);
-        } else if (checkData.status === "Failed") {
-          clearInterval(pollInterval);
-          clearInterval(timeoutInterval);
-          toast.error("Payment failed. Please try again.");
-          setIsAwaitingPayment(false);
-          setIsPaying(false);
+        console.log('Clearing previous status for:', localCheckoutId);
+        const clearRes = await fetch(`/api/stk_api/clear_status?checkout_id=${localCheckoutId}`);
+        
+        if (!clearRes.ok) {
+          const errorText = await clearRes.text();
+          console.error('Failed to clear status:', errorText);
+          throw new Error(`Status clearance failed: ${errorText}`);
         }
-      } catch (err) {
-        console.error("Polling error:", err);
+        console.log('Successfully cleared previous status');
+      } catch (clearError) {
+        console.error('Error clearing status:', clearError);
+        throw clearError;
       }
-    }, 3000);
 
-    const timeoutInterval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(pollInterval);
-          clearInterval(timeoutInterval);
-          toast.error("Payment timed out. Please try again.");
-          setIsAwaitingPayment(false);
-          setIsPaying(false);
-          return 0;
+      // 2. Initiate STK Push
+      let stkResponse;
+      try {
+        console.log('Initiating STK Push...');
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('STK Push failed:', errorText);
+          throw new Error(`STK Push failed: ${errorText}`);
         }
-        return prev - 1;
-      });
-    }, 1000);
-  } catch (error) {
-    console.error("Payment error:", error);
-    toast.error("Payment initiation failed.");
-    setIsAwaitingPayment(false);
-    setIsPaying(false);
-  }
-};
+
+        stkResponse = await response.json();
+        console.log('STK Push response:', stkResponse);
+      } catch (stkError) {
+        console.error('STK Push initiation error:', stkError);
+        throw stkError;
+      }
+
+      const checkoutId = stkResponse.CheckoutRequestID;
+      if (!checkoutId) {
+        throw new Error("Missing CheckoutRequestID in STK response");
+      }
+
+      console.log('Received CheckoutRequestID:', checkoutId);
+      toast.success("Payment initiated. Please enter your M-PESA PIN.");
+
+      // 3. Start polling for payment status
+      let pollCount = 0;
+      const maxPolls = 40; // ~2 minutes (3000ms * 40)
+      
+      pollInterval = setInterval(async () => {
+        pollCount++;
+        console.log(`Polling payment status (attempt ${pollCount}/${maxPolls})...`);
+
+        try {
+          const checkRes = await fetch(`/api/stk_api/check_payment_status?checkout_id=${checkoutId}`);
+          
+          if (!checkRes.ok) {
+            console.error('Status check failed:', await checkRes.text());
+            return;
+          }
+
+          const checkData = await checkRes.json();
+          console.log('Status check response:', checkData);
+
+          if (checkData.status === "Success") {
+            console.log('Payment successful! Transaction details:', checkData.transactionDetails);
+            cleanup();
+            toast.success("Payment confirmed!");
+            
+            // Extract M-Pesa receipt number
+            const receiptNumber = checkData.transactionDetails?.find(
+              (item: any) => item.Name === "MpesaReceiptNumber"
+            )?.Value;
+
+            router.push({
+              pathname: '/ThankYouPage',
+              query: { 
+                data: encodeURIComponent(JSON.stringify({ 
+                  ...payload, 
+                  Amount: payload.amount,
+                  ReceiptNumber: receiptNumber,
+                  CheckoutRequestID: checkoutId
+                }))
+              }
+            });
+
+          } else if (checkData.status === "Cancelled") {
+            console.log('Payment was cancelled by user');
+            cleanup();
+            toast.error("Payment was cancelled.");
+          } else if (checkData.status === "Failed") {
+            console.log('Payment failed with status:', checkData);
+            cleanup();
+            toast.error("Payment failed. Please try again.");
+          } else if (pollCount >= maxPolls) {
+            console.log('Max polling attempts reached');
+            cleanup();
+            toast.error("Payment verification timed out. Please check your M-Pesa transactions.");
+          }
+        } catch (err) {
+          console.error("Polling error:", err);
+          if (pollCount >= maxPolls) {
+            cleanup();
+            toast.error("Payment verification encountered errors. Please check your M-Pesa transactions.");
+          }
+        }
+      }, 3000);
+
+      // 4. Set up timeout
+      timeoutInterval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            console.log('Payment timeout reached');
+            cleanup();
+            toast.error("Payment timed out. Please try again.");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+    } catch (error) {
+      console.error("Payment process error:", error);
+      cleanup();
+      
+      let errorMessage = "Payment initiation failed.";
+      if (error instanceof Error) {
+        errorMessage = error.message.includes('STK Push failed') 
+          ? "Failed to initiate payment. Please try again."
+          : error.message;
+      }
+      
+      toast.error(errorMessage);
+    }
+  };
 
 
   // ******PAYMENT METHODS******
