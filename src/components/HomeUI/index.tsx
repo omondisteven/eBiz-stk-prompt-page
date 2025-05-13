@@ -289,7 +289,7 @@ const handlePayment = async (url: string, payload: any) => {
           console.log(`[${transactionId}] Payment success`);
           toast.success('Payment confirmed!');
           try {
-            await router.push(`/thank-you?receipt=${details.MpesaReceiptNumber}`);
+            await router.push("ThankYouPage");
             cleanup(true); // Skip state reset as we've navigated away
           } catch (error) {
             console.error(`[${transactionId}] Navigation failed:`, error);
