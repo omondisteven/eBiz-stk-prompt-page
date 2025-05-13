@@ -52,7 +52,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const access_token_url = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
       const initiate_url = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
-      const CallBackURL = 'https://e-biz-stk-prompt-page.vercel.app/api/stk_api/callback_url';
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const CallBackURL = `${baseUrl}/api/stk_api/callback_url`;
       
       console.log('Using callback URL:', CallBackURL);
 
