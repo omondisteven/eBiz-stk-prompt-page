@@ -286,11 +286,20 @@ const handlePayment = async (url: string, payload: any) => {
 
           const receipt = details.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value || 'N/A';
 
+          // Determine TransactionType from URL
+          let TransactionType = '';
+          if (url.includes('paybill')) TransactionType = 'Paybill';
+          else if (url.includes('till')) TransactionType = 'Pay with Till Number';
+          else if (url.includes('sendmoney')) TransactionType = 'Send Money';
+          else if (url.includes('agent')) TransactionType = 'Withdraw from Agent';
+
+          // Construct data for ThankYouPage
           const paymentDetails = {
-            ...payload,
+            TransactionType,
             Amount: payload.amount || 'N/A',
             Receipt: receipt,
-            Status: status,
+            PhoneNumber: payload.phone,
+            AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
             Timestamp: new Date().toISOString(),
           };
 
@@ -334,7 +343,6 @@ const handlePayment = async (url: string, payload: any) => {
     toast.error(error instanceof Error ? error.message : 'Payment failed');
   }
 };
-
 
   // ******PAYMENT METHODS******
   const handlePayBill = () => {
