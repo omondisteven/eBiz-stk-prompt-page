@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Initiate STK push for till payment
       const stkResponse = await axios.post(initiate_url, {
-        BusinessShortCode: BusinessShortCode,
+        BusinessShortCode,
         Password,
         Timestamp,
         TransactionType: 'CustomerBuyGoodsOnline',
