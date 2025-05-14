@@ -38,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         TransactionType: 'CustomerBuyGoodsOnline',
         Amount: amount,
         PartyA: phone,
-        PartyB: '600000', // SandBox friendly till numberr
+        PartyB: '174379 ', // SandBox friendly till numberr
         PhoneNumber: phone,
         CallBackURL,
         AccountReference: accountnumber,
