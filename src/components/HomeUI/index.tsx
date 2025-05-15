@@ -332,7 +332,9 @@ const HomeUI = () => {
             const { status, details } = await checkRes.json();
             console.log(`[${transactionId}] Payment status:`, status, 'Details:', details);
 
-            if (status === 'Success') {
+            const normalizedStatus = (status || '').toLowerCase();
+
+            if (normalizedStatus === 'success') {
               console.log(`[${transactionId}] Payment confirmed successfully`);
               paymentStatusRef.current = 'success';
               cleanup();
