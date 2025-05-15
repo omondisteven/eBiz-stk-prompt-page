@@ -527,7 +527,7 @@ const HomeUI = () => {
         setIsAwaitingPayment(false); // Reset payment state
         setIsPaying(false);
 
-        router.push("ThankYouPage"); // Or any other desired behavior
+        // router.push("ThankYouPage"); // Or any other desired behavior
     };
 
     return (
