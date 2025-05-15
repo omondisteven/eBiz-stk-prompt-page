@@ -254,9 +254,7 @@ const HomeUI = () => {
     const handlePayment = async (url: string, payload: any) => {
       console.log('[1] Starting payment process');
       const transactionId = `tx_${Date.now()}`;
-      console.log(`[${transactionId}] Payload:`, payload);
-      console.log(`[${transactionId}] URL:`, url);
-
+      
       // Reset all state and refs
       isCompleteRef.current = false;
       paymentStatusRef.current = 'pending';
@@ -273,7 +271,6 @@ const HomeUI = () => {
         console.log(`[${transactionId}] Cleaning up intervals`);
         setIsPaying(false);
         setIsAwaitingPayment(false);
-        setCountdown(0);
         activeIntervals.forEach(clearInterval);
         activeIntervals.clear();
       };
@@ -286,11 +283,8 @@ const HomeUI = () => {
           body: JSON.stringify(payload),
         });
 
-        console.log(`[${transactionId}] Raw response:`, response);
-
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`[${transactionId}] STK Push failed response:`, errorText);
           throw new Error(errorText);
         }
 
@@ -298,15 +292,13 @@ const HomeUI = () => {
         console.log(`[${transactionId}] STK Response JSON:`, JSON.stringify(result, null, 2));
 
         if (!result.CheckoutRequestID) {
-          console.error(`[${transactionId}] Missing CheckoutRequestID in response`);
           throw new Error('No CheckoutRequestID received');
         }
 
         const mpesaCheckoutId = result.CheckoutRequestID;
-        console.log(`[${transactionId}] CheckoutRequestID: ${mpesaCheckoutId}`);
         toast.success('Enter your M-PESA PIN when prompted');
 
-        // Enhanced polling with mobile-specific settings
+        // Enhanced polling
         const pollIntervalMs = isMobile ? 5000 : 3000;
         const maxAttempts = isMobile ? 30 : 20;
         let attempts = 0;
@@ -314,43 +306,27 @@ const HomeUI = () => {
         const pollPaymentStatus = async () => {
           if (isCompleteRef.current) return;
           attempts++;
-          console.log(`[${transactionId}] Polling attempt ${attempts}/${maxAttempts}`);
 
           try {
             const statusCheckUrl = `/api/stk_api/check_payment_status?checkout_id=${mpesaCheckoutId}&t=${Date.now()}`;
-            console.log(`[${transactionId}] Checking status at: ${statusCheckUrl}`);
-            
             const checkRes = await fetch(statusCheckUrl);
-            console.log(`[${transactionId}] Status check response:`, checkRes.status);
 
             if (!checkRes.ok) {
-              const text = await checkRes.text();
-              console.error(`[${transactionId}] Status check failed:`, text);
-              throw new Error(text);
+              throw new Error(await checkRes.text());
             }
 
             const { status, details } = await checkRes.json();
             console.log(`[${transactionId}] Payment status:`, status, 'Details:', details);
 
-            const normalizedStatus = (status || '').toLowerCase();
-
-            if (normalizedStatus === 'success') {
+            if (status === 'Success') {
               console.log(`[${transactionId}] Payment confirmed successfully`);
               paymentStatusRef.current = 'success';
-              cleanup();
-
+              
               const receipt = details.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value || 'N/A';
-              console.log(`[${transactionId}] Receipt number: ${receipt}`);
-
-              let TransactionType = '';
-              if (url.includes('paybill')) TransactionType = 'Paybill';
-              else if (url.includes('till')) TransactionType = 'Pay with Till Number';
-              else if (url.includes('sendmoney')) TransactionType = 'Send Money';
-              else if (url.includes('agent')) TransactionType = 'Withdraw from Agent';
-
+              
               const paymentDetails = {
                 ...data,
-                TransactionType,
+                TransactionType: transactionType,
                 Amount: payload.amount || 'N/A',
                 Receipt: receipt,
                 PhoneNumber: payload.phone,
@@ -358,32 +334,28 @@ const HomeUI = () => {
                 Timestamp: new Date().toISOString(),
               };
 
-              console.log(`[${transactionId}] Redirecting to ThankYouPage`);
-              
-              // Forceful redirect for mobile
-              if (isMobile) {
-                window.location.assign(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify(paymentDetails))}`);
-              } else {
-                router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify(paymentDetails))}`);
-              }
-              
-              // Show success toast after a small delay
-              setTimeout(() => {
-                toast.success('Payment confirmed!', { duration: 5000 });
-              }, 1000);
+              // Clear countdown and intervals
+              setCountdown(0);
+              cleanup();
+
+              // Show success feedback
+              toast.success('Payment confirmed!', { duration: 5000 });
+
+              // Navigate to ThankYouPage
+              router.push({
+                pathname: '/ThankYouPage',
+                query: { data: JSON.stringify(paymentDetails) }
+              });
 
             } else if (status === 'Failed') {
-              console.warn(`[${transactionId}] Payment failed`);
               paymentStatusRef.current = 'failed';
               cleanup();
               toast.error('Payment failed. Please try again.');
             } else if (status === 'Cancelled') {
-              console.warn(`[${transactionId}] Payment was cancelled`);
               paymentStatusRef.current = 'cancelled';
               cleanup();
               toast.error('Payment was cancelled by user');
             } else if (attempts >= maxAttempts) {
-              console.warn(`[${transactionId}] Payment verification timeout`);
               cleanup();
               toast('Payment verification timeout', { icon: '⚠️' });
             }
@@ -399,23 +371,19 @@ const HomeUI = () => {
         // Start polling
         const pollIntervalId = setInterval(pollPaymentStatus, pollIntervalMs);
         activeIntervals.add(pollIntervalId);
-
-        // Initial immediate check
-        pollPaymentStatus();
+        pollPaymentStatus(); // Immediate first check
 
         // Countdown timer
         const countdownTimer = setInterval(() => {
           setCountdown(prev => {
-            const newCount = prev - 1;
-            if (newCount <= 0) {
-              console.warn(`[${transactionId}] Countdown timer expired`);
+            if (prev <= 1) {
               if (paymentStatusRef.current === 'pending') {
                 cleanup();
                 toast('Payment process timed out', { icon: '⏱️' });
               }
               return 0;
             }
-            return newCount;
+            return prev - 1;
           });
         }, 1000);
         activeIntervals.add(countdownTimer);
