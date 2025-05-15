@@ -1,17 +1,11 @@
 // /src/pages/api/stk_api/callback_url.ts
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
 type CallbackMetadataItem = {
   Name: string;
   Value: string | number;
-};
-
-type PaymentStatus = {
-  timestamp: string;
-  status: 'Pending' | 'Success' | 'Failed' | 'Cancelled';
-  details: CallbackMetadataItem[] | string;
 };
 
 type CallbackData = {
@@ -28,57 +22,60 @@ type CallbackData = {
   };
 };
 
-const tmpDir = path.join('/tmp', 'logs');
-const statusPath = path.join(tmpDir, 'payment_statuses.json');
-const callbackLogPath = path.join(tmpDir, 'mpesa_callbacks.log');
+type PaymentStatus = {
+  timestamp: string;
+  status: 'Pending' | 'Success' | 'Failed' | 'Cancelled';
+  details: CallbackMetadataItem[] | string;
+};
 
-if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+const tmpDir = path.join(process.cwd(), 'tmp');
+const statusPath = path.join(tmpDir, 'payment_statuses.json');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).end('Method Not Allowed');
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const callback: CallbackData = req.body;
-  const stkCallback = callback.Body.stkCallback;
-  const checkoutId = stkCallback.CheckoutRequestID;
+  const data = req.body as CallbackData;
+  const callback = data?.Body?.stkCallback;
+  if (!callback?.CheckoutRequestID) return res.status(400).json({ error: 'Missing CheckoutRequestID' });
 
-  let status: PaymentStatus;
+  const checkoutId = callback.CheckoutRequestID;
+  const resultCode = callback.ResultCode;
+  const status: PaymentStatus = {
+    timestamp: new Date().toISOString(),
+    status: 'Pending',
+    details: 'No details'
+  };
 
-  switch (stkCallback.ResultCode) {
-    case 0:
-      status = {
-        timestamp: new Date().toISOString(),
-        status: 'Success',
-        details: stkCallback.CallbackMetadata?.Item || [],
-      };
-      break;
-    case 1032:
-      status = {
-        timestamp: new Date().toISOString(),
-        status: 'Cancelled',
-        details: stkCallback.ResultDesc,
-      };
-      break;
-    default:
-      status = {
-        timestamp: new Date().toISOString(),
-        status: 'Failed',
-        details: stkCallback.ResultDesc,
-      };
-      break;
+  if (resultCode === 0) {
+    status.status = 'Success';
+    status.details = callback.CallbackMetadata?.Item || 'No metadata';
+  } else if (resultCode === 1032) {
+    status.status = 'Cancelled';
+    status.details = callback.ResultDesc;
+  } else {
+    status.status = 'Failed';
+    status.details = callback.ResultDesc;
   }
 
-  // Save status to file
+  // Ensure tmp dir exists
+  if (!fs.existsSync(tmpDir)) {
+    fs.mkdirSync(tmpDir);
+  }
+
+  // Read existing statuses
   let statuses: Record<string, PaymentStatus> = {};
   if (fs.existsSync(statusPath)) {
-    const file = fs.readFileSync(statusPath, 'utf-8');
-    statuses = JSON.parse(file || '{}');
+    const raw = fs.readFileSync(statusPath, 'utf8');
+    try {
+      statuses = JSON.parse(raw);
+    } catch {
+      statuses = {};
+    }
   }
 
+  // Update status
   statuses[checkoutId] = status;
   fs.writeFileSync(statusPath, JSON.stringify(statuses, null, 2));
 
-  // Also log the full callback
-  fs.appendFileSync(callbackLogPath, JSON.stringify(callback, null, 2) + '\n\n');
-
-  res.status(200).json({ success: true });
+  return res.status(200).json({ message: 'Callback processed successfully' });
 }
