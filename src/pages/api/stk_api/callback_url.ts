@@ -1,3 +1,4 @@
+// /src/pages/api/stk_api/callback_url.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
@@ -56,30 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    let status: PaymentStatus['status'];
-    let details: PaymentStatus['details'];
-
-    if (ResultCode === 0) {
-      status = 'Success';
-      details = CallbackMetadata?.Item || 'No transaction details';
-    } else if (ResultCode === 1032) {
-      status = 'Cancelled';
-      details = 'User cancelled the payment';
-    } else {
-      status = 'Failed';
-      details = ResultDesc;
-    }
-
-    const statusUpdate: PaymentStatus = {
-      timestamp: new Date().toISOString(),
-      status,
-      details
-    };
-
-    fs.appendFileSync(callbackLogPath, 
-      `${new Date().toISOString()} - ${CheckoutRequestID} - ${status}\n${JSON.stringify(callbackData, null, 2)}\n\n`
-    );
-
+    // Initialize statuses object first
     let statuses: Record<string, PaymentStatus> = {};
     if (fs.existsSync(statusPath)) {
       try {
@@ -89,8 +67,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    statuses[CheckoutRequestID] = statusUpdate;
-    fs.writeFileSync(statusPath, JSON.stringify(statuses, null, 2));
+    let status: PaymentStatus['status'];
+    let details: PaymentStatus['details'];
+
+    if (ResultCode === 0) {
+      status = 'Success';
+      details = CallbackMetadata?.Item || 'No transaction details';
+      
+      // Update statuses immediately
+      statuses[CheckoutRequestID] = {
+        timestamp: new Date().toISOString(),
+        status,
+        details
+      };
+      
+      // Write the updated statuses immediately
+      fs.writeFileSync(statusPath, JSON.stringify(statuses, null, 2));
+      console.log(`[${callbackId}] Success status written immediately`);
+    } else if (ResultCode === 1032) {
+      status = 'Cancelled';
+      details = 'User cancelled the payment';
+    } else {
+      status = 'Failed';
+      details = ResultDesc;
+    }
+
+    // For non-success cases, update statuses after determining status
+    if (ResultCode !== 0) {
+      statuses[CheckoutRequestID] = {
+        timestamp: new Date().toISOString(),
+        status,
+        details
+      };
+      fs.writeFileSync(statusPath, JSON.stringify(statuses, null, 2));
+    }
+
+    fs.appendFileSync(callbackLogPath, 
+      `${new Date().toISOString()} - ${CheckoutRequestID} - ${status}\n${JSON.stringify(callbackData, null, 2)}\n\n`
+    );
+
     console.log(`[${callbackId}] Status for ${CheckoutRequestID} set to ${status}`);
     
   } catch (error) {
