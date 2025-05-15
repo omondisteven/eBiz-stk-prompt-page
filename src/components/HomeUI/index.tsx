@@ -263,10 +263,6 @@ const HomeUI = () => {
             toast.error('Payment failed. Please try again.');
         }
     };
-    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setAmount(value);
-    };
 
     const handlePayment = async (url: string, payload: any) => {
         console.log('Starting payment process');
@@ -349,6 +345,48 @@ const HomeUI = () => {
         }
     };
 
+    // Handle phone number input change
+    const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value;
+
+        // Ensure the number starts with "254"
+        if (!value.startsWith("254")) {
+            value = "254";
+            setWarning("Phone number must start with '254'.");
+        } else {
+            setWarning(null);
+        }
+
+        // Validate the number after "254"
+        if (value.length > 3) {
+            const afterPrefix = value.slice(3);
+            if (/^0/.test(afterPrefix)) {
+                setError("The digit after '254' cannot be zero.");
+            } else {
+                setError(null);
+            }
+        } else {
+            setError(null);
+        }
+
+        setPhoneNumber(value);
+    };
+
+    // Validate phone number length on blur
+    const handlePhoneNumberBlur = () => {
+        if (phoneNumber.length !== 12) {
+            setError("Phone number must be exactly 12 digits.");
+        } else {
+            setError(null);
+        }
+    };
+
+    // Handle Amount input change
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setAmount(value);
+    };
+
     // Payment methods
     const handlePayBill = () => {
         if (!phoneNumber.trim() || !data.PaybillNumber?.trim() || !data.AccountNumber?.trim() || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
@@ -387,42 +425,6 @@ const HomeUI = () => {
             amount: amount.toString(),
             accountnumber: data.RecepientPhoneNumber.trim(),
         });
-    };
-
-     // Handle phone number input change
-    const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let value = e.target.value;
-
-        // Ensure the number starts with "254"
-        if (!value.startsWith("254")) {
-            value = "254";
-            setWarning("Phone number must start with '254'.");
-        } else {
-            setWarning(null);
-        }
-
-        // Validate the number after "254"
-        if (value.length > 3) {
-            const afterPrefix = value.slice(3);
-            if (/^0/.test(afterPrefix)) {
-                setError("The digit after '254' cannot be zero.");
-            } else {
-                setError(null);
-            }
-        } else {
-            setError(null);
-        }
-
-        setPhoneNumber(value);
-    };
-
-    // Validate phone number length on blur
-    const handlePhoneNumberBlur = () => {
-        if (phoneNumber.length !== 12) {
-            setError("Phone number must be exactly 12 digits.");
-        } else {
-            setError(null);
-        }
     };
 
     const handleWithdraw = () => {
