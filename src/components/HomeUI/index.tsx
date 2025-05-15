@@ -130,6 +130,7 @@ const HomeUI = () => {
     isAwaitingPayment: false,
     countdown: 60
   });
+  const activeIntervalsRef = useRef<Set<NodeJS.Timeout>>(new Set());
 
   // Mobile detection
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
@@ -251,68 +252,172 @@ const HomeUI = () => {
 
   // Updated handlePayment function with correct toast methods
 // Enhanced handlePayment with detailed logging
-// Updated handlePayment function without hooks
-  const handlePayment = async (url: string, payload: any) => {
+const handlePayment = async (url: string, payload: any) => {
     console.log('[1] Starting payment process');
     const transactionId = `tx_${Date.now()}`;
-    
+    console.log(`[${transactionId}] Payload:`, payload);
+    console.log(`[${transactionId}] URL:`, url);
+
     // Reset state
     isCompleteRef.current = false;
-    countdownRef.current = 60;
-    paymentStatusRef.current = 'pending';
-    setPaymentState({
-      isPaying: true,
-      isAwaitingPayment: true,
-      countdown: 60
-    });
-
-    const pollInterval = isMobile ? 5000 : 3000;
-    const maxAttempts = isMobile ? 30 : 20;
+    setIsPaying(true);
+    setIsAwaitingPayment(true);
+    setCountdown(60);
+    activeIntervalsRef.current = new Set();
 
     const cleanup = () => {
       if (isCompleteRef.current) return;
       isCompleteRef.current = true;
 
-      console.log(`[${transactionId}] Cleaning up`);
-      setPaymentState({
-        isPaying: false,
-        isAwaitingPayment: false,
-        countdown: 0
-      });
+      console.log(`[${transactionId}] Cleaning up intervals`);
+      setIsPaying(false);
+      setIsAwaitingPayment(false);
+      setCountdown(0);
+      activeIntervalsRef.current.forEach(clearInterval);
+      activeIntervalsRef.current.clear();
     };
 
     try {
-      console.log(`[${transactionId}] Initiating STK Push`);
+      console.log(`[${transactionId}] Initiating STK Push request`);
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
+      console.log(`[${transactionId}] Raw response:`, response);
+
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`[${transactionId}] STK Push failed response:`, errorText);
         throw new Error(errorText);
       }
 
       const result = await response.json();
-      console.log(`[${transactionId}] STK Response:`, result);
+      console.log(`[${transactionId}] STK Response JSON:`, result);
 
       if (!result.CheckoutRequestID) {
+        console.error(`[${transactionId}] Missing CheckoutRequestID in response`);
         throw new Error('No CheckoutRequestID received');
       }
 
       const mpesaCheckoutId = result.CheckoutRequestID;
+      console.log(`[${transactionId}] CheckoutRequestID: ${mpesaCheckoutId}`);
       toast.success('Enter your M-PESA PIN when prompted');
 
-      // Polling implementation remains the same...
-      // Just remove any hook usage inside this function
+      // Mobile-optimized polling
+      const pollIntervalMs = isMobile ? 5000 : 3000;
+      const maxAttempts = isMobile ? 30 : 20;
+      let attempts = 0;
+
+      const pollPaymentStatus = async () => {
+        if (isCompleteRef.current) return;
+        attempts++;
+        console.log(`[${transactionId}] Polling attempt ${attempts}...`);
+
+        try {
+          const checkRes = await fetch(
+            `/api/stk_api/check_payment_status?checkout_id=${mpesaCheckoutId}`
+          );
+          console.log(`[${transactionId}] Status check response:`, checkRes);
+
+          if (!checkRes.ok) {
+            const text = await checkRes.text();
+            console.error(`[${transactionId}] Status check failed:`, text);
+            throw new Error(text);
+          }
+
+          const { status, details } = await checkRes.json();
+          console.log(`[${transactionId}] Poll ${attempts} status:`, status, 'details:', details);
+
+          if (status === 'Success') {
+            console.log(`[${transactionId}] Payment confirmed successfully`);
+            cleanup();
+            toast.success('Payment confirmed!');
+
+            const receipt = details.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value || 'N/A';
+
+            let TransactionType = '';
+            if (url.includes('paybill')) TransactionType = 'Paybill';
+            else if (url.includes('till')) TransactionType = 'Pay with Till Number';
+            else if (url.includes('sendmoney')) TransactionType = 'Send Money';
+            else if (url.includes('agent')) TransactionType = 'Withdraw from Agent';
+
+            const paymentDetails = {
+              ...data,
+              TransactionType,
+              Amount: payload.amount || 'N/A',
+              Receipt: receipt,
+              PhoneNumber: payload.phone,
+              AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
+              Timestamp: new Date().toISOString(),
+            };
+
+            console.log(`[${transactionId}] Redirecting to ThankYouPage with data:`, paymentDetails);
+            
+            // Mobile-friendly redirect
+            if (isMobile) {
+              window.location.href = `/ThankYouPage?data=${encodeURIComponent(JSON.stringify(paymentDetails))}`;
+            } else {
+              router.push(`/ThankYouPage?data=${encodeURIComponent(JSON.stringify(paymentDetails))}`);
+            }
+          } else if (status === 'Failed') {
+            console.warn(`[${transactionId}] Payment failed`);
+            cleanup();
+            toast.error('Payment failed. Please try again.');
+          } else if (status === 'Cancelled') {
+            console.warn(`[${transactionId}] Payment was cancelled`);
+            cleanup();
+            toast.error('Payment was cancelled by user');
+          } else if (attempts >= maxAttempts) {
+            console.warn(`[${transactionId}] Payment verification timeout`);
+            cleanup();
+            toast('Payment verification timeout', { icon: '⚠️' });
+          }
+        } catch (error) {
+          console.error(`[${transactionId}] Poll error during payment status check:`, error);
+          if (attempts >= maxAttempts) {
+            cleanup();
+            toast.error('Payment verification failed');
+          }
+        }
+      };
+
+      // Start polling
+      const pollIntervalId = setInterval(() => {
+        if (!isCompleteRef.current && attempts < maxAttempts) {
+          pollPaymentStatus();
+        } else {
+          clearInterval(pollIntervalId);
+          activeIntervalsRef.current.delete(pollIntervalId);
+        }
+      }, pollIntervalMs);
+      activeIntervalsRef.current.add(pollIntervalId);
+
+      // Initial immediate check
+      pollPaymentStatus();
+
+      // Countdown timer
+      const countdownTimer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            console.warn(`[${transactionId}] Countdown timer expired`);
+            cleanup();
+            toast('Payment process timed out', { icon: '⏱️' });
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      activeIntervalsRef.current.add(countdownTimer);
 
     } catch (error) {
-      console.error(`[${transactionId}] Payment error:`, error);
+      console.error(`[${transactionId}] Unexpected error during payment:`, error);
       cleanup();
       toast.error(error instanceof Error ? error.message : 'Payment failed');
     }
   };
+
 
 
   // ******PAYMENT METHODS******
