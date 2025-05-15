@@ -9,7 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useAppContext } from "@/context/AppContext";
 import Link from "next/link";
 
-// Calculator component
+// Add this Calculator component near your other imports
 const Calculator = ({ onCalculate, onClose, onClear }: {
     onCalculate: (result: string) => void,
     onClose: () => void,
@@ -46,7 +46,7 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
         } else if (value === 'C') {
             setInput('');
             setLiveResult('0');
-            onClear();
+            onClear(); // Clear the amount input box
         } else if (value === '⌫') {
             setInput(input.slice(0, -1));
         } else {
@@ -76,6 +76,7 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
                 <HiX className="h-4 w-4" />
             </button>
 
+            {/* Display current input and live result */}
             <div className="mb-2 p-2 bg-gray-100 rounded">
                 <div className="text-gray-600 text-sm h-5 text-right">{input || '0'}</div>
                 <div className={`text-lg font-semibold text-right ${
@@ -108,31 +109,36 @@ const HomeUI = () => {
     const router = useRouter();
     const [transactionType, setTransactionType] = useState("");
     const [data, setData] = useState<any>({});
-    const { data: appData } = useAppContext();
-    const [phoneNumber, setPhoneNumber] = useState("254");
-    const [amount, setAmount] = useState(data.Amount || "");
-    const [warning, setWarning] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const { data: appData } = useAppContext(); // Use the context
+    const [phoneNumber, setPhoneNumber] = useState("254"); // Initialize with default value
+    const [amount, setAmount] = useState(data.Amount || ""); // State for editable Amount
+    const [warning, setWarning] = useState<string | null>(null); // Warning message
+    const [error, setError] = useState<string | null>(null); // Error message
     const [showCalculator, setShowCalculator] = useState(false);
 
+    const [isAwaitingPayment, setIsAwaitingPayment] = useState(false);
+    const [countdown, setCountdown] = useState(30);
+    const [isPaying, setIsPaying] = useState(false); // Disable button during processing
+
+    // Move all hooks to component level
+    const isCompleteRef = useRef(false);
+    const countdownRef = useRef(60);
+    const paymentStatusRef = useRef<'pending' | 'success' | 'failed' | 'cancelled'>('pending');
     const [paymentState, setPaymentState] = useState({
         isPaying: false,
         isAwaitingPayment: false,
-        countdown: 60,
-        status: 'pending' as 'pending' | 'success' | 'failed' | 'cancelled',
-        checkoutRequestId: ''
+        countdown: 60
     });
-
     const activeIntervalsRef = useRef<Set<NodeJS.Timeout>>(new Set());
-    const isCompleteRef = useRef(false);
+
+    // Mobile detection
     const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
-    // Handle visibility changes for mobile
+    // Handle visibility changes
     useEffect(() => {
         const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible' && paymentState.status === 'pending') {
-                console.log('Mobile app came to foreground - checking payment status');
-                checkPaymentStatus();
+            if (document.visibilityState === 'visible' && paymentStatusRef.current === 'pending') {
+                console.log('Mobile app came to foreground - refreshing payment status');
             }
         };
 
@@ -145,19 +151,25 @@ const HomeUI = () => {
                 document.removeEventListener('visibilitychange', handleVisibilityChange);
             }
         };
-    }, [isMobile, paymentState.status]);
+    }, [isMobile]);
 
-    // QR code data decoding
+    // Update phoneNumber when QR code data is decoded
+    // Replace the useEffect that decodes the QR data with:
+
     useEffect(() => {
         if (router.query.data) {
             try {
                 let rawData = router.query.data as string;
+                // console.log("Raw data received:", rawData); // Debug log
+
                 let decodedData;
                 try {
+                    // First try Base64 decode
                     decodedData = decodeURIComponent(escape(atob(rawData)));
                 } catch (base64Err) {
                     console.warn("Base64 decode failed, trying URI decode");
                     try {
+                        // Fallback to URI decode
                         decodedData = decodeURIComponent(rawData);
                     } catch (uriErr) {
                         console.error("All decode attempts failed:", uriErr);
@@ -175,6 +187,7 @@ const HomeUI = () => {
                     return;
                 }
 
+                // Validate required fields
                 if (!parsedData.TransactionType) {
                     toast.error("Missing transaction type in QR data");
                     return;
@@ -192,158 +205,7 @@ const HomeUI = () => {
         }
     }, [router.query]);
 
-    // Cleanup intervals on unmount
-    useEffect(() => {
-        return () => {
-            activeIntervalsRef.current.forEach(clearInterval);
-            activeIntervalsRef.current.clear();
-        };
-    }, []);
 
-    const checkPaymentStatus = async () => {
-        if (!paymentState.isAwaitingPayment || isCompleteRef.current || !paymentState.checkoutRequestId) return;
-
-        try {
-            const statusCheckUrl = `/api/stk_api/check_payment_status?checkout_id=${paymentState.checkoutRequestId}&t=${Date.now()}`;
-            const checkRes = await fetch(statusCheckUrl);
-
-            if (!checkRes.ok) {
-                throw new Error(await checkRes.text());
-            }
-
-            const { status, details } = await checkRes.json();
-            console.log('Payment status:', status, 'Details:', details);
-
-            if (status !== 'Pending') {
-                handlePaymentResult(status, details);
-            }
-        } catch (error) {
-            console.error('Status check error:', error);
-        }
-    };
-
-    const handlePaymentResult = (status: 'success' | 'failed' | 'cancelled', details: any) => {
-        if (isCompleteRef.current) return;
-        isCompleteRef.current = true;
-
-        // Clear all intervals
-        activeIntervalsRef.current.forEach(clearInterval);
-        activeIntervalsRef.current.clear();
-
-        setPaymentState(prev => ({
-            ...prev,
-            isAwaitingPayment: false,
-            isPaying: false,
-            status
-        }));
-
-        if (status === 'success') {
-            const receipt = Array.isArray(details) 
-                ? details.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value || 'N/A'
-                : 'N/A';
-            
-            const paymentDetails = {
-                ...data,
-                TransactionType: transactionType,
-                Amount: amount || 'N/A',
-                Receipt: receipt,
-                PhoneNumber: phoneNumber,
-                AccountNumber: data.AccountNumber || data.TillNumber || data.RecepientPhoneNumber || data.StoreNumber || 'N/A',
-                Timestamp: new Date().toISOString(),
-            };
-
-            toast.success('Payment successful!');
-            router.push({
-                pathname: '/ThankYouPage',
-                query: { data: JSON.stringify(paymentDetails) }
-            });
-        } else if (status === 'cancelled') {
-            toast.error('Payment cancelled by the user');
-        } else {
-            toast.error('Payment failed. Please try again.');
-        }
-    };
-
-    const handlePayment = async (url: string, payload: any) => {
-        console.log('Starting payment process');
-        isCompleteRef.current = false;
-        
-        setPaymentState({
-            isPaying: true,
-            isAwaitingPayment: true,
-            countdown: 60,
-            status: 'pending',
-            checkoutRequestId: ''
-        });
-
-        const cleanup = () => {
-            if (isCompleteRef.current) return;
-            isCompleteRef.current = true;
-            
-            activeIntervalsRef.current.forEach(clearInterval);
-            activeIntervalsRef.current.clear();
-            
-            setPaymentState(prev => ({
-                ...prev,
-                isPaying: false,
-                isAwaitingPayment: false
-            }));
-        };
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-
-            const result = await response.json();
-            console.log('STK Response:', result);
-
-            if (!result.CheckoutRequestID) {
-                throw new Error('No CheckoutRequestID received');
-            }
-
-            // Store CheckoutRequestID for status checks
-            setPaymentState(prev => ({
-                ...prev,
-                checkoutRequestId: result.CheckoutRequestID
-            }));
-            toast.success('Enter your M-PESA PIN when prompted');
-
-            // Start polling for payment status
-            const pollInterval = setInterval(() => {
-                if (!isCompleteRef.current) {
-                    checkPaymentStatus();
-                }
-            }, isMobile ? 5000 : 3000);
-            activeIntervalsRef.current.add(pollInterval);
-
-            // Start countdown timer
-            const countdownInterval = setInterval(() => {
-                setPaymentState(prev => {
-                    if (prev.countdown <= 1) {
-                        if (!isCompleteRef.current && prev.status === 'pending') {
-                            cleanup();
-                            toast('Payment process timed out', { icon: '⏱️' });
-                        }
-                        return { ...prev, countdown: 0 };
-                    }
-                    return { ...prev, countdown: prev.countdown - 1 };
-                });
-            }, 1000);
-            activeIntervalsRef.current.add(countdownInterval);
-
-        } catch (error) {
-            console.error('Payment error:', error);
-            cleanup();
-            toast.error(error instanceof Error ? error.message : 'Payment failed');
-        }
-    };
 
     // Handle phone number input change
     const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -387,7 +249,154 @@ const HomeUI = () => {
         setAmount(value);
     };
 
-    // Payment methods
+    // Updated handlePayment function with correct toast methods
+    // Enhanced handlePayment with detailed logging
+    const handlePayment = async (url: string, payload: any) => {
+      console.log('[1] Starting payment process');
+      const transactionId = `tx_${Date.now()}`;
+      
+      // Reset all state and refs
+      isCompleteRef.current = false;
+      paymentStatusRef.current = 'pending';
+      setIsPaying(true);
+      setIsAwaitingPayment(true);
+      setCountdown(60);
+      const activeIntervals = new Set<NodeJS.Timeout>();
+      activeIntervalsRef.current = activeIntervals;
+
+      const cleanup = () => {
+        if (isCompleteRef.current) return;
+        isCompleteRef.current = true;
+
+        console.log(`[${transactionId}] Cleaning up intervals`);
+        setIsPaying(false);
+        setIsAwaitingPayment(false);
+        activeIntervals.forEach(clearInterval);
+        activeIntervals.clear();
+      };
+
+      try {
+        console.log(`[${transactionId}] Initiating STK Push request`);
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText);
+        }
+
+        const result = await response.json();
+        console.log(`[${transactionId}] STK Response JSON:`, JSON.stringify(result, null, 2));
+
+        if (!result.CheckoutRequestID) {
+          throw new Error('No CheckoutRequestID received');
+        }
+
+        const mpesaCheckoutId = result.CheckoutRequestID;
+        toast.success('Enter your M-PESA PIN when prompted');
+
+        // Enhanced polling
+        const pollIntervalMs = isMobile ? 5000 : 3000;
+        const maxAttempts = isMobile ? 30 : 20;
+        let attempts = 0;
+
+        const pollPaymentStatus = async () => {
+          if (isCompleteRef.current) return;
+          attempts++;
+
+          try {
+            const statusCheckUrl = `/api/stk_api/check_payment_status?checkout_id=${mpesaCheckoutId}&t=${Date.now()}`;
+            const checkRes = await fetch(statusCheckUrl);
+
+            if (!checkRes.ok) {
+              throw new Error(await checkRes.text());
+            }
+
+            const { status, details } = await checkRes.json();
+            console.log(`[${transactionId}] Payment status:`, status, 'Details:', details);
+
+            if (status === 'Success') {
+              console.log(`[${transactionId}] Payment confirmed successfully`);
+              paymentStatusRef.current = 'success';
+              
+              const receipt = details.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value || 'N/A';
+              
+              const paymentDetails = {
+                ...data,
+                TransactionType: transactionType,
+                Amount: payload.amount || 'N/A',
+                Receipt: receipt,
+                PhoneNumber: payload.phone,
+                AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
+                Timestamp: new Date().toISOString(),
+              };
+
+              // Clear countdown and intervals
+              setCountdown(0);
+              cleanup();
+
+              // Show success feedback
+              toast.success('Payment confirmed!', { duration: 5000 });
+
+              // Navigate to ThankYouPage
+              router.push({
+                pathname: '/ThankYouPage',
+                query: { data: JSON.stringify(paymentDetails) }
+              });
+
+            } else if (status === 'Failed') {
+              paymentStatusRef.current = 'failed';
+              cleanup();
+              toast.error('Payment failed. Please try again.');
+            } else if (status === 'Cancelled') {
+              paymentStatusRef.current = 'cancelled';
+              cleanup();
+              toast.error('Payment was cancelled by user');
+
+            } else if (attempts >= maxAttempts) {
+              cleanup();
+              toast('Payment verification timeout', { icon: '⚠️' });
+            }
+          } catch (error) {
+            console.error(`[${transactionId}] Poll error:`, error);
+            if (attempts >= maxAttempts) {
+              cleanup();
+              toast.error('Payment verification failed');
+            }
+          }
+        };
+
+        // Start polling
+        const pollIntervalId = setInterval(pollPaymentStatus, pollIntervalMs);
+        activeIntervals.add(pollIntervalId);
+        pollPaymentStatus(); // Immediate first check
+
+        // Countdown timer
+        const countdownTimer = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              if (paymentStatusRef.current === 'pending') {
+                cleanup();
+                toast('Payment process timed out', { icon: '⏱️' });
+              }
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        activeIntervals.add(countdownTimer);
+
+      } catch (error) {
+        console.error(`[${transactionId}] Payment error:`, error);
+        cleanup();
+        toast.error(error instanceof Error ? error.message : 'Payment failed');
+      }
+    };
+
+    // ******PAYMENT METHODS******
     const handlePayBill = () => {
         if (!phoneNumber.trim() || !data.PaybillNumber?.trim() || !data.AccountNumber?.trim() || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
             toast.error("Please fill in all the fields.");
@@ -401,6 +410,8 @@ const HomeUI = () => {
         });
     };
 
+
+
     const handlePayTill = () => {
         if (!phoneNumber.trim() || !data.TillNumber?.trim() || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
             toast.error("Please fill in all the fields.");
@@ -413,6 +424,7 @@ const HomeUI = () => {
             accountnumber: data.TillNumber.trim(),
         });
     };
+
 
     const handleSendMoney = () => {
         if (!phoneNumber.trim() || !data.RecepientPhoneNumber?.trim() || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
@@ -439,6 +451,7 @@ const HomeUI = () => {
             storenumber: data.StoreNumber.trim(),
         });
     };
+
 
     // Save Contact Functionality
     const handleSaveContact = () => {
@@ -476,27 +489,27 @@ const HomeUI = () => {
     };
 
     const handleCancel = () => {
+        // Reset form fields
         setPhoneNumber("254");
         setAmount("");
         setError(null);
         setWarning(null);
         setShowCalculator(false);
+        // Additional logic if needed, like clearing transaction data
 
-        // Stop any running timers and reset payment state
-        isCompleteRef.current = true;
+        // Stop any running timers
         activeIntervalsRef.current.forEach(clearInterval);
         activeIntervalsRef.current.clear();
-        setPaymentState({
-            isPaying: false,
-            isAwaitingPayment: false,
-            countdown: 0,
-            status: 'pending',
-            checkoutRequestId: ''
-        });
+        setCountdown(0); // Reset countdown state
+        setIsAwaitingPayment(false); // Reset payment state
+        setIsPaying(false);
+
+        // router.push("ThankYouPage"); // Or any other desired behavior
     };
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-50 items-center">
+            {/* Container with width constraints */}
             <div className="w-full md:w-1/3 lg:w-1/3 xl:w-1/3 2xl:w-1/3 flex flex-col flex-grow">
                 {/* Header Section */}
                 <div className="p-4 border-b border-gray-200 bg-white shadow-sm rounded-t-lg mx-2 sm:mx-0 mt-2 sm:mt-0">
@@ -509,7 +522,6 @@ const HomeUI = () => {
                         )}
                     </h2>
                 </div>
-                
                 {/* Main Content */}
                 <div className="flex-1 p-4 overflow-auto mx-2 sm:mx-0">
                     <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.15)] p-4 mb-4 border border-gray-200">
@@ -674,6 +686,7 @@ const HomeUI = () => {
                         </div>
 
                         {/* Phone Number Input */}
+                        {/* Update the phone number input field in the transaction details section */}
                         {transactionType && transactionType !== "Contact" && (
                             <div className="mt-4">
                                 <label className="block text-sm font-bold">Payers Phone Number:</label>
@@ -682,11 +695,12 @@ const HomeUI = () => {
                                     onChange={handlePhoneNumberChange}
                                     onBlur={handlePhoneNumberBlur}
                                     placeholder="Enter Phone Number"
-                                    type="tel"
-                                    inputMode="tel"
-                                    pattern="[0-9\- ]*"
+                                    type="tel" // Change to tel input type
+                                    inputMode="tel" // Ensure numeric keyboard on mobile
+                                    pattern="[0-9\- ]*" // Only allow numbers, dashes and spaces
                                     className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm"
                                     onKeyDown={(e) => {
+                                        // Only allow numbers, dashes, spaces, and navigation keys
                                         const allowedKeys = [
                                             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                                             '-', ' ', 'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'
@@ -703,7 +717,7 @@ const HomeUI = () => {
                     </div>
                 </div>
 
-                {/* Action Buttons */}
+                {/* Updated Action Buttons section */}
                 <div className="p-4 border-t border-gray-200 bg-white shadow-sm rounded-b-lg mx-2 sm:mx-0 mb-2 sm:mb-0">
                     <div className="flex flex-col space-y-2">
                         {(transactionType === "PayBill" ||
@@ -727,29 +741,16 @@ const HomeUI = () => {
                                             return;
                                     }
                                 }}
-                                disabled={paymentState.isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
+                                disabled={isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
                             >
                                 <HiOutlineCreditCard className="mr-2" />
                                 {transactionType === "SendMoney" ? "SEND" :
                                     transactionType === "WithdrawMoney" ? "WITHDRAW" : "PAY"}
                             </Button>
                         )}
-                        
-                        {paymentState.isAwaitingPayment && (
-                            <div className="text-center">
-                                <div className="text-yellow-600 text-sm">
-                                    Awaiting MPESA PIN entry... {paymentState.countdown}s remaining
-                                </div>
-                                {paymentState.status === 'cancelled' && (
-                                    <div className="text-red-600 text-sm mt-1">
-                                        Payment cancelled by the user
-                                    </div>
-                                )}
-                                {paymentState.status === 'failed' && (
-                                    <div className="text-red-600 text-sm mt-1">
-                                        Payment failed. Please try again.
-                                    </div>
-                                )}
+                        {isAwaitingPayment && (
+                            <div className="text-yellow-600 text-sm mt-2 text-center">
+                                Awaiting MPESA PIN entry... {countdown}s remaining
                             </div>
                         )}
 
@@ -772,7 +773,6 @@ const HomeUI = () => {
                         </Button>
                     </div>
                 </div>
-                
                 {/* Footer Section */}
                 <div className="py-4 text-center text-sm text-gray-500">
                     Powered by{' '}
