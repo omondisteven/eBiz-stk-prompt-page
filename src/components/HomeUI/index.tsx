@@ -275,7 +275,7 @@ const HomeUI = () => {
               }
             }
 
-            if (status === 'Success') {
+            if (status === 'success') {
               setPaymentStatus('success');
               cleanup();
               
