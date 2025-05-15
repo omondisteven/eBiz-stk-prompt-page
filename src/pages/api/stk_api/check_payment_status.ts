@@ -1,50 +1,45 @@
 // /src/pages/api/stk_api/check_payment_status.ts
 import { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
 
 const tmpDir = path.join('/tmp', 'logs');
 const statusPath = path.join(tmpDir, 'payment_statuses.json');
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { checkout_id, mobile } = req.query;
+  const isMobile = mobile === 'true';
 
-  // Add mobile-specific logging
-  if (mobile === 'true') {
-    console.log('Mobile status check for:', checkout_id);
-  }
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // const { checkout_id } = req.query;
-
   if (!checkout_id || typeof checkout_id !== 'string') {
+    console.warn('Invalid or missing checkout_id:', checkout_id);
     return res.status(400).json({ error: 'Invalid checkout_id' });
   }
 
+  if (isMobile) {
+    console.log('Mobile status check for:', checkout_id);
+  }
+
   try {
-    let statusData = { status: 'Pending', details: null };
-
-    if (fs.existsSync(statusPath)) {
-      const rawData = fs.readFileSync(statusPath, 'utf-8');
-      const allStatuses = JSON.parse(rawData);
-
-      if (allStatuses[checkout_id]) {
-        statusData = {
-          status: allStatuses[checkout_id].status,
-          details: allStatuses[checkout_id].details
-        };
+    let allStatuses: { [key: string]: { status: string; details: any } } = {};
+    if (fs) {
+      if (await fs.stat(statusPath).then(() => true).catch(() => false)) {
+        const rawData = await fs.readFile(statusPath, 'utf-8');
+        allStatuses = JSON.parse(rawData);
       }
     }
 
+    const statusData = allStatuses[checkout_id] ?? { status: 'Pending', details: null };
     return res.status(200).json(statusData);
 
   } catch (error) {
     console.error('Status check error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       status: 'Error',
-      details: 'Failed to check status' 
+      details: 'Failed to check status'
     });
   }
 }
