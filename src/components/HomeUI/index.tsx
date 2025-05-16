@@ -275,10 +275,10 @@ const HomeUI = () => {
               }
             }
 
-            if (status === 'success') {
+            if (status === 'Success') {
               setPaymentStatus('success');
               cleanup();
-              
+            
               const receipt = Array.isArray(details) 
                 ? details.find(item => item.Name === 'MpesaReceiptNumber')?.Value 
                 : 'N/A';
