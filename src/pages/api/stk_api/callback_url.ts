@@ -29,7 +29,7 @@ type CallbackData = {
 };
 
 const tmpDir = path.join('/tmp', 'logs');
-const statusPath = path.join(tmpDir, 'payment_statuses.json');
+const statusPath = path.join(tmpDir, 'payment_statuses.json' );
 const callbackLogPath = path.join(tmpDir, 'mpesa_callbacks.log');
 
 if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
