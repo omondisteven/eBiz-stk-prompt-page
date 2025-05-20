@@ -89,9 +89,9 @@ const ThankYouPage = () => {
       setReceiptData(parsedData);
       
       // Generate receipt number
-      const generatedReceiptNumber = "RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
-      setReceiptNumber(generatedReceiptNumber);
-      console.log("📄 Generated Receipt Number:", generatedReceiptNumber);
+      // const generatedReceiptNumber = "RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+      // setReceiptNumber(generatedReceiptNumber);
+      // console.log("📄 Generated Receipt Number:", generatedReceiptNumber);
 
       // // Set timestamp
       // const now = new Date();
@@ -105,7 +105,7 @@ const ThankYouPage = () => {
       // });
       // setTimestamp(formattedTimestamp);
 
-      // setReceiptNumber(parsedData.Receipt || 'N/A');
+      setReceiptNumber(parsedData.Receipt || 'N/A');
 
       if (parsedData.Timestamp) {
         const parsedDate = new Date(parsedData.Timestamp);
