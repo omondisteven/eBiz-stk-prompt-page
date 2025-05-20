@@ -8,79 +8,75 @@ type CallbackMetadataItem = {
   Value: string | number;
 };
 
-type CallbackData = {
-  Body: {
-    stkCallback: {
-      CallbackMetadata?: {
-        Item: CallbackMetadataItem[];
-      };
-      ResultDesc: string;
-    };
-  };
+type PaymentStatus = {
+  timestamp: string;
+  status: 'Success' | 'Failed';
+  details: CallbackMetadataItem[] | string;
 };
 
-const tmpDir = path.join(process.cwd(), 'tmp', 'logs');
-const statusPath = path.join(tmpDir, 'payment_statuses.json');
-const callbackLogPath = path.join(tmpDir, 'mpesa_callbacks.log');
-
-// Ensure tmp directory exists
-if (!fs.existsSync(tmpDir)) {
-  fs.mkdirSync(tmpDir, { recursive: true });
-}
+type Statuses = {
+  [checkoutRequestId: string]: PaymentStatus;
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Always respond quickly to M-Pesa first
-  res.status(200).json({ ResultCode: 0, ResultDesc: "Callback received successfully" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ 
+      ResultCode: 1,
+      ResultDesc: 'Method Not Allowed' 
+    });
+  }
 
   try {
-    const data: CallbackData = req.body;
-
-    if (!data.Body.stkCallback.CallbackMetadata) {
-      console.log(data.Body.stkCallback.ResultDesc);
-      return;
+    if (!req.body || !req.body.Body?.stkCallback) {
+      console.error('Invalid callback structure:', req.body);
+      return res.status(400).json({
+        ResultCode: 1,
+        ResultDesc: 'Invalid request format'
+      });
     }
 
-    const body = data.Body.stkCallback.CallbackMetadata;
+    // Immediate response to M-Pesa
+    res.status(200).json({ 
+      ResultCode: 0, 
+      ResultDesc: "Callback received successfully" 
+    });
 
-    const amountObj = body.Item.find((obj: any) => obj.Name === "Amount");
-    const codeObj = body.Item.find((obj: any) => obj.Name === "MpesaReceiptNumber");
-    const phoneNumberObj = body.Item.find((obj: any) => obj.Name === "PhoneNumber");
+    const { stkCallback } = req.body.Body;
+    const { CheckoutRequestID, CallbackMetadata, ResultDesc } = stkCallback;
 
-    const amount = amountObj?.Value;
-    const mpesaCode = codeObj?.Value;
-    const phoneNumber = phoneNumberObj?.Value?.toString();
-
-    // Initialize statuses
-    let statuses: Record<string, any> = {};
-    if (fs.existsSync(statusPath)) {
-      statuses = JSON.parse(fs.readFileSync(statusPath, 'utf-8'));
-    }
-
-    // Update status with successful payment details
-    statuses[req.body.Body.stkCallback.CheckoutRequestID] = {
+    const statusUpdate: PaymentStatus = {
       timestamp: new Date().toISOString(),
-      status: 'Success',
-      details: body.Item
+      status: CallbackMetadata ? 'Success' : 'Failed',
+      details: CallbackMetadata?.Item || ResultDesc
     };
 
-    // Write statuses
-    fs.writeFileSync(statusPath, JSON.stringify(statuses, null, 2));
+    console.log('Payment callback:', {
+      CheckoutRequestID,
+      status: statusUpdate.status,
+      details: statusUpdate.details
+    });
 
-    // Log callback
-    fs.appendFileSync(callbackLogPath, 
-      `${new Date().toISOString()} - ${req.body.Body.stkCallback.CheckoutRequestID}\n` +
-      `${JSON.stringify(req.body, null, 2)}\n\n`
-    );
+    if (process.env.NODE_ENV === 'development') {
+      const tmpDir = path.join(process.cwd(), 'tmp', 'logs');
+      const statusPath = path.join(tmpDir, 'payment_statuses.json');
+      
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      }
 
-    console.log('Payment successful:', { amount, mpesaCode, phoneNumber });
+      const statuses: Statuses = fs.existsSync(statusPath)
+        ? JSON.parse(fs.readFileSync(statusPath, 'utf-8'))
+        : {};
+
+      statuses[CheckoutRequestID] = statusUpdate;
+      fs.writeFileSync(statusPath, JSON.stringify(statuses, null, 2));
+    }
 
   } catch (error) {
     console.error('Callback processing error:', error);
-    if (fs.existsSync(callbackLogPath)) {
-      fs.appendFileSync(callbackLogPath, 
-        `${new Date().toISOString()} - ERROR\n` +
-        `${error instanceof Error ? error.stack : String(error)}\n\n`
-      );
-    }
+    return res.status(500).json({
+      ResultCode: 1,
+      ResultDesc: 'Internal server error'
+    });
   }
 }
