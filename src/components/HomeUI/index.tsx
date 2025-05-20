@@ -270,15 +270,13 @@ const HomeUI = () => {
           setPaymentStatus('success');
           cleanup();
         
-          const receipt = typeof details === 'object' && details.MpesaReceiptNumber 
-            ? details.MpesaReceiptNumber 
-            : 'N/A';
+          const receipt = details.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value || 'N/A';
 
           const paymentDetails = {
             ...data,
             TransactionType: transactionType,
             Amount: payload.amount,
-            Receipt: details.receiptNumber || 'N/A',  // Use the actual receipt number,
+            Receipt: receipt,
             PhoneNumber: payload.phone,
             AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
             Timestamp: new Date().toISOString(),
