@@ -215,7 +215,8 @@ const HomeUI = () => {
     };
 
     // Enhanced payment handling with proper status tracking
-    const handlePayment = async (url: string, payload: any) => {
+    // In your index.tsx, update the handlePayment function:
+  const handlePayment = async (url: string, payload: any) => {
       const transactionId = `tx_${Date.now()}`;
       console.log(`[${transactionId}] Initiating payment`);
       
@@ -339,7 +340,6 @@ const HomeUI = () => {
         toast.error(error instanceof Error ? error.message : 'Payment failed');
       }
     };
-
 
   // ******PAYMENT METHODS******
   const handlePayBill = () => {
