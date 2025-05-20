@@ -643,7 +643,7 @@ const HomeUI = () => {
               transactionType === "SendMoney" || 
               transactionType === "WithdrawMoney") && (
               <Button
-                className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"
+                className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md flex items-center justify-center"
                 style={{ backgroundColor: "#006400" }}
                 onClick={() => {
                   switch(transactionType) {
@@ -661,34 +661,24 @@ const HomeUI = () => {
                 }}
                 disabled={isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
-                <HiOutlineCreditCard className="mr-2" />
-                {transactionType === "SendMoney" ? "SEND" : 
-                transactionType === "WithdrawMoney" ? "WITHDRAW" : "PAY"}
+                {isPaying ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing... ({countdown}s)
+                  </>
+                ) : (
+                  <>
+                    <HiOutlineCreditCard className="mr-2" />
+                    {transactionType === "SendMoney" ? "SEND" : 
+                    transactionType === "WithdrawMoney" ? "WITHDRAW" : "PAY"}
+                  </>
+                )}
               </Button>
             )}
-            {isAwaitingPayment && (
-              <div className="text-yellow-600 text-sm mt-2 text-center">
-                Awaiting MPESA PIN entry... {countdown}s remaining
-              </div>
-            )}
-
-            {transactionType === "Contact" && (
-              <Button
-                className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"
-                style={{ backgroundColor: "#006400" }}
-                onClick={handleSaveContact}
-              >
-                Save Contact
-              </Button>
-            )}
-
-            <Button
-              className="font-bold w-full bg-gray-700 bg-gray-800 text-white py-3 rounded-md shadow-md"
-              onClick={() => router.push("ThankYouPage")}
-            >
-              <HiX className="mr-2" />
-              Cancel
-            </Button>
+            
           </div>
           {paymentStatus === 'cancelled' && (
             <div className="text-red-500">
