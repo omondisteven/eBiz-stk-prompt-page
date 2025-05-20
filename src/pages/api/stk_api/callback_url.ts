@@ -14,7 +14,7 @@ type PaymentStatus = {
   details: CallbackMetadataItem[] | string;
   amount?: number;
   phoneNumber?: string;
-  // receiptNumber?: string;
+  receiptNumber?: string;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -47,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Extract payment details
     const amountObj = CallbackMetadata?.Item.find((i: CallbackMetadataItem) => i.Name === "Amount");
-    // const receiptObj = CallbackMetadata?.Item.find((i: CallbackMetadataItem) => i.Name === "MpesaReceiptNumber");
+    const receiptObj = CallbackMetadata?.Item.find((i: CallbackMetadataItem) => i.Name === "MpesaReceiptNumber");
     const phoneObj = CallbackMetadata?.Item.find((i: CallbackMetadataItem) => i.Name === "PhoneNumber");
 
     const statusUpdate: PaymentStatus = {
@@ -56,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       details: CallbackMetadata?.Item || ResultDesc,
       amount: amountObj?.Value as number,
       phoneNumber: phoneObj?.Value as string,
-      // receiptNumber: receiptObj?.Value as string
+      receiptNumber: receiptObj?.Value as string
     };
 
     console.log('Processing payment:', {
@@ -72,7 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       processedAt: new Date(),
       // Add any additional fields you want to store
       transactionType: req.body.Body?.stkCallback?.ResultCode === 0 ? 'completed' : 'failed',
-      // receiptNumber: receiptObj?.Value || null  // Add this line to store receipt number
+      receiptNumber: receiptObj?.Value || null  // Add this line to store receipt number
     });
 
     console.log('Transaction saved to Firestore:', CheckoutRequestID);
