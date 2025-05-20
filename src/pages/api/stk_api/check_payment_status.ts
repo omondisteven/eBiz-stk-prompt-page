@@ -1,106 +1,39 @@
-// /src/pages/api/stk_api/check_payment_status.ts
+// src/pages/api/stk_api/check_payment_status.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
-type PaymentStatus = {
-  timestamp: string;
-  status: 'Pending' | 'Success' | 'Failed' | 'Cancelled';
-  details: any;
-};
-
 const tmpDir = path.join(process.cwd(), 'tmp', 'logs');
-const statusPath = path.join(tmpDir, 'payment_statuses.json');
+const statusFile = path.join(tmpDir, 'payment_statuses.json');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { checkout_id, mobile, force_query } = req.query;
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  const { checkout_id, force_query } = req.query;
 
   if (!checkout_id || typeof checkout_id !== 'string') {
-    return res.status(400).json({ error: 'Invalid checkout_id' });
+    return res.status(400).json({ error: "Missing or invalid CheckoutRequestID" });
   }
 
   try {
-    // Initialize default response
-    const defaultResponse = { 
-      status: 'Pending' as const, 
-      details: [] 
-    };
-
-    // Check if status file exists
-    if (!fs.existsSync(statusPath)) {
-      if (force_query === 'true') {
-        return await queryStkStatus(checkout_id, res);
-      }
-      return res.status(200).json(defaultResponse);
+    let statusData: any = {};
+    if (fs.existsSync(statusFile)) {
+      const fileContent = fs.readFileSync(statusFile, 'utf-8');
+      statusData = JSON.parse(fileContent);
     }
 
-    // Read and parse status file
-    const rawData = fs.readFileSync(statusPath, 'utf-8');
-    const statuses: Record<string, PaymentStatus> = JSON.parse(rawData);
-    const result = statuses[checkout_id];
-
-    // If no result or still pending and force_query is true, perform active query
-    if ((!result || result.status === 'Pending') && force_query === 'true') {
-      return await queryStkStatus(checkout_id, res);
+    const record = statusData[checkout_id];
+    if (record) {
+      return res.status(200).json(record);
     }
 
-    // Return the status if found
-    if (!result) {
-      return res.status(200).json(defaultResponse);
+    // Optional: STK Push Query fallback
+    if (force_query === "true") {
+      // You may call your `stkPushQuery` logic here if needed
+      return res.status(200).json({ status: "Pending", details: "Awaiting user action" });
     }
 
-    return res.status(200).json({ 
-      status: result.status, 
-      details: result.details 
-    });
-
-  } catch (error) {
-    console.error('Status check error:', error);
-    return res.status(500).json({
-      status: 'Error',
-      details: 'Failed to check status'
-    });
-  }
-}
-
-async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
-  try {
-    const queryRes = await fetch(`${process.env.NEXTAUTH_URL}/api/stk_api/query_payment`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ checkoutRequestID: checkoutId }),
-    });
-
-    if (!queryRes.ok) {
-      throw new Error(await queryRes.text());
-    }
-
-    const queryData = await queryRes.json();
-    
-    // Map M-Pesa response codes to our statuses
-    let status: 'Pending' | 'Success' | 'Failed' | 'Cancelled' = 'Pending';
-    if (queryData.ResultCode === '0') {
-      status = 'Success';
-    } else if (queryData.ResultCode === '1032') {
-      status = 'Cancelled';
-    } else if (queryData.ResultCode && queryData.ResultCode !== '0') {
-      status = 'Failed';
-    }
-
-    return res.status(200).json({
-      status,
-      details: queryData.ResultDesc || 'No details available'
-    });
-
-  } catch (error) {
-    console.error('STK Query error:', error);
-    return res.status(200).json({
-      status: 'Pending',
-      details: 'Status check in progress'
-    });
+    return res.status(200).json({ status: "Pending", details: "No callback yet" });
+  } catch (e) {
+    console.error("Check status error:", e);
+    return res.status(500).json({ error: "Server error" });
   }
 }
