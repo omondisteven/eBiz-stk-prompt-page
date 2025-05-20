@@ -645,10 +645,14 @@ const HomeUI = () => {
               transactionType === "SendMoney" || 
               transactionType === "WithdrawMoney") && (
               <Button
-                className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"
-                style={{ backgroundColor: "#006400" }}
+                className={`font-bold w-full text-white py-3 rounded-md shadow-md flex items-center justify-center ${
+                  isPaying ? 'bg-gray-500 cursor-not-allowed' : 'bg-green-900 hover:bg-green-800'
+                }`}
+                disabled={
+                  isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0
+                }
                 onClick={() => {
-                  switch(transactionType) {
+                  switch (transactionType) {
                     case "PayBill":
                       return handlePayBill();
                     case "BuyGoods":
@@ -661,12 +665,23 @@ const HomeUI = () => {
                       return;
                   }
                 }}
-                disabled={isPaying || !!error || !!warning || phoneNumber.length !== 12 || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
               >
                 <HiOutlineCreditCard className="mr-2" />
-                {transactionType === "SendMoney" ? "SEND" : 
-                transactionType === "WithdrawMoney" ? "WITHDRAW" : "PAY"}
+                {isPaying ? (
+                  <span>
+                    Processing... {countdown}s
+                  </span>
+                ) : (
+                  <>
+                    {transactionType === "SendMoney"
+                      ? "SEND"
+                      : transactionType === "WithdrawMoney"
+                      ? "WITHDRAW"
+                      : "PAY"}
+                  </>
+                )}
               </Button>
+
             )}
             {isAwaitingPayment && (
               <div className="text-yellow-600 text-sm mt-2 text-center">
@@ -684,13 +699,6 @@ const HomeUI = () => {
               </Button>
             )}
 
-            <Button
-              className="font-bold w-full bg-gray-700 bg-gray-800 text-white py-3 rounded-md shadow-md"
-              onClick={() => router.push("ThankYouPage")}
-            >
-              <HiX className="mr-2" />
-              Cancel
-            </Button>
           </div>
           {paymentStatus === 'cancelled' && (
             <div className="text-red-500">
