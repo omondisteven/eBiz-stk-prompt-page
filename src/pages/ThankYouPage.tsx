@@ -86,7 +86,7 @@ const ThankYouPage = () => {
       console.log("✅ Final parsed data object:", parsedData);
 
       // Set the data
-      // setReceiptData(parsedData);
+      setReceiptData(parsedData);
       
       // Generate receipt number
       const generatedReceiptNumber = "RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -289,7 +289,7 @@ const ThankYouPage = () => {
         <br />
         <p>{receiptData.TransactionType}</p>  
         <br />
-        <p className="text-sm text-gray-500 mb-1">Transaction ID: {receiptNumber}</p>
+        <p className="text-sm text-gray-500 mb-1">MPESA REF#: {receiptNumber}</p>
         <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
         {/* <hr className="my-4 border-gray-300" /> */}
         <br />
