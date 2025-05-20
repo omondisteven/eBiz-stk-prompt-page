@@ -678,7 +678,29 @@ const HomeUI = () => {
                 )}
               </Button>
             )}
-            
+            {isAwaitingPayment && (
+              <div className="text-yellow-600 text-sm mt-2 text-center">
+                Awaiting MPESA PIN entry... {countdown}s remaining
+              </div>
+            )}
+
+            {transactionType === "Contact" && (
+              <Button
+                className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"
+                style={{ backgroundColor: "#006400" }}
+                onClick={handleSaveContact}
+              >
+                Save Contact
+              </Button>
+            )}
+
+            <Button
+              className="font-bold w-full bg-gray-700 bg-gray-800 text-white py-3 rounded-md shadow-md"
+              onClick={() => router.push("ThankYouPage")}
+            >
+              <HiX className="mr-2" />
+              Cancel
+            </Button>
           </div>
           {paymentStatus === 'cancelled' && (
             <div className="text-red-500">
