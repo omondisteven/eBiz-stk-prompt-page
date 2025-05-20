@@ -270,9 +270,14 @@ const HomeUI = () => {
           setPaymentStatus('success');
           cleanup();
         
-          const receipt = typeof details === 'object' && details.MpesaReceiptNumber 
-            ? details.MpesaReceiptNumber 
-            : 'N/A';
+          let receipt = 'N/A';
+            if (Array.isArray(details)) {
+              const receiptItem = details.find((item) => item.Name === 'MpesaReceiptNumber');
+              if (receiptItem && typeof receiptItem.Value === 'string') {
+                receipt = receiptItem.Value;
+              }
+            }
+
 
           const paymentDetails = {
             ...data,
