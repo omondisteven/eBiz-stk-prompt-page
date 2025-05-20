@@ -32,7 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({
         status: data.status === 'Success' ? 'Success' : 'Failed',
         details: data.details,
-        resultCode: data.status === 'Success' ? '0' : '1'
+        resultCode: data.status === 'Success' ? '0' : '1',
+        receiptNumber: data.receiptNumber || null  //Mpesa REF
       });
     }
 

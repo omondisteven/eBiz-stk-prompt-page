@@ -65,13 +65,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       amount: statusUpdate.amount,
       phone: statusUpdate.phoneNumber
     });
-
+    
     // Save to Firestore
     await setDoc(doc(db, 'transactions', CheckoutRequestID), {
       ...statusUpdate,
       processedAt: new Date(),
       // Add any additional fields you want to store
-      transactionType: req.body.Body?.stkCallback?.ResultCode === 0 ? 'completed' : 'failed'
+      transactionType: req.body.Body?.stkCallback?.ResultCode === 0 ? 'completed' : 'failed',
+      receiptNumber: receiptObj?.Value || null  // Add this line to store receipt number
     });
 
     console.log('Transaction saved to Firestore:', CheckoutRequestID);
