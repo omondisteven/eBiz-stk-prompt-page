@@ -3,48 +3,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
-<<<<<<< HEAD
 const tmpDir = path.join(process.cwd(), 'tmp', 'logs');
 const statusFile = path.join(tmpDir, 'payment_statuses.json');
-=======
-type CallbackMetadataItem = {
-  Name: string;
-  Value: string | number;
-};
-
-type CallbackData = {
-  Body?: {
-    stkCallback?: {
-      MerchantRequestID: string;
-      CheckoutRequestID: string;
-      ResultCode: number;
-      ResultDesc: string;
-      CallbackMetadata?: {
-        Item: CallbackMetadataItem[];
-      };
-    };
-  };
-  stkCallback?: {
-    MerchantRequestID: string;
-    CheckoutRequestID: string;
-    ResultCode: number;
-    ResultDesc: string;
-    CallbackMetadata?: {
-      Item: CallbackMetadataItem[];
-    };
-  };
-};
-
-type PaymentStatus = {
-  timestamp: string;
-  status: 'Pending' | 'Success' | 'Failed' | 'Cancelled';
-  details: CallbackMetadataItem[] | string;
-};
-
-const tmpDir = path.join('/tmp', 'logs');
-const statusPath = path.join(tmpDir, 'payment_statuses.json');
-const callbackLogPath = path.join(tmpDir, 'mpesa_callbacks.log');
->>>>>>> 491ed35e5c450424ebbef243c2eef485276ba248
 
 if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
