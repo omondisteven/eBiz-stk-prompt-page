@@ -1,7 +1,7 @@
 // src/pages/api/stk_api/callback_url.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
-import path from 'path';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../../../lib/firebase';
 
 type CallbackMetadataItem = {
   Name: string;
@@ -12,53 +12,14 @@ type PaymentStatus = {
   timestamp: string;
   status: 'Success' | 'Failed';
   details: CallbackMetadataItem[] | string;
-};
-
-type Statuses = {
-  [checkoutRequestId: string]: PaymentStatus;
-};
-
-type CallbackData = {
-  Body: {
-    stkCallback: {
-      CheckoutRequestID: string;
-      ResultCode: number;
-      CallbackMetadata?: {
-        Item: Array<{
-          Name: string;
-          Value: string | number;
-        }>;
-      };
-      ResultDesc: string;
-    };
-  };
+  amount?: number;
+  phoneNumber?: string;
+  receiptNumber?: string;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log('Request method:', req.method);
-  console.log('Request headers:', req.headers);
+  console.log(`[${new Date().toISOString()}] Callback received`);
   
-  if (req.method === 'GET') {
-    // For testing purposes only
-    return res.status(200).json({
-      message: 'This endpoint requires POST requests',
-      example: {
-        Body: {
-          stkCallback: {
-            CheckoutRequestID: "test123",
-            ResultCode: 0,
-            CallbackMetadata: {
-              Item: [
-                { Name: "Amount", Value: 100 },
-                { Name: "MpesaReceiptNumber", Value: "TEST123" }
-              ]
-            }
-          }
-        }
-      }
-    });
-  }
-
   if (req.method !== 'POST') {
     return res.status(405).json({ 
       ResultCode: 1,
@@ -67,8 +28,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const data = req.body as CallbackData;
-    console.log('Received callback:', data);
+    if (!req.body || !req.body.Body?.stkCallback) {
+      console.error('Invalid callback structure:', req.body);
+      return res.status(400).json({
+        ResultCode: 1,
+        ResultDesc: 'Invalid request format'
+      });
+    }
+
+    const { stkCallback } = req.body.Body;
+    const { CheckoutRequestID, ResultCode, CallbackMetadata, ResultDesc } = stkCallback;
 
     // Always respond immediately to M-Pesa
     res.status(200).json({ 
@@ -76,18 +45,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ResultDesc: "Callback received successfully" 
     });
 
-    // Process the callback data here
-    console.log('Payment status:', {
-      requestId: data.Body.stkCallback.CheckoutRequestID,
-      status: data.Body.stkCallback.ResultCode === 0 ? 'Success' : 'Failed',
-      details: data.Body.stkCallback.CallbackMetadata || data.Body.stkCallback.ResultDesc
+    // Extract payment details
+    const amountObj = CallbackMetadata?.Item.find((i: CallbackMetadataItem) => i.Name === "Amount");
+    const receiptObj = CallbackMetadata?.Item.find((i: CallbackMetadataItem) => i.Name === "MpesaReceiptNumber");
+    const phoneObj = CallbackMetadata?.Item.find((i: CallbackMetadataItem) => i.Name === "PhoneNumber");
+
+    const statusUpdate: PaymentStatus = {
+      timestamp: new Date().toISOString(),
+      status: ResultCode === 0 ? 'Success' : 'Failed',
+      details: CallbackMetadata?.Item || ResultDesc,
+      amount: amountObj?.Value as number,
+      phoneNumber: phoneObj?.Value as string,
+      receiptNumber: receiptObj?.Value as string
+    };
+
+    console.log('Processing payment:', {
+      requestId: CheckoutRequestID,
+      status: statusUpdate.status,
+      amount: statusUpdate.amount,
+      phone: statusUpdate.phoneNumber
     });
+
+    // Save to Firestore
+    await setDoc(doc(db, 'transactions', CheckoutRequestID), {
+      ...statusUpdate,
+      processedAt: new Date(),
+      // Add any additional fields you want to store
+      transactionType: req.body.Body?.stkCallback?.ResultCode === 0 ? 'completed' : 'failed'
+    });
+
+    console.log('Transaction saved to Firestore:', CheckoutRequestID);
 
   } catch (error) {
     console.error('Callback processing error:', error);
-    res.status(500).json({
-      ResultCode: 1,
-      ResultDesc: 'Internal server error'
-    });
+    // Response already sent, but log the error
   }
 }

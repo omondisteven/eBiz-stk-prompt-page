@@ -1,7 +1,7 @@
 // src/pages/api/stk_api/check_payment_status.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
-import path from 'path';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../../../lib/firebase';
 import axios from 'axios';
 
 type PaymentStatus = {
@@ -10,9 +10,6 @@ type PaymentStatus = {
   details: any;
   resultCode?: string;
 };
-
-const tmpDir = path.join(process.cwd(), 'tmp', 'logs');
-const statusPath = path.join(tmpDir, 'payment_statuses.json');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { checkout_id, force_query } = req.query;
@@ -26,38 +23,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Initialize default response
-    const defaultResponse = { 
-      status: 'Pending' as const, 
-      details: 'Waiting for payment confirmation',
-      resultCode: '500.001.1001' // Default pending code
-    };
+    // First check Firestore
+    const docRef = doc(db, 'transactions', checkout_id);
+    const docSnap = await getDoc(docRef);
 
-    // Check if status file exists
-    if (!fs.existsSync(statusPath)) {
-      if (force_query === 'true') {
-        return await queryStkStatus(checkout_id, res);
-      }
-      return res.status(200).json(defaultResponse);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return res.status(200).json({
+        status: data.status === 'Success' ? 'Success' : 'Failed',
+        details: data.details,
+        resultCode: data.status === 'Success' ? '0' : '1'
+      });
     }
 
-    // Read and parse status file
-    const rawData = fs.readFileSync(statusPath, 'utf-8');
-    const statuses: Record<string, PaymentStatus> = JSON.parse(rawData);
-    const result = statuses[checkout_id];
-
-    // If we have a result and it's not pending, return it immediately
-    if (result && result.status !== 'Pending') {
-      return res.status(200).json(result);
-    }
-
-    // If force_query is true or we don't have a result, perform STK query
-    if (force_query === 'true' || !result) {
+    // If not in DB and force_query is true, perform STK query
+    if (force_query === 'true') {
       return await queryStkStatus(checkout_id, res);
     }
 
-    // Otherwise return the pending status
-    return res.status(200).json(result || defaultResponse);
+    // Default pending response
+    return res.status(200).json({ 
+      status: 'Pending',
+      details: 'Waiting for payment confirmation',
+      resultCode: '500.001.1001'
+    });
 
   } catch (error) {
     console.error('Status check error:', error);
@@ -132,22 +121,19 @@ async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
       status = 'Failed';
     }
 
-    // Update status file
-    let statuses: Record<string, PaymentStatus> = {};
-    if (fs.existsSync(statusPath)) {
-      statuses = JSON.parse(fs.readFileSync(statusPath, 'utf-8'));
-    }
-
-    statuses[checkoutId] = {
+    // Save to Firestore instead of filesystem
+    await setDoc(doc(db, 'transactions', checkoutId), {
       timestamp: new Date().toISOString(),
       status,
       details: queryData.ResultDesc || 'No details available',
       resultCode: queryData.ResultCode
-    };
+    });
 
-    fs.writeFileSync(statusPath, JSON.stringify(statuses, null, 2));
-
-    return res.status(200).json(statuses[checkoutId]);
+    return res.status(200).json({
+      status,
+      details: queryData.ResultDesc || 'No details available',
+      resultCode: queryData.ResultCode
+    });
 
   } catch (error: any) {
     console.error('STK Query error:', error);
