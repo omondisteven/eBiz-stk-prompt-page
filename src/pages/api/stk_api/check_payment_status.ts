@@ -8,6 +8,7 @@ type PaymentStatus = {
   timestamp: string;
   status: 'Pending' | 'Success' | 'Failed' | 'Cancelled';
   details: any;
+  resultCode?: string;
 };
 
 const tmpDir = path.join(process.cwd(), 'tmp', 'logs');
@@ -28,7 +29,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Initialize default response
     const defaultResponse = { 
       status: 'Pending' as const, 
-      details: 'Waiting for payment confirmation' 
+      details: 'Waiting for payment confirmation',
+      resultCode: '500.001.1001' // Default pending code
     };
 
     // Check if status file exists
@@ -44,39 +46,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const statuses: Record<string, PaymentStatus> = JSON.parse(rawData);
     const result = statuses[checkout_id];
 
-    // If no result or still pending and force_query is true, perform active query
-    if ((!result || result.status === 'Pending') && force_query === 'true') {
+    // If we have a result and it's not pending, return it immediately
+    if (result && result.status !== 'Pending') {
+      return res.status(200).json(result);
+    }
+
+    // If force_query is true or we don't have a result, perform STK query
+    if (force_query === 'true' || !result) {
       return await queryStkStatus(checkout_id, res);
     }
 
-    // Return the status if found
-    if (!result) {
-      return res.status(200).json(defaultResponse);
-    }
-
-    return res.status(200).json({ 
-      status: result.status, 
-      details: result.details 
-    });
+    // Otherwise return the pending status
+    return res.status(200).json(result || defaultResponse);
 
   } catch (error) {
     console.error('Status check error:', error);
     return res.status(500).json({
       status: 'Error',
-      details: 'Failed to check status'
+      details: 'Failed to check status',
+      resultCode: '500.001.1001'
     });
   }
 }
 
 async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
   try {
+    const mpesaEnv = process.env.MPESA_ENVIRONMENT;
+    const MPESA_BASE_URL = mpesaEnv === "live"
+      ? "https://api.safaricom.co.ke"
+      : "https://sandbox.safaricom.co.ke";
+
     // Generate token
     const auth = Buffer.from(
       `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
     ).toString('base64');
 
     const tokenResponse = await axios.get(
-      `${process.env.MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`,
+      `${MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`,
       {
         headers: {
           authorization: `Basic ${auth}`,
@@ -100,7 +106,7 @@ async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
     ).toString('base64');
 
     const queryResponse = await axios.post(
-      `${process.env.MPESA_BASE_URL}/mpesa/stkpushquery/v1/query`,
+      `${MPESA_BASE_URL}/mpesa/stkpushquery/v1/query`,
       {
         BusinessShortCode: process.env.MPESA_SHORTCODE,
         Password: password,
@@ -116,8 +122,8 @@ async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
 
     const queryData = queryResponse.data;
     
-    // Map M-Pesa response codes to our statuses
-    let status: 'Pending' | 'Success' | 'Failed' | 'Cancelled' = 'Pending';
+    // Determine status based on ResultCode
+    let status: PaymentStatus['status'] = 'Pending';
     if (queryData.ResultCode === '0') {
       status = 'Success';
     } else if (queryData.ResultCode === '1032') {
@@ -126,16 +132,39 @@ async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
       status = 'Failed';
     }
 
-    return res.status(200).json({
-      status,
-      details: queryData.ResultDesc || 'No details available'
-    });
+    // Update status file
+    let statuses: Record<string, PaymentStatus> = {};
+    if (fs.existsSync(statusPath)) {
+      statuses = JSON.parse(fs.readFileSync(statusPath, 'utf-8'));
+    }
 
-  } catch (error) {
+    statuses[checkoutId] = {
+      timestamp: new Date().toISOString(),
+      status,
+      details: queryData.ResultDesc || 'No details available',
+      resultCode: queryData.ResultCode
+    };
+
+    fs.writeFileSync(statusPath, JSON.stringify(statuses, null, 2));
+
+    return res.status(200).json(statuses[checkoutId]);
+
+  } catch (error: any) {
     console.error('STK Query error:', error);
+    
+    // Handle specific M-Pesa error codes
+    if (error.response?.data?.errorCode === '500.001.1001') {
+      return res.status(200).json({
+        status: 'Pending',
+        details: 'The transaction is still processing',
+        resultCode: '500.001.1001'
+      });
+    }
+
     return res.status(200).json({
       status: 'Pending',
-      details: 'Status check in progress'
+      details: 'Status check in progress',
+      resultCode: '500.001.1001'
     });
   }
 }
