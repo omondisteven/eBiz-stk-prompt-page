@@ -293,7 +293,7 @@ const ThankYouPage = () => {
         <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
         {/* <hr className="my-4 border-gray-300" /> */}
         <br />
-        <div className="w-full text-red-300 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
+        <div className="w-full text-red-600 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
           {receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}
         </div>
        
