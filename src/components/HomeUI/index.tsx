@@ -214,126 +214,122 @@ const HomeUI = () => {
         setAmount(e.target.value);
     };
 
-    // Enhanced payment handling with proper status tracking
+  // Enhanced payment handling with proper status tracking
   const handlePayment = async (url: string, payload: any) => {
-  const transactionId = `tx_${Date.now()}`;
-  console.log(`[${transactionId}] Initiating payment`);
-  
-  // Reset state
-  isCompleteRef.current = false;
-  setPaymentStatus('pending');
-  setIsPaying(true);
-  setIsAwaitingPayment(true);
-  setCountdown(60);
-  const activeIntervals = new Set<NodeJS.Timeout>();
-  activeIntervalsRef.current = activeIntervals;
+    const transactionId = `tx_${Date.now()}`;
+    console.log(`[${transactionId}] Initiating payment`);
+    
+    // Reset state
+    isCompleteRef.current = false;
+    setPaymentStatus('pending');
+    setIsPaying(true);
+    setIsAwaitingPayment(true);
+    setCountdown(60);
+    const activeIntervals = new Set<NodeJS.Timeout>();
+    activeIntervalsRef.current = activeIntervals;
 
-  const cleanup = () => {
-    if (isCompleteRef.current) return;
-    isCompleteRef.current = true;
-    setIsPaying(false);
-    setIsAwaitingPayment(false);
-    activeIntervals.forEach(clearInterval);
-    activeIntervals.clear();
-  };
-
-  try {
-    // Initiate STK push
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) throw new Error(await response.text());
-
-    const result = await response.json();
-    if (!result.CheckoutRequestID) throw new Error('No CheckoutRequestID received');
-
-    const checkoutId = result.CheckoutRequestID;
-    console.log(`[${transactionId}] CheckoutRequestID: ${checkoutId}`);
-    toast.success('Enter your M-PESA PIN when prompted');
-
-    // Enhanced polling with STK Query
-    const pollPaymentStatus = async () => {
-      try {
-        console.log(`[${transactionId}] Checking payment status...`);
-        const statusCheckUrl = `/api/stk_api/check_payment_status?checkout_id=${checkoutId}&t=${Date.now()}&force_query=${countdown < 45}`;
-        const checkRes = await fetch(statusCheckUrl);
-
-        if (!checkRes.ok) throw new Error(await checkRes.text());
-
-        const { status, details, resultCode } = await checkRes.json();
-        console.log(`[${transactionId}] Status: ${status}, ResultCode: ${resultCode}`);
-
-        if (status === 'Success') {
-          setPaymentStatus('success');
-          cleanup();
-        
-          const receipt = typeof details === 'object' && details.MpesaReceiptNumber 
-            ? details.MpesaReceiptNumber 
-            : 'N/A';
-
-          const paymentDetails = {
-            ...data,
-            TransactionType: transactionType,
-            Amount: payload.amount,
-            Receipt: receipt || 'N/A',  // Use the actual receipt number,
-            PhoneNumber: payload.phone,
-            AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
-            Timestamp: new Date().toISOString(),
-          };
-
-          console.log(`[${transactionId}] Payment successful!`, paymentDetails);
-          toast.success('Payment successful!');
-          router.push({
-            pathname: '/ThankYouPage',
-            query: { data: JSON.stringify(paymentDetails) }
-          });
-
-        } else if (status === 'Failed') {
-          setPaymentStatus('failed');
-          cleanup();
-          console.error(`[${transactionId}] Payment failed: ${details}`);
-          toast.error(details || 'Payment failed. Please try again.');
-        } else if (status === 'Cancelled') {
-          setPaymentStatus('cancelled');
-          cleanup();
-          console.log(`[${transactionId}] Payment cancelled by user`);
-          toast.error('Payment cancelled by the user');
-        }
-      } catch (error) {
-        console.error(`[${transactionId}] Poll error:`, error);
-      }
+    const cleanup = () => {
+      if (isCompleteRef.current) return;
+      isCompleteRef.current = true;
+      setIsPaying(false);
+      setIsAwaitingPayment(false);
+      activeIntervals.forEach(clearInterval);
+      activeIntervals.clear();
     };
 
-    // Start polling
-    const pollInterval = setInterval(pollPaymentStatus, 3000);
-    activeIntervals.add(pollInterval);
-    pollPaymentStatus(); // Immediate first check
-
-    // Countdown timer
-    const countdownInterval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          if (paymentStatus === 'pending') {
-            cleanup();
-            console.log(`[${transactionId}] Payment process timed out`);
-            toast('Payment process timed out', { icon: '⏱️' });
-          }
-          return 0;
-        }
-        return prev - 1;
+    try {
+      // Initiate STK push
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
-    }, 1000);
-    activeIntervals.add(countdownInterval);
 
-  } catch (error) {
-    cleanup();
-    console.error(`[${transactionId}] Payment error:`, error);
-    toast.error(error instanceof Error ? error.message : 'Payment failed');
-  }
-};
+      if (!response.ok) throw new Error(await response.text());
+
+      const result = await response.json();
+      if (!result.CheckoutRequestID) throw new Error('No CheckoutRequestID received');
+
+      const checkoutId = result.CheckoutRequestID;
+      console.log(`[${transactionId}] CheckoutRequestID: ${checkoutId}`);
+      toast.success('Enter your M-PESA PIN when prompted');
+
+      // Enhanced polling with STK Query
+      const pollPaymentStatus = async () => {
+        try {
+          console.log(`[${transactionId}] Checking payment status...`);
+          const statusCheckUrl = `/api/stk_api/check_payment_status?checkout_id=${checkoutId}&t=${Date.now()}&force_query=${countdown < 45}`;
+          const checkRes = await fetch(statusCheckUrl);
+
+          if (!checkRes.ok) throw new Error(await checkRes.text());
+
+          const { status, details, resultCode, receiptNumber } = await checkRes.json();
+          console.log(`[${transactionId}] Status: ${status}, ResultCode: ${resultCode}, Receipt: ${receiptNumber}`);
+
+          if (status === 'Success') {
+            setPaymentStatus('success');
+            cleanup();
+          
+            const paymentDetails = {
+              ...data,
+              TransactionType: transactionType,
+              Amount: payload.amount,
+              Receipt: receiptNumber || 'N/A',
+              PhoneNumber: payload.phone,
+              AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
+              Timestamp: new Date().toISOString(),
+            };
+
+            console.log(`[${transactionId}] Payment successful!`, paymentDetails);
+            toast.success('Payment successful!');
+            router.push({
+              pathname: '/ThankYouPage',
+              query: { data: JSON.stringify(paymentDetails) }
+            });
+
+          } else if (status === 'Failed') {
+            setPaymentStatus('failed');
+            cleanup();
+            console.error(`[${transactionId}] Payment failed: ${details}`);
+            toast.error(details || 'Payment failed. Please try again.');
+          } else if (status === 'Cancelled') {
+            setPaymentStatus('cancelled');
+            cleanup();
+            console.log(`[${transactionId}] Payment cancelled by user`);
+            toast.error('Payment cancelled by the user');
+          }
+        } catch (error) {
+          console.error(`[${transactionId}] Poll error:`, error);
+        }
+      };
+
+      // Start polling
+      const pollInterval = setInterval(pollPaymentStatus, 3000);
+      activeIntervals.add(pollInterval);
+      pollPaymentStatus(); // Immediate first check
+
+      // Countdown timer
+      const countdownInterval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            if (paymentStatus === 'pending') {
+              cleanup();
+              console.log(`[${transactionId}] Payment process timed out`);
+              toast('Payment process timed out', { icon: '⏱️' });
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      activeIntervals.add(countdownInterval);
+
+    } catch (error) {
+      cleanup();
+      console.error(`[${transactionId}] Payment error:`, error);
+      toast.error(error instanceof Error ? error.message : 'Payment failed');
+    }
+  };
 
   // ******PAYMENT METHODS******
   const handlePayBill = () => {
@@ -681,14 +677,8 @@ const HomeUI = () => {
                   </>
                 )}
               </Button>
-
             )}
-            {isAwaitingPayment && (
-              <div className="text-yellow-600 text-sm mt-2 text-center">
-                Awaiting MPESA PIN entry... {countdown}s remaining
-              </div>
-            )}
-
+            
             {transactionType === "Contact" && (
               <Button
                 className="font-bold w-full bg-green-900 text-white py-3 rounded-md shadow-md"

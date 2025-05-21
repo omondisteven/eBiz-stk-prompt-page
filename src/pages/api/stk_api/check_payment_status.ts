@@ -1,6 +1,6 @@
 // src/pages/api/stk_api/check_payment_status.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import axios from 'axios';
 
@@ -9,6 +9,7 @@ type PaymentStatus = {
   status: 'Pending' | 'Success' | 'Failed' | 'Cancelled';
   details: any;
   resultCode?: string;
+  receiptNumber?: string;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -33,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         status: data.status === 'Success' ? 'Success' : 'Failed',
         details: data.details,
         resultCode: data.status === 'Success' ? '0' : '1',
-        receiptNumber: data.receiptNumber || null  //Mpesa REF
+        receiptNumber: data.receiptNumber || null
       });
     }
 
@@ -112,34 +113,23 @@ async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
 
     const queryData = queryResponse.data;
     
-    // Determine status based on ResultCode
-    let status: PaymentStatus['status'] = 'Pending';
-    if (queryData.ResultCode === '0') {
-      status = 'Success';
-    } else if (queryData.ResultCode === '1032') {
-      status = 'Cancelled';
-    } else if (queryData.ResultCode && queryData.ResultCode !== '0') {
-      status = 'Failed';
+    // Extract receipt number from callback metadata if available
+    let receiptNumber = null;
+    if (queryData.ResultCode === '0' && queryData.CallbackMetadata && queryData.CallbackMetadata.Item) {
+      const receiptObj = queryData.CallbackMetadata.Item.find((i: any) => i.Name === "MpesaReceiptNumber");
+      receiptNumber = receiptObj?.Value || null;
     }
 
-    // Save to Firestore instead of filesystem
-    await setDoc(doc(db, 'transactions', checkoutId), {
-      timestamp: new Date().toISOString(),
-      status,
-      details: queryData.ResultDesc || 'No details available',
-      resultCode: queryData.ResultCode
-    });
-
     return res.status(200).json({
-      status,
+      status: queryData.ResultCode === '0' ? 'Success' : 'Failed',
       details: queryData.ResultDesc || 'No details available',
-      resultCode: queryData.ResultCode
+      resultCode: queryData.ResultCode,
+      receiptNumber
     });
 
   } catch (error: any) {
     console.error('STK Query error:', error);
     
-    // Handle specific M-Pesa error codes
     if (error.response?.data?.errorCode === '500.001.1001') {
       return res.status(200).json({
         status: 'Pending',
