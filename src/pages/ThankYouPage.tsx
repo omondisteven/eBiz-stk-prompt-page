@@ -255,7 +255,7 @@ const ThankYouPage = () => {
             maximumFractionDigits: 2,
           }).format(receiptData.Amount)}
         </p>
-        <QRCode
+        {/* <QRCode
           value={JSON.stringify({
             receiptNumber,
             businessName: receiptData.businessName,
@@ -266,9 +266,9 @@ const ThankYouPage = () => {
           })}
           size={128}
           className="mx-auto my-4"
-        />
+        /> */}
         {/* Center-aligned Download and Share icons */}
-        <div className="flex justify-center gap-4 mb-4">
+        {/* <div className="flex justify-center gap-4 mb-4">
           <Download 
             onClick={handleDownload}
             className="w-5 h-5 text-blue-600 cursor-pointer hover:text-blue-700 hover:scale-110 transition-all"
@@ -279,7 +279,7 @@ const ThankYouPage = () => {
             className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700 hover:scale-110 transition-all"
             name="Share Receipt"
           />
-        </div>
+        </div> */}
         <div className="mt-2 text-sm break-words space-y-1">
           {receiptData.businessAddress && <p>{receiptData.businessAddress}</p>}
           {receiptData.businessPhone && <p className="font-bold text-green-600">{receiptData.businessPhone}</p>}
@@ -293,7 +293,7 @@ const ThankYouPage = () => {
         <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
         {/* <hr className="my-4 border-gray-300" /> */}
         <br />
-        <div className="w-full bg-gray-900 text-yellow-300 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
+        <div className="w-full text-yellow-300 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
           {receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}
         </div>
        
