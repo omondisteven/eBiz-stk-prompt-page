@@ -424,7 +424,7 @@ const saveAsVCard = (vCard: string) => {
               <Contact className="w-5 h-5 text-green-600" />
               <h2 className="text-lg font-bold text-green-600">Save Our Contacts</h2>
             </div>
-          <p className="text-blue-500 text-sm text-center">Scan the Qr Code or click the<strong className="text-gray-900"> Save </strong>button to add our contacts to your phone book</p>
+          <p className="text-blue-500 text-sm text-center">Scan the Qr Code or click the<strong className="text-gray-900"> &quot;Add to Contacts&quot; </strong>button to add our contacts to your phone book</p>
 
           <div className="flex justify-center mb-4 w-full p-4 bg-white">
             <QRCode 
@@ -507,7 +507,7 @@ const saveAsVCard = (vCard: string) => {
               className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 w-full py-6"
             >
               <Contact className="w-5 h-5" />
-              <span className="text-lg font-semibold">Save Contact</span>
+              <span className="text-lg font-semibold">Add to Contacts</span>
             </Button>
           </div>
         </div>
