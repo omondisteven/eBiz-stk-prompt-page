@@ -424,7 +424,7 @@ const saveAsVCard = (vCard: string) => {
               <Contact className="w-5 h-5 text-green-600" />
               <h2 className="text-lg font-bold text-green-600">Save Our Contacts</h2>
             </div>
-          <p className="text-blue-500 text-sm text-center">Scan the Qr Code or click the<strong className="text-gray-900"> &quot;Add to Contacts&quot; </strong>button to add our contacts to your phone book</p>
+          <p className="text-blue-500 text-sm text-center">Scan the Qr Code or click <strong className="text-gray-900"> &quot;Add to Contacts&quot; </strong> to add our contacts to your phone book</p>
 
           <div className="flex justify-center mb-4 w-full p-4 bg-white">
             <QRCode 
@@ -549,39 +549,39 @@ const saveAsVCard = (vCard: string) => {
         </div>
       )}
       {/* SAVE CONTACT INSTRUCTION MODAL */}
-      {showContactInstructionModal && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2">
-              <Contact className="w-5 h-5 text-blue-500" />
-              <h3 className="text-lg font-bold">Add to Contacts.</h3>
+        {showContactInstructionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                <Contact className="w-5 h-5 text-blue-500" />
+                <h3 className="text-lg font-bold">Add to Contacts.</h3>
+              </div>
+              <button 
+                onClick={() => setShowContactInstructionModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <button 
-              onClick={() => setShowContactInstructionModal(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600 mb-4">
-              Select <strong>&quot;Open&quot;</strong> after download is completed to save our contacts to your phone book.
-            </p>
             
-            <Button 
-              onClick={() => {
-                setShowContactInstructionModal(false);
-                handleSaveContactConfirmation();
-              }}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700">
-              OK, I Understand
-            </Button>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 mb-4">
+                Select <strong>&quot;Open&quot;</strong> after download is completed to save our contacts to your phone book.
+              </p>
+              
+              <Button 
+                onClick={() => {
+                  setShowContactInstructionModal(false);
+                  handleSaveContactConfirmation();
+                }}
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700">
+                OK, I Understand
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
     </div>
   );
