@@ -426,13 +426,7 @@ const saveAsVCard = (vCard: string) => {
 
           <div className="flex justify-center mb-4 w-full p-4 bg-white">
             <QRCode 
-              value={JSON.stringify({
-                name: receiptData.businessName,
-                email: receiptData.businessEmail,
-                phone: receiptData.businessPhone,
-                address: receiptData.businessAddress,
-                description: receiptData.businessComment,
-              })} 
+              value={generateVCard()}  // Directly use the vCard content as QR value
               size={200}
               style={{ height: "auto", maxWidth: "100%", width: "100%" }}
               bgColor="transparent"
