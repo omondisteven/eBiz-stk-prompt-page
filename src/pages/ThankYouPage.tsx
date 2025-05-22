@@ -234,38 +234,34 @@ const ThankYouPage = () => {
       return;
     }
 
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    
-    if (isAndroid) {
-      const contactUri = `intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.dir/contact;S.name=${encodeURIComponent(receiptData.businessName)};S.phone=${encodeURIComponent(receiptData.businessPhone)}${receiptData.businessEmail ? `;S.email=${encodeURIComponent(receiptData.businessEmail)}` : ''};end`;
-
-      // Try to open contact form on Android
-      window.location.href = contactUri;
-      toast.success("Opening contact form...");
-      return;
-    }
-
-    // Fallback to vCard download
     const vCard = generateVCard();
     const blob = new Blob([vCard], { type: 'text/vcard' });
     const url = URL.createObjectURL(blob);
+    const fileName = `${receiptData.businessName || 'contact'}.vcf`;
+
+    // Create invisible link
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${receiptData.businessName || 'contact'}.vcf`;
+    link.download = fileName;
     document.body.appendChild(link);
 
-    const isMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
+    // Try opening directly (mobile-friendly)
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
-      window.open(url, '_blank');
+      toast("Opening contact form...");
+      setTimeout(() => {
+        window.open(url, '_blank'); // Open in new tab to trigger contact import
+      }, 1000);
     } else {
-      link.click();
+      link.click(); // Desktop download
     }
 
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success("Contact vCard downloaded!");
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    toast.success("Tap 'Open' to save contact in your app");
   };
+
 
 
   // Add this new function to handle direct contact saving
