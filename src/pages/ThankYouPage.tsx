@@ -6,14 +6,12 @@ import jsPDF from "jspdf";
 import QRCode from "react-qr-code";
 import toast from "react-hot-toast";
 import {
-  Mail, Phone, Globe, MapPin, Share2, Download, Copy, X, Contact, FileDown, Share
+  Mail, Phone, Globe, MapPin, Share2, Download, Copy, X, Contact, FileDown, Share, Printer
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { toPng } from "html-to-image";
 import { saveAs } from "file-saver";
-// import { title } from "process";
 import { MousePointerClick } from "lucide-react";
-
 
 const ThankYouPage = () => {
   const router = useRouter();
@@ -23,145 +21,164 @@ const ThankYouPage = () => {
   const [receiptNumber, setReceiptNumber] = useState("");
   const [timestamp, setTimestamp] = useState("");
   const [showContact, setShowContact] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   useEffect(() => {
-  if (router.query.data) {
-    try {
-      let rawData = router.query.data as string;
-      console.log("✅ Raw data received from QR:", rawData);
-
-      let decodedData;
-      let parsedData;
-
-      // Attempt 1: Direct Base64 decode (new format)
+    if (router.query.data) {
       try {
-        decodedData = decodeURIComponent(escape(atob(rawData)));
-        parsedData = JSON.parse(decodedData);
-        console.log("✅ Successfully decoded with Base64 method");
-      } catch (base64Err) {
-        console.warn("⚠️ Base64 decode failed, trying alternative methods:", base64Err);
+        let rawData = router.query.data as string;
+        console.log("✅ Raw data received from QR:", rawData);
 
-        // Attempt 2: Double URI decode (legacy format)
+        let decodedData;
+        let parsedData;
+
+        // Attempt 1: Direct Base64 decode (new format)
         try {
-          decodedData = decodeURIComponent(decodeURIComponent(rawData));
+          decodedData = decodeURIComponent(escape(atob(rawData)));
           parsedData = JSON.parse(decodedData);
-          console.log("✅ Successfully decoded with double URI method");
-        } catch (doubleDecodeErr) {
-          console.warn("⚠️ Double decode failed, trying single decode:", doubleDecodeErr);
+          console.log("✅ Successfully decoded with Base64 method");
+        } catch (base64Err) {
+          console.warn("⚠️ Base64 decode failed, trying alternative methods:", base64Err);
 
-          // Attempt 3: Single URI decode
+          // Attempt 2: Double URI decode (legacy format)
           try {
-            decodedData = decodeURIComponent(rawData);
+            decodedData = decodeURIComponent(decodeURIComponent(rawData));
             parsedData = JSON.parse(decodedData);
-            console.log("✅ Successfully decoded with single URI method");
-          } catch (singleDecodeErr) {
-            console.warn("⚠️ Single decode failed, trying raw JSON parse:", singleDecodeErr);
+            console.log("✅ Successfully decoded with double URI method");
+          } catch (doubleDecodeErr) {
+            console.warn("⚠️ Double decode failed, trying single decode:", doubleDecodeErr);
 
-            // Attempt 4: Direct JSON parse (might work for some legacy codes)
+            // Attempt 3: Single URI decode
             try {
-              parsedData = JSON.parse(rawData);
-              console.log("✅ Successfully parsed raw JSON");
-            } catch (finalErr) {
-              console.error("❌ All decode attempts failed:", finalErr);
-              toast.error("Invalid QR code format. Please try scanning again.");
-              return;
+              decodedData = decodeURIComponent(rawData);
+              parsedData = JSON.parse(decodedData);
+              console.log("✅ Successfully decoded with single URI method");
+            } catch (singleDecodeErr) {
+              console.warn("⚠️ Single decode failed, trying raw JSON parse:", singleDecodeErr);
+
+              // Attempt 4: Direct JSON parse (might work for some legacy codes)
+              try {
+                parsedData = JSON.parse(rawData);
+                console.log("✅ Successfully parsed raw JSON");
+              } catch (finalErr) {
+                console.error("❌ All decode attempts failed:", finalErr);
+                toast.error("Invalid QR code format. Please try scanning again.");
+                return;
+              }
             }
           }
         }
+
+        // Validate the parsed data
+        if (!parsedData || typeof parsedData !== 'object') {
+          console.error("❌ Parsed data is not an object:", parsedData);
+          toast.error("Invalid QR data structure");
+          return;
+        }
+
+        if (!parsedData.TransactionType && !parsedData.businessName) {
+          console.error("❌ Required fields missing from parsed data:", parsedData);
+          toast.error("QR code missing required data fields");
+          return;
+        }
+
+        console.log("✅ Final parsed data object:", parsedData);
+
+        // Set the data
+        setReceiptData(parsedData);
+        
+        setReceiptNumber(parsedData.Receipt || 'N/A');
+
+        if (parsedData.Timestamp) {
+          const parsedDate = new Date(parsedData.Timestamp);
+          const formattedTimestamp = parsedDate.toLocaleString("en-KE", {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          });
+          setTimestamp(formattedTimestamp);
+        } else {
+          setTimestamp('N/A');
+        }
+      } catch (e) {
+        console.error("❌ Error processing QR code data:", e);
+        toast.error("Failed to process QR code. Please try again.");
       }
-
-      // Validate the parsed data
-      if (!parsedData || typeof parsedData !== 'object') {
-        console.error("❌ Parsed data is not an object:", parsedData);
-        toast.error("Invalid QR data structure");
-        return;
-      }
-
-      if (!parsedData.TransactionType && !parsedData.businessName) {
-        console.error("❌ Required fields missing from parsed data:", parsedData);
-        toast.error("QR code missing required data fields");
-        return;
-      }
-
-      console.log("✅ Final parsed data object:", parsedData);
-
-      // Set the data
-      setReceiptData(parsedData);
-      
-      // Generate receipt number
-      // const generatedReceiptNumber = "RCPT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
-      // setReceiptNumber(generatedReceiptNumber);
-      // console.log("📄 Generated Receipt Number:", generatedReceiptNumber);
-
-      // // Set timestamp
-      // const now = new Date();
-      // const formattedTimestamp = now.toLocaleString("en-KE", {
-      //   year: "numeric",
-      //   month: "short",
-      //   day: "2-digit",
-      //   hour: "2-digit",
-      //   minute: "2-digit",
-      //   second: "2-digit",
-      // });
-      // setTimestamp(formattedTimestamp);
-
-      setReceiptNumber(parsedData.Receipt || 'N/A');
-
-      if (parsedData.Timestamp) {
-        const parsedDate = new Date(parsedData.Timestamp);
-        const formattedTimestamp = parsedDate.toLocaleString("en-KE", {
-          year: "numeric",
-          month: "short",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        });
-        setTimestamp(formattedTimestamp);
-      } else {
-        setTimestamp('N/A');
-      }
-
-      // console.log("🕒 Timestamp:", formattedTimestamp);
-
-    } catch (e) {
-      console.error("❌ Error processing QR code data:", e);
-      toast.error("Failed to process QR code. Please try again.");
     }
-  }
-}, [router.query]);
+  }, [router.query]);
 
-
-
-  const handleDownload = async () => {
+  const handleDownload = async (format: 'pdf' | 'png') => {
     const input = showContact ? contactRef.current : receiptRef.current;
     if (!input) return;
 
-    const canvas = await html2canvas(input);
-    const imgData = canvas.toDataURL("image/png");
+    if (format === 'pdf') {
+      const canvas = await html2canvas(input);
+      const imgData = canvas.toDataURL("image/png");
 
-    const pdf = new jsPDF();
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`${showContact ? 'contact' : receiptNumber}.pdf`);
+      const pdf = new jsPDF();
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${showContact ? 'contact' : receiptNumber}.pdf`);
+    } else {
+      const canvas = await html2canvas(input);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          saveAs(blob, `${showContact ? 'contact' : receiptNumber}.png`);
+        }
+      });
+    }
+    setShowDownloadModal(false);
   };
 
   const handleShare = async () => {
     const input = showContact ? contactRef.current : receiptRef.current;
     if (navigator.share && input) {
-      const canvas = await html2canvas(input);
-      canvas.toBlob(async (blob) => {
-        const file = new File([blob!], `${showContact ? 'contact' : receiptNumber}.png`, { type: "image/png" });
-        await navigator.share({
-          files: [file],
-          title: showContact ? "Contact information!" : "Your Receipt",
-          text: showContact ? "Here is the contact information." : "Here is your transaction receipt.",
+      try {
+        const canvas = await html2canvas(input);
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            const file = new File([blob], `${showContact ? 'contact' : receiptNumber}.png`, { type: "image/png" });
+            await navigator.share({
+              files: [file],
+              title: showContact ? "Contact information" : "Your Receipt",
+              text: showContact ? "Here is the contact information." : "Here is your transaction receipt.",
+            });
+          }
         });
-      });
+      } catch (error) {
+        console.error('Error sharing:', error);
+        toast.error("Failed to share. Please try downloading instead.");
+      }
     } else {
-      alert("Sharing not supported. Please download instead.");
+      toast.error("Sharing not supported in your browser. Please download instead.");
+    }
+  };
+
+  const handlePrint = () => {
+    const input = showContact ? contactRef.current : receiptRef.current;
+    if (!input) return;
+
+    const printWindow = window.open('', '', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.document.write('<html><head><title>Print</title>');
+      printWindow.document.write('<style>@media print { body { margin: 0; padding: 0; } }</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write(input.innerHTML);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+    } else {
+      toast.error("Popup blocked. Please allow popups to print.");
     }
   };
 
@@ -176,8 +193,8 @@ const ThankYouPage = () => {
   const copyLink = () => {
     const link = window.location.href;
     navigator.clipboard.writeText(link)
-      .then(() => alert("Link copied to clipboard!"))
-      .catch(() => alert("Failed to copy link"));
+      .then(() => toast.success("Link copied to clipboard!"))
+      .catch(() => toast.error("Failed to copy link"));
   };
 
   const shareContact = async () => {
@@ -210,116 +227,105 @@ const ThankYouPage = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
       {!showContact ? (
-        <div
-        ref={receiptRef}
-        className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto border border-gray-400 border-dotted"
-       >
-        <div className="flex flex-col items-center mb-6">
-          {/* Animated Tick Icon */}
-          <div className="animate-ping-once bg-green-500 rounded-full p-3 mb-2">
-            <svg
-              className="w-10 h-10 text-white animate-bounce"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={3}
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          {/* Swiping Success Text */}
-          <div className="overflow-hidden">
-            <p className="text-green-600 animate-slide-in">
-              Success!
+        <>
+          <div
+            ref={receiptRef}
+            className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto border border-gray-400 border-dotted"
+          >
+            <div className="flex flex-col items-center mb-6">
+              <div className="animate-ping-once bg-green-500 rounded-full p-3 mb-2">
+                <svg
+                  className="w-10 h-10 text-white animate-bounce"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={3}
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-green-600 animate-slide-in">
+                  Success!
+                </p>
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-bold mt-2 mb-1" style={{color: "#2ecc71"}}>
+              {receiptData.businessName || "BLTA Solutions Limited"}
+            </h2>
+            <p className="font-bold mt-2 mb-1" style={{color: "#999999"}}>
+              {receiptData.businessComment || "SMS | Short Codes | Solutions"}
+            </p>       
+            
+            <p className="text-3xl text-green-700 font-bold my-4">
+              {new Intl.NumberFormat("en-KE", {
+                style: "currency",
+                currency: "KES",
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(receiptData.Amount)}
             </p>
+
+            <div className="mt-2 text-sm break-words space-y-1">
+              {receiptData.businessAddress && <p>{receiptData.businessAddress}</p>}
+              {receiptData.businessPhone && <p className="font-bold text-green-600">{receiptData.businessPhone}</p>}
+              <p>{receiptData.businessComment}</p>
+            </div>
+
+            <br />
+            <p>{receiptData.TransactionType}</p>  
+            <br />
+            <p className="text-sm text-gray-500 mb-1">MPESA REF#: {receiptNumber}</p>
+            <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
+            <br />
+            <div className="w-full text-red-600 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
+              {receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}
+            </div>
           </div>
-        </div>
 
-        {/* Increased size for businessName */}
-        <h2 className="text-2xl font-bold mt-2 mb-1"
-        style={{color: "#2ecc71"}}>
-          {receiptData.businessName || "BLTA Solutions Limited"}
-        </h2>
-        <p className="font-bold mt-2 mb-1"
-        style={{color: "#999999"}}>
-          {receiptData.businessComment || "SMS | Short Codes | Solutions"}
-        </p>       
-        
-        {/* Reduced size for "YOUR RECEIPT" heading */}
-        {/* <h3 className="text-xl font-bold mb-4">YOUR RECEIPT</h3> */}
-        <p className="text-3xl text-green-700 font-bold my-4">
-          {new Intl.NumberFormat("en-KE", {
-            style: "currency",
-            currency: "KES",
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }).format(receiptData.Amount)}
-        </p>
-        {/* <QRCode
-          value={JSON.stringify({
-            receiptNumber,
-            businessName: receiptData.businessName,
-            amount: receiptData.Amount,
-            description: receiptData.businessComment,
-            email: receiptData.businessEmail,
-            timestamp,
-          })}
-          size={128}
-          className="mx-auto my-4"
-        /> */}
-        {/* Center-aligned Download and Share icons */}
-        {/* <div className="flex justify-center gap-4 mb-4">
-          <Download 
-            onClick={handleDownload}
-            className="w-5 h-5 text-blue-600 cursor-pointer hover:text-blue-700 hover:scale-110 transition-all"
-            name="Download Receipt"
-          />
-          <Share2 
-            onClick={handleShare}
-            className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700 hover:scale-110 transition-all"
-            name="Share Receipt"
-          />
-        </div> */}
-        <div className="mt-2 text-sm break-words space-y-1">
-          {receiptData.businessAddress && <p>{receiptData.businessAddress}</p>}
-          {receiptData.businessPhone && <p className="font-bold text-green-600">{receiptData.businessPhone}</p>}
-          <p>{receiptData.businessComment}</p>
-        </div>
+          {/* Action buttons below receipt */}
+          <div className="flex justify-center gap-4 mt-6 w-full max-w-md">
+            <button 
+              onClick={() => setShowDownloadModal(true)}
+              className="flex flex-col items-center justify-center p-3 rounded-lg bg-white shadow hover:bg-gray-50 transition-colors w-20"
+            >
+              <Download className="w-6 h-6 text-blue-600" />
+              <span className="text-xs mt-1">Download</span>
+            </button>
+            
+            <button 
+              onClick={handlePrint}
+              className="flex flex-col items-center justify-center p-3 rounded-lg bg-white shadow hover:bg-gray-50 transition-colors w-20"
+            >
+              <Printer className="w-6 h-6 text-gray-600" />
+              <span className="text-xs mt-1">Print</span>
+            </button>
+            
+            <button 
+              onClick={handleShare}
+              className="flex flex-col items-center justify-center p-3 rounded-lg bg-white shadow hover:bg-gray-50 transition-colors w-20"
+            >
+              <Share2 className="w-6 h-6 text-green-600" />
+              <span className="text-xs mt-1">Share</span>
+            </button>
+          </div>
 
-        <br />
-        <p>{receiptData.TransactionType}</p>  
-        <br />
-        <p className="text-sm text-gray-500 mb-1">MPESA REF#: {receiptNumber}</p>
-        <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
-        {/* <hr className="my-4 border-gray-300" /> */}
-        <br />
-        <div className="w-full text-red-600 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
-          {receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}
-        </div>
-
-        {/* <br /> */}
-
-        {/* {!showContact && ( */}
-        <div className="w-full max-w-md mt-6">
-        <Button
-          onClick={() => setShowContact(true)}
-          className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
-        >          
-          <p>{receiptData.businessPromo2 || "Contact us for available Offers!"}</p>
-          <MousePointerClick  className="mr-2" />
-        </Button>
-      </div>
-      
-      {/* )} */}
-       
-      </div>
+          <div className="w-full max-w-md mt-6">
+            <Button
+              onClick={() => setShowContact(true)}
+              className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
+            >          
+              <p>{receiptData.businessPromo2 || "Contact us for available Offers!"}</p>
+              <MousePointerClick className="mr-2" />
+            </Button>
+          </div>
+        </>
       ) : (
         <div
           ref={contactRef}
           className="bg-white p-6 rounded-lg border-4 border-[#2f363d] shadow-md w-full max-w-md relative overflow-y-auto max-h-[90vh]"
-         >
-
-          {/* Close button at top right */}
+        >
           <div className="flex justify-end mb-2">
             <button 
               onClick={() => setShowContact(false)}
@@ -353,7 +359,6 @@ const ThankYouPage = () => {
               </h1>
             </div>
 
-            {/* Phone */}
             {receiptData.businessPhone && (
               <div className="flex items-center p-2 border rounded hover:bg-gray-50">
                 <Phone className="w-5 h-5 mr-3 text-gray-500" />
@@ -367,7 +372,6 @@ const ThankYouPage = () => {
               </div>
             )}
 
-            {/* Email */}
             {receiptData.businessEmail && (
               <div className="flex items-center p-2 border rounded hover:bg-gray-50">
                 <Mail className="w-5 h-5 mr-3 text-gray-500" />
@@ -381,7 +385,6 @@ const ThankYouPage = () => {
               </div>
             )}
 
-            {/* Address */}
             {receiptData.businessAddress && (
               <div className="flex items-center p-2 border rounded hover:bg-gray-50">
                 <MapPin className="w-5 h-5 mr-3 text-gray-500" />
@@ -399,7 +402,6 @@ const ThankYouPage = () => {
               </div>
             )}
 
-            {/* WhatsApp */}
             {receiptData.businessPhone && (
               <div className="flex items-center p-2 border rounded hover:bg-gray-50">
                 <FaWhatsapp className="w-5 h-5 mr-3 text-green-500" />
@@ -436,8 +438,43 @@ const ThankYouPage = () => {
             </Button>
           </div>
         </div>
-      )}      
+      )}
 
+      {/* Download Modal */}
+      {showDownloadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">Download Options</h3>
+              <button 
+                onClick={() => setShowDownloadModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <Button 
+                onClick={() => handleDownload('pdf')}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <FileDown className="w-5 h-5" />
+                Download as PDF
+              </Button>
+              
+              <Button 
+                onClick={() => handleDownload('png')}
+                className="w-full flex items-center justify-center gap-2"
+                variant="outline"
+              >
+                <FileDown className="w-5 h-5" />
+                Download as PNG
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
