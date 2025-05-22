@@ -539,7 +539,7 @@ const ThankYouPage = () => {
 
           {/* Update the button group in the contact section to this: */}
           <div className="flex justify-center gap-4 mt-6">
-            <Button 
+            {/* <Button 
               variant="outline" 
               onClick={downloadContactQR}
               className="flex items-center gap-2"
@@ -553,7 +553,7 @@ const ThankYouPage = () => {
             >
               <Share className="w-4 h-4" />
               Share
-            </Button>
+            </Button> */}
             <Button 
               onClick={saveContactToDevice}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
