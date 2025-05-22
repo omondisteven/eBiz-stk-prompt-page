@@ -282,8 +282,8 @@ const ThankYouPage = () => {
             <p className="text-sm text-gray-500 mb-1">MPESA REF#: {receiptNumber}</p>
             <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
             <br />
-            <div className="w-full text-red-600 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
-              {receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}
+            <div className="w-full rounded-3xl shadow-lg">
+              <p className="w-full text-red-600 font-semibold italic p-4 animate-blink">{receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}</p>
             </div>             
           </div>
              <div className="w-full max-w-md mt-6">
