@@ -231,56 +231,56 @@ const ThankYouPage = () => {
       return;
     }
 
-    // Check if we're on a mobile device
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    if (isMobile) {
-      try {
-        // For mobile devices - use Contacts API if available
+    try {
+      if (isMobile) {
+        // Try Contacts API first if available
         if ('contacts' in navigator && 'ContactsManager' in window) {
-          // Request permission first
-          const permissions = await navigator.permissions.query({ name: 'contacts' } as any);
-          if (permissions.state !== 'granted') {
+          try {
             const permissionResult = await (navigator as any).contacts.requestPermission();
             if (permissionResult !== 'granted') {
               toast.error("Permission to access contacts was denied");
               return;
             }
+
+            const contact = {
+              name: [receiptData.businessName],
+              tel: [{
+                value: receiptData.businessPhone,
+                type: 'work'
+              }],
+              email: receiptData.businessEmail ? [{
+                value: receiptData.businessEmail,
+                type: 'work'
+              }] : undefined,
+              address: receiptData.businessAddress ? [{
+                streetAddress: receiptData.businessAddress,
+                type: 'work'
+              }] : undefined
+            };
+
+            await (navigator as any).contacts.create(contact);
+            toast.success("Contact saved to your device!");
+            return;
+          } catch (apiError) {
+            console.warn('Contacts API failed, falling back to vCard', apiError);
+            // Continue to vCard fallback
           }
-
-          // Create contact object
-          const contact = {
-            name: [receiptData.businessName],
-            tel: [{
-              value: receiptData.businessPhone,
-              type: 'work'
-            }],
-            email: receiptData.businessEmail ? [{
-              value: receiptData.businessEmail,
-              type: 'work'
-            }] : undefined,
-            address: receiptData.businessAddress ? [{
-              streetAddress: receiptData.businessAddress,
-              type: 'work'
-            }] : undefined
-          };
-
-          // Save contact
-          await (navigator as any).contacts.create(contact);
-          toast.success("Contact saved to your device!");
-        } else {
-          // Fallback for mobile browsers without Contacts API
-          const vCard = generateVCard();
-          saveAsVCard(vCard);
         }
-      } catch (error) {
-        console.error('Error saving contact:', error);
-        toast.error("Failed to save contact. Please try the download option.");
+        
+        // Fallback for all mobile devices
+        const vCard = generateVCard();
+        saveAsVCard(vCard);
+        toast("Contact downloaded as vCard. Open it to save to your contacts.");
+      } else {
+        // Desktop behavior
+        const vCard = generateVCard();
+        saveAsVCard(vCard);
       }
-    } else {
-      // For desktop - download as vCard
-      const vCard = generateVCard();
-      saveAsVCard(vCard);
+    } catch (error) {
+      console.error('Error saving contact:', error);
+      toast.error("Failed to save contact. Please try the download option instead.");
     }
   };
 
@@ -530,6 +530,7 @@ const ThankYouPage = () => {
           </div>
           
 
+          {/* Update the button group in the contact section to this: */}
           <div className="flex justify-center gap-4 mt-6">
             <Button 
               variant="outline" 
@@ -552,22 +553,6 @@ const ThankYouPage = () => {
             >
               <Contact className="w-4 h-4" />
               Save Contact
-            </Button>
-          
-            <Button 
-              variant="outline" 
-              onClick={downloadContactQR}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Download
-            </Button>
-            <Button 
-              onClick={shareContact}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-            >
-              <Share className="w-4 h-4" />
-              Share
             </Button>
           </div>
         </div>
