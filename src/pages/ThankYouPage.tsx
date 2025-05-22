@@ -501,28 +501,13 @@ const saveAsVCard = (vCard: string) => {
           
 
           {/* Update the button group in the contact section to this: */}
-          <div className="flex justify-center gap-4 mt-6">
-            {/* <Button 
-              variant="outline" 
-              onClick={downloadContactQR}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Download
-            </Button>
-            <Button 
-              onClick={shareContact}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-            >
-              <Share className="w-4 h-4" />
-              Share
-            </Button> */}
+          <div className="flex justify-center mt-6 w-full">            
             <Button 
               onClick={saveContactToDevice}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 w-full py-6"
             >
-              <Contact className="w-4 h-4" />
-              Save Contact
+              <Contact className="w-5 h-5" />
+              <span className="text-lg font-semibold">Save Contact</span>
             </Button>
           </div>
         </div>
