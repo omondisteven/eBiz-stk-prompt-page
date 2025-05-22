@@ -23,7 +23,8 @@ const ThankYouPage = () => {
   const [timestamp, setTimestamp] = useState("");
   const [showContact, setShowContact] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
-  const [vCardUrl, setVCardUrl] = useState('');
+  const [showContactOptions, setShowContactOptions] = useState(false);
+  const [contactFileUrl, setContactFileUrl] = useState('');
 
 
   useEffect(() => {
@@ -233,45 +234,66 @@ const ThankYouPage = () => {
       return;
     }
 
-    try {
-      // Generate vCard
-      const vCard = generateVCard();
-      const blob = new Blob([vCard], { type: 'text/vcard' });
-      const url = URL.createObjectURL(blob);
-      const fileName = `${receiptData.businessName || 'contact'}.vcf`;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    // Generate vCard content
+    const vCard = generateVCard();
+    const blob = new Blob([vCard], { type: 'text/vcard' });
+    const url = URL.createObjectURL(blob);
+    setContactFileUrl(url);
 
-      if (isAndroid) {
-        // Try Android Intent URL
-        try {
-          window.location.href = `intent://${url}#Intent;action=android.intent.action.VIEW;type=text/x-vcard;end`;
-          toast.success("Trying to open contact in your preferred app...");
-        } catch (err) {
-          console.warn("Intent fallback failed, using open().", err);
-          window.open(url, '_blank');
-        }
-      } else if (isIOS) {
-        // iOS does not support custom URL schemes for Contacts
-        window.open(url, '_blank');
-        toast("Tap 'Open in...' to add to Contacts.");
-      } else {
-        // Desktop: just download
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success("vCard downloaded. Open it to save to contacts.");
-      }
-
-      setTimeout(() => URL.revokeObjectURL(url), 3000);
-    } catch (error) {
-      console.error('Error saving contact:', error);
-      toast.error("Failed to save contact. Please try manually.");
+    if (isMobile) {
+      // On mobile, show options modal
+      setShowContactOptions(true);
+    } else {
+      // On desktop, just download the vCard
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${receiptData.businessName || 'contact'}.vcf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Contact downloaded as vCard!");
     }
+  };
+
+  // Add this new function to handle direct contact saving
+  const handleAddToContacts = (method: 'native' | 'vcf') => {
+    if (!contactFileUrl) return;
+
+    if (method === 'native') {
+      // Try to use device-specific methods to open contacts app
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const isAndroid = /Android/i.test(navigator.userAgent);
+
+      try {
+        if (isIOS) {
+          // iOS - try to open contacts app directly
+          window.location.href = `contacts://import-vcard?url=${encodeURIComponent(contactFileUrl)}`;
+        } else if (isAndroid) {
+          // Android - use intent URL
+          window.location.href = `intent://${contactFileUrl}#Intent;action=android.intent.action.VIEW;type=text/x-vcard;end`;
+        } else {
+          // Fallback for other mobile browsers
+          window.open(contactFileUrl, '_blank');
+        }
+      } catch (e) {
+        console.error('Error opening contacts app:', e);
+        toast.error("Couldn't open contacts app. Please try the vCard option.");
+      }
+    } else {
+      // vCard download method
+      const link = document.createElement('a');
+      link.href = contactFileUrl;
+      link.download = `${receiptData.businessName || 'contact'}.vcf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast("Downloaded vCard. Open it to save to contacts.");
+    }
+
+    setShowContactOptions(false);
+    setTimeout(() => URL.revokeObjectURL(contactFileUrl), 1000);
   };
 
   
@@ -592,6 +614,47 @@ const ThankYouPage = () => {
           </div>
         </div>
       )}      
+
+      {/* Save contact Modal */}
+      {showContactOptions && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold">Save Contact</h3>
+            <button 
+              onClick={() => {
+                setShowContactOptions(false);
+                URL.revokeObjectURL(contactFileUrl);
+              }}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <p className="mb-4">Choose how you want to save this contact:</p>
+          
+          <div className="space-y-3">
+            <Button 
+              onClick={() => handleAddToContacts('native')}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <Contact className="w-5 h-5" />
+              Add to Contacts Directly
+            </Button>
+            
+            <Button 
+              onClick={() => handleAddToContacts('vcf')}
+              className="w-full flex items-center justify-center gap-2"
+              variant="outline"
+            >
+              <Download className="w-5 h-5" />
+              Download vCard File
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
 
     </div>
   );
