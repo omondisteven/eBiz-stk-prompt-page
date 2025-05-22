@@ -580,8 +580,8 @@ const saveAsVCard = (vCard: string) => {
           
           <div className="space-y-4">
             <p className="text-sm text-gray-600 mb-4">
-              When the download notification appears, Please select &#34;Open&#34; to save the contact.
-            </p>
+            When the download notification appears, please select <strong>Open</strong> to save the contact to your device.
+          </p>
             
             <Button 
               onClick={() => {
