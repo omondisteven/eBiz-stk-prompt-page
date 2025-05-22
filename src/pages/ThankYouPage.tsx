@@ -23,10 +23,6 @@ const ThankYouPage = () => {
   const [timestamp, setTimestamp] = useState("");
   const [showContact, setShowContact] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
-  const [showVCardPrompt, setShowVCardPrompt] = useState(false);
-  // const [vCardUrl, setVCardUrl] = useState<string | null>(null);
-
-  const [showVCardModal, setShowVCardModal] = useState(false);
   const [vCardUrl, setVCardUrl] = useState('');
 
 
@@ -240,32 +236,17 @@ const ThankYouPage = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     try {
-      // First try the Contacts API if available (mobile)
-      if (isMobile && 'contacts' in navigator && 'ContactsManager' in window) {
+      // Try Contacts API if available
+      if (isMobile && 'contacts' in navigator && 'ContactsManager' in window && 'save' in (navigator as any).contacts) {
         try {
-          const permissionResult = await (navigator as any).contacts.requestPermission();
-          if (permissionResult !== 'granted') {
-            toast.error("Permission to access contacts was denied");
-            return;
-          }
-
           const contact = {
             name: [receiptData.businessName],
-            tel: [{
-              value: receiptData.businessPhone,
-              type: 'work'
-            }],
-            email: receiptData.businessEmail ? [{
-              value: receiptData.businessEmail,
-              type: 'work'
-            }] : undefined,
-            address: receiptData.businessAddress ? [{
-              streetAddress: receiptData.businessAddress,
-              type: 'work'
-            }] : undefined
+            tel: [{ value: receiptData.businessPhone, type: 'work' }],
+            email: receiptData.businessEmail ? [{ value: receiptData.businessEmail, type: 'work' }] : undefined,
+            address: receiptData.businessAddress ? [{ streetAddress: receiptData.businessAddress, type: 'work' }] : undefined
           };
 
-          await (navigator as any).contacts.create(contact);
+          await (navigator as any).contacts.save(contact);
           toast.success("Contact saved to your device!");
           return;
         } catch (apiError) {
@@ -273,77 +254,36 @@ const ThankYouPage = () => {
         }
       }
 
-      // Generate vCard
+      // Fallback: generate and open .vcf file
       const vCard = generateVCard();
       const blob = new Blob([vCard], { type: 'text/vcard' });
       const url = URL.createObjectURL(blob);
-      setVCardUrl(url);
+      const fileName = `${receiptData.businessName || 'contact'}.vcf`;
 
+      // Create invisible link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+
+      // Mobile: try opening .vcf directly
       if (isMobile) {
-        // On mobile: Show modal with option to open
-        setShowVCardModal(true);
-        
-        // Auto-download in background
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${receiptData.businessName || 'contact'}.vcf`;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        window.open(url, '_blank');
       } else {
-        // On desktop: Direct download as before
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${receiptData.businessName || 'contact'}.vcf`;
-        document.body.appendChild(link);
+        // Desktop: standard download
         link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        toast.success("Contact downloaded as vCard!");
       }
 
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      toast.success("Contact vCard ready. Open it to save.");
     } catch (error) {
       console.error('Error saving contact:', error);
-      toast.error("Failed to save contact. Please try the download option instead.");
+      toast.error("Failed to save contact. Please try again.");
     }
   };
-
-  // Add this function to handle opening the contact file
-  const openContactFile = () => {
-    if (!vCardUrl) return;
-
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isAndroid = /Android/i.test(navigator.userAgent);
-
-    try {
-      if (isIOS) {
-        // Try iOS-specific approach first
-        window.location.href = `contacts://import-vcard?url=${encodeURIComponent(vCardUrl)}`;
-      } else if (isAndroid) {
-        // Try Android intent
-        window.location.href = `intent://${vCardUrl}#Intent;action=android.intent.action.VIEW;type=text/x-vcard;end`;
-      } else {
-        // Fallback to iframe method
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = vCardUrl;
-        document.body.appendChild(iframe);
-        
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 1000);
-      }
-    } catch (e) {
-      console.error('Error opening contact file:', e);
-      toast.error("Couldn't open contacts app. Please open the downloaded file manually.");
-    }
-
-    setShowVCardModal(false);
-    setTimeout(() => URL.revokeObjectURL(vCardUrl), 1000);
-  };
-
-
+  
   // Helper function to generate vCard content
   const generateVCard = () => {
     let vCard = 'BEGIN:VCARD\n';
@@ -660,49 +600,7 @@ const ThankYouPage = () => {
             </div>
           </div>
         </div>
-      )}
-      {/* Save contact modal */}
-      {showVCardModal && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold">Contact Saved</h3>
-            <button 
-              onClick={() => {
-                setShowVCardModal(false);
-                if (vCardUrl) URL.revokeObjectURL(vCardUrl);
-              }}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          <p className="mb-4">The contact has been downloaded as a vCard file.</p>
-          
-          <div className="space-y-2">
-            <Button 
-              onClick={openContactFile}
-              className="w-full flex items-center justify-center gap-2"
-            >
-              <Contact className="w-5 h-5" />
-              {/iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'Open in Contacts' : 'Add to Contacts'}
-            </Button>
-            
-            <Button 
-              onClick={() => {
-                setShowVCardModal(false);
-                if (vCardUrl) URL.revokeObjectURL(vCardUrl);
-              }}
-              className="w-full flex items-center justify-center gap-2"
-              variant="outline"
-            >
-              Close
-            </Button>
-          </div>
-        </div>
-      </div>
-    )}
+      )}      
 
     </div>
   );
