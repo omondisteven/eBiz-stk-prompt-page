@@ -282,17 +282,17 @@ const ThankYouPage = () => {
             <div className="w-full text-red-600 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
               {receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}
             </div>
-          </div>          
-
-          <div className="w-full max-w-md mt-6">
-            <Button
-              onClick={() => setShowContact(true)}
-              className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
-            >          
-              <p>{receiptData.businessPromo2 || "Contact us for available Offers!"}</p>
-              <MousePointerClick className="mr-2" />
-            </Button>
-          </div>
+              <div className="w-full max-w-md mt-6">
+              <Button
+                onClick={() => setShowContact(true)}
+                className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
+              >          
+                <p>{receiptData.businessPromo2 || "Contact us for available Offers!"}</p>
+                <MousePointerClick className="mr-2" />
+              </Button>
+            </div>
+          </div>   
+          
           {/* Action buttons below receipt */}
           <div className="flex justify-center gap-4 mt-6 w-full max-w-md">
             <button 
