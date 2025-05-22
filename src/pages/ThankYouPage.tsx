@@ -234,55 +234,53 @@ const ThankYouPage = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     try {
-      if (isMobile) {
-        // Try Contacts API first if available
-        if ('contacts' in navigator && 'ContactsManager' in window) {
-          try {
-            const permissionResult = await (navigator as any).contacts.requestPermission();
-            if (permissionResult !== 'granted') {
-              toast.error("Permission to access contacts was denied");
-              return;
-            }
+      // ✅ Use Web Contacts API if available and supported
+      if (isMobile && 'contacts' in navigator && 'ContactsManager' in window && 'save' in (navigator as any).contacts) {
+        try {
+          const contact = {
+            name: [receiptData.businessName],
+            tel: [{ value: receiptData.businessPhone, type: 'work' }],
+            email: receiptData.businessEmail ? [{ value: receiptData.businessEmail, type: 'work' }] : undefined,
+            address: receiptData.businessAddress ? [{ streetAddress: receiptData.businessAddress, type: 'work' }] : undefined
+          };
 
-            const contact = {
-              name: [receiptData.businessName],
-              tel: [{
-                value: receiptData.businessPhone,
-                type: 'work'
-              }],
-              email: receiptData.businessEmail ? [{
-                value: receiptData.businessEmail,
-                type: 'work'
-              }] : undefined,
-              address: receiptData.businessAddress ? [{
-                streetAddress: receiptData.businessAddress,
-                type: 'work'
-              }] : undefined
-            };
-
-            await (navigator as any).contacts.create(contact);
-            toast.success("Contact saved to your device!");
-            return;
-          } catch (apiError) {
-            console.warn('Contacts API failed, falling back to vCard', apiError);
-            // Continue to vCard fallback
-          }
+          await (navigator as any).contacts.save(contact);
+          toast.success("Contact saved to your device!");
+          return;
+        } catch (apiError) {
+          console.warn('Contacts API failed, falling back to vCard', apiError);
+          // fallback to vCard below
         }
-        
-        // Fallback for all mobile devices
-        const vCard = generateVCard();
-        saveAsVCard(vCard);
-        toast("Contact downloaded as vCard. Open it to save to your contacts.");
-      } else {
-        // Desktop behavior
-        const vCard = generateVCard();
-        saveAsVCard(vCard);
       }
+
+      // 🔁 Fallback: generate vCard and download or open
+      const vCard = generateVCard();
+      const blob = new Blob([vCard], { type: 'text/vcard' });
+      const url = URL.createObjectURL(blob);
+      const fileName = `${receiptData.businessName || 'contact'}.vcf`;
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+
+      if (isMobile) {
+        // On mobile, try to open directly (can prompt "Add to Contacts")
+        window.open(url, '_blank');
+      } else {
+        link.click();
+      }
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Contact downloaded as vCard!");
+
     } catch (error) {
       console.error('Error saving contact:', error);
       toast.error("Failed to save contact. Please try the download option instead.");
     }
   };
+
 
   // Helper function to generate vCard content
   const generateVCard = () => {
