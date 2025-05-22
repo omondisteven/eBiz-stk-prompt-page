@@ -228,12 +228,8 @@ const ThankYouPage = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
       {!showContact ? (
         <>
-          <div
-            ref={receiptRef}
-            className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md text-center overflow-auto border border-gray-400 border-dotted"
-          >
-            <div className="flex flex-col items-center mb-6">
-              <div className="animate-ping-once bg-green-500 rounded-full p-3 mb-2">
+        <div className="bg-gray-200 shadow-lg p-6 w-full max-w-md overflow-auto biorder gray-500">
+          <div className="animate-ping-once bg-green-500 rounded-full p-3 mb-2">
                 <svg
                   className="w-10 h-10 text-white animate-bounce"
                   fill="none"
@@ -244,9 +240,14 @@ const ThankYouPage = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
+          <div
+            ref={receiptRef}
+            className="bg-white text-center border border-gray-400 border-dotted"
+          >
+            <div className="flex flex-col items-center mb-6">              
               <div className="overflow-hidden">
                 <p className="text-green-600 animate-slide-in">
-                  Success!
+                  Payment Approved!
                 </p>
               </div>
             </div>
@@ -281,17 +282,18 @@ const ThankYouPage = () => {
             <br />
             <div className="w-full text-red-600 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
               {receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}
-            </div>
-              <div className="w-full max-w-md mt-6">
-              <Button
-                onClick={() => setShowContact(true)}
-                className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
-              >          
-                <p>{receiptData.businessPromo2 || "Contact us for available Offers!"}</p>
-                <MousePointerClick className="mr-2" />
-              </Button>
-            </div>
-          </div>   
+            </div>             
+          </div>
+             <div className="w-full max-w-md mt-6">
+                <Button
+                  onClick={() => setShowContact(true)}
+                  className="w-full bg-green-900 text-white hover:bg-purple-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 text-lg font-bold"
+                >          
+                  <p>{receiptData.businessPromo2 || "Contact us for available Offers!"}</p>
+                  <MousePointerClick className="mr-2" />
+                </Button>
+              </div>
+        </div>          
           
           {/* Action buttons below receipt */}
           <div className="flex justify-center gap-4 mt-6 w-full max-w-md">
