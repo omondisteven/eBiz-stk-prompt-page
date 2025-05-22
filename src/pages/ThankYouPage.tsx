@@ -227,23 +227,33 @@ const ThankYouPage = () => {
   };
   // ***SAVE CONTACT FUNCTION***
   const saveContactToDevice = async () => {
-  if (!receiptData.businessName || !receiptData.businessPhone) {
-    toast.error("Contact information is incomplete");
-    return;
-  }
+    if (!receiptData.businessName || !receiptData.businessPhone) {
+      toast.error("Contact information is incomplete");
+      return;
+    }
 
-  // Check if we're on a mobile device
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-  if (isMobile) {
-    
+    if (isMobile) {
+      // Only show the instruction modal on mobile
+      setShowContactInstructionModal(true);
+    } else {
+      // For desktop, proceed directly with download
+      try {
+        const vCard = generateVCard();
+        saveAsVCard(vCard);
+      } catch (error) {
+        console.error('Error saving contact:', error);
+        toast.error("Failed to save contact. Please try again.");
+      }
+    }
+  };
 
+  // Move the actual contact saving logic to a separate function
+  const handleSaveContactConfirmation = async () => {
     try {
-        // Show the instruction modal first
-        setShowContactInstructionModal(true);
       // For mobile devices - use Contacts API if available
       if ('contacts' in navigator && 'ContactsManager' in window) {
-        // Request permission first
         const permissions = await navigator.permissions.query({ name: 'contacts' } as any);
         if (permissions.state !== 'granted') {
           const permissionResult = await (navigator as any).contacts.requestPermission();
@@ -253,7 +263,6 @@ const ThankYouPage = () => {
           }
         }
 
-        // Create contact object
         const contact = {
           name: [receiptData.businessName],
           tel: [{
@@ -270,7 +279,6 @@ const ThankYouPage = () => {
           }] : undefined
         };
 
-        // Save contact
         await (navigator as any).contacts.create(contact);
         toast.success("Contact saved to your device!");
       } else {
@@ -282,12 +290,7 @@ const ThankYouPage = () => {
       console.error('Error saving contact:', error);
       toast.error("Failed to save contact. Please try the download option.");
     }
-  } else {
-    // For desktop - download as vCard
-    const vCard = generateVCard();
-    saveAsVCard(vCard);
-  }
-};
+  };
 
 // Helper function to generate vCard content
 const generateVCard = () => {
@@ -620,17 +623,9 @@ const saveAsVCard = (vCard: string) => {
             <Button 
               onClick={() => {
                 setShowContactInstructionModal(false);
-                // Trigger the download after modal closes
-                try {
-                  const vCard = generateVCard();
-                  saveAsVCard(vCard);
-                } catch (error) {
-                  console.error('Error saving contact:', error);
-                  toast.error("Failed to save contact. Please try the download option.");
-                }
+                handleSaveContactConfirmation();
               }}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700"
-            >
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700">
               OK, I Understand
             </Button>
           </div>
