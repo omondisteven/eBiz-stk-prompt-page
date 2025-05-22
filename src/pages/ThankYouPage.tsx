@@ -228,148 +228,103 @@ const ThankYouPage = () => {
   };
   // ***SAVE CONTACT FUNCTION***
   const saveContactToDevice = async () => {
-    if (!receiptData.businessName || !receiptData.businessPhone) {
-      toast.error("Contact information is incomplete");
-      return;
-    }
+  if (!receiptData.businessName || !receiptData.businessPhone) {
+    toast.error("Contact information is incomplete");
+    return;
+  }
 
+  // Show the instruction modal first
+  setShowDownloadModal(true);
+
+  // Check if we're on a mobile device
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  if (isMobile) {
     try {
-      // Check if we're on Android with Chrome (which supports web share)
-      const isAndroidChrome = /Android.*Chrome\//.test(navigator.userAgent);
-      
-      // Check if we're on iOS
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      
-      // Try Web Share API first (works on Android Chrome and some iOS browsers)
-      if (navigator.share && (isAndroidChrome || isIOS)) {
-        const vCard = generateVCard();
-        const blob = new Blob([vCard], { type: 'text/vcard' });
-        const file = new File([blob], `${receiptData.businessName}.vcf`, { type: 'text/vcard' });
-        
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: 'Save Contact',
-            text: `Save ${receiptData.businessName} to your contacts`,
-            files: [file]
-          });
-          return;
+      // For mobile devices - use Contacts API if available
+      if ('contacts' in navigator && 'ContactsManager' in window) {
+        // Request permission first
+        const permissions = await navigator.permissions.query({ name: 'contacts' } as any);
+        if (permissions.state !== 'granted') {
+          const permissionResult = await (navigator as any).contacts.requestPermission();
+          if (permissionResult !== 'granted') {
+            toast.error("Permission to access contacts was denied");
+            return;
+          }
         }
-      }
 
-      // For iOS devices, create a hidden link with data URI
-      if (isIOS) {
-        const vCard = generateVCard();
-        const vCardData = encodeURIComponent(vCard);
-        const url = `data:text/vcard;charset=utf-8,${vCardData}`;
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${receiptData.businessName}.vcf`;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast.success("Contact file ready. Open it to save to contacts.");
-        return;
-      }
-
-      // For Android, try to open a mailto link with the vCard as attachment
-      if (isAndroidChrome) {
-        const vCard = generateVCard();
-        const blob = new Blob([vCard], { type: 'text/vcard' });
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-          const base64Data = e.target?.result as string;
-          const encodedData = encodeURIComponent(base64Data.split(',')[1]);
-          
-          const mailtoLink = `mailto:?subject=Contact for ${receiptData.businessName}&body=Save this contact to your address book&attachment=data:text/vcard;base64,${encodedData}`;
-          
-          window.location.href = mailtoLink;
+        // Create contact object
+        const contact = {
+          name: [receiptData.businessName],
+          tel: [{
+            value: receiptData.businessPhone,
+            type: 'work'
+          }],
+          email: receiptData.businessEmail ? [{
+            value: receiptData.businessEmail,
+            type: 'work'
+          }] : undefined,
+          address: receiptData.businessAddress ? [{
+            streetAddress: receiptData.businessAddress,
+            type: 'work'
+          }] : undefined
         };
-        
-        reader.readAsDataURL(blob);
-        return;
-      }
 
-      // Fallback for other browsers/devices
-      const vCard = generateVCard();
-      saveAsVCard(vCard);
-      
+        // Save contact
+        await (navigator as any).contacts.create(contact);
+        toast.success("Contact saved to your device!");
+      } else {
+        // Fallback for mobile browsers without Contacts API
+        const vCard = generateVCard();
+        saveAsVCard(vCard);
+      }
     } catch (error) {
       console.error('Error saving contact:', error);
-      toast.error("Failed to save contact. Please try again.");
+      toast.error("Failed to save contact. Please try the download option.");
     }
-  };
+  } else {
+    // For desktop - download as vCard
+    const vCard = generateVCard();
+    saveAsVCard(vCard);
+  }
+};
 
-  // Improved vCard generator with more fields
-  const generateVCard = () => {
-    let vCard = 'BEGIN:VCARD\n';
-    vCard += 'VERSION:3.0\n';
-    vCard += `FN:${receiptData.businessName}\n`;
-    vCard += `ORG:${receiptData.businessName}\n`;
-    
-    if (receiptData.businessPhone) {
-      // Add phone numbers with different types for better compatibility
-      vCard += `TEL;TYPE=WORK,VOICE:${receiptData.businessPhone}\n`;
-      vCard += `TEL;TYPE=CELL:${receiptData.businessPhone}\n`;
-    }
-    
-    if (receiptData.businessEmail) {
-      vCard += `EMAIL;TYPE=WORK:${receiptData.businessEmail}\n`;
-    }
-    
-    if (receiptData.businessAddress) {
-      // Split address into components for better compatibility
-      const addressParts = receiptData.businessAddress.split(',');
-      vCard += `ADR;TYPE=WORK:;;${addressParts[0] || ''};${addressParts[1] || ''};${addressParts[2] || ''};;\n`;
-      vCard += `LABEL;TYPE=WORK:${receiptData.businessAddress}\n`;
-    }
-    
-    if (receiptData.businessComment) {
-      vCard += `NOTE:${receiptData.businessComment}\n`;
-    }
-    
-    vCard += 'REV:' + new Date().toISOString() + '\n';
-    vCard += 'END:VCARD';
-    return vCard;
-  };
+// Helper function to generate vCard content
+const generateVCard = () => {
+  let vCard = 'BEGIN:VCARD\n';
+  vCard += 'VERSION:3.0\n';
+  vCard += `FN:${receiptData.businessName}\n`;
+  vCard += `ORG:${receiptData.businessName}\n`;
+  
+  if (receiptData.businessPhone) {
+    vCard += `TEL;TYPE=WORK,VOICE:${receiptData.businessPhone}\n`;
+  }
+  
+  if (receiptData.businessEmail) {
+    vCard += `EMAIL;TYPE=WORK:${receiptData.businessEmail}\n`;
+  }
+  
+  if (receiptData.businessAddress) {
+    vCard += `ADR;TYPE=WORK:;;${receiptData.businessAddress}\n`;
+  }
+  
+  vCard += 'END:VCARD';
+  return vCard;
+};
 
-  // Improved vCard saver with more options
-  const saveAsVCard = (vCard: string) => {
-    const blob = new Blob([vCard], { type: 'text/vcard' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${receiptData.businessName || 'contact'}.vcf`;
-    
-    // For mobile devices, try to open in new tab
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-      // Create iframe for better iOS compatibility
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = url;
-      document.body.appendChild(iframe);
-      
-      // Also provide direct link as fallback
-      setTimeout(() => {
-        window.open(url, '_blank');
-        document.body.removeChild(iframe);
-        URL.revokeObjectURL(url);
-      }, 100);
-    } else {
-      // Standard download for desktop
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }
-    
-    toast.success("Contact downloaded as vCard. Open it to save to your contacts.");
-  };  
+// Helper function to save vCard
+const saveAsVCard = (vCard: string) => {
+  const blob = new Blob([vCard], { type: 'text/vcard' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${receiptData.businessName || 'contact'}.vcf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  toast.success("Contact downloaded as vCard!");
+};
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
@@ -498,7 +453,7 @@ const ThankYouPage = () => {
           </div>
 
           <h2 className="text-green-600 text-xl font-bold mb-4 text-center">Our Contacts</h2>
-          <p className="text-gray-500 text-sm text-center">Click the<strong> Save </strong>button below to save our contacts</p>
+          <p className="text-gray-500 text-sm text-center">Click the<strong className="text-gray-900"> Save </strong>button below to save our contacts</p>
 
           <div className="flex justify-center mb-4 w-full p-4 bg-white">
             <QRCode 
@@ -643,6 +598,40 @@ const ThankYouPage = () => {
           </div>
         </div>
       )}      
+      {/* SAVE CONTACT INSTRUCTION MODAL */}
+      {showDownloadModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold">Save Contact</h3>
+            <button 
+              onClick={() => setShowDownloadModal(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600 mb-4">
+              When the download notification appears, please select <strong>"Open"</strong> to save the contact to your device.
+            </p>
+            
+            <Button 
+              onClick={() => {
+                setShowDownloadModal(false);
+                // Trigger the download immediately after closing the modal
+                const vCard = generateVCard();
+                saveAsVCard(vCard);
+              }}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              OK, I Understand
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
 
     </div>
   );
