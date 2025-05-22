@@ -284,7 +284,8 @@ const ThankYouPage = () => {
             <br />
             <div className="w-full text-red-600 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
               {receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}
-            </div>             
+            </div>      
+            <br />       
           </div>
              <div className="w-full max-w-md mt-6">
                 <Button
