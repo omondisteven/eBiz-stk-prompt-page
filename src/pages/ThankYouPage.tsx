@@ -282,8 +282,8 @@ const ThankYouPage = () => {
             <p className="text-sm text-gray-500 mb-1">MPESA REF#: {receiptNumber}</p>
             <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
             <br />
-            <div className="w-full rounded-3xl shadow-lg">
-              <p className="w-full text-red-600 font-semibold italic p-4 animate-blink">{receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}</p>
+            <div className="w-full text-red-600 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
+              {receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}
             </div>             
           </div>
              <div className="w-full max-w-md mt-6">
@@ -338,7 +338,8 @@ const ThankYouPage = () => {
             </button>
           </div>
 
-          <h2 className="text-xl font-bold mb-4 text-center">Contact us directly</h2>
+          <h2 className="text-xl font-bold mb-4 text-center">Our Contacts</h2>
+          <p className="text-gray-500 text-sm text-center">Click "Save" button below to save our contacts</p>
 
           <div className="flex justify-center mb-4 w-full p-4 bg-white">
             <QRCode 
@@ -364,7 +365,6 @@ const ThankYouPage = () => {
 
             {receiptData.businessPhone && (
               <div className="flex items-center p-2 border rounded hover:bg-gray-50">
-                <Phone className="w-5 h-5 mr-3 text-gray-500" />
                 <div className="flex-1">
                   <p className="text-sm text-gray-500">Phone</p>
                   <p>{receiptData.businessPhone}</p>
@@ -377,7 +377,6 @@ const ThankYouPage = () => {
 
             {receiptData.businessEmail && (
               <div className="flex items-center p-2 border rounded hover:bg-gray-50">
-                <Mail className="w-5 h-5 mr-3 text-gray-500" />
                 <div className="flex-1">
                   <p className="text-sm text-gray-500">Email</p>
                   <p>{receiptData.businessEmail}</p>
@@ -390,7 +389,6 @@ const ThankYouPage = () => {
 
             {receiptData.businessAddress && (
               <div className="flex items-center p-2 border rounded hover:bg-gray-50">
-                <MapPin className="w-5 h-5 mr-3 text-gray-500" />
                 <div className="flex-1">
                   <p className="text-sm text-gray-500">Address</p>
                   <p>{receiptData.businessAddress}</p>
@@ -407,7 +405,6 @@ const ThankYouPage = () => {
 
             {receiptData.businessPhone && (
               <div className="flex items-center p-2 border rounded hover:bg-gray-50">
-                <FaWhatsapp className="w-5 h-5 mr-3 text-green-500" />
                 <div className="flex-1">
                   <p className="text-sm text-gray-500">WhatsApp</p>
                   <p>{receiptData.businessPhone}</p>
