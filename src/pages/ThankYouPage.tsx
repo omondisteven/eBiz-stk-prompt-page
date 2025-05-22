@@ -233,13 +233,14 @@ const ThankYouPage = () => {
     return;
   }
 
-  // Show the instruction modal first
-  setShowDownloadModal(true);
-
   // Check if we're on a mobile device
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   if (isMobile) {
+    
+  // Show the instruction modal first
+    setShowDownloadModal(true);
+
     try {
       // For mobile devices - use Contacts API if available
       if ('contacts' in navigator && 'ContactsManager' in window) {
@@ -565,39 +566,38 @@ const saveAsVCard = (vCard: string) => {
 
       {/* Download Modal */}
       {showDownloadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold">Download Options</h3>
-              <button 
-                onClick={() => setShowDownloadModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold">Save Contact</h3>
+            <button 
+              onClick={() => setShowDownloadModal(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600 mb-4">
+              When the download notification appears, please select <strong>{"\"Open\""}</strong> to save the contact to your device.
+            </p>
             
-            <div className="space-y-4">
-              <Button 
-                onClick={() => handleDownload('pdf')}
-                className="w-full flex items-center justify-center gap-2"
-              >
-                <FileDown className="w-5 h-5" />
-                Download as PDF
-              </Button>
-              
-              <Button 
-                onClick={() => handleDownload('png')}
-                className="w-full flex items-center justify-center gap-2"
-                variant="outline"
-              >
-                <FileDown className="w-5 h-5" />
-                Download as PNG
-              </Button>
-            </div>
+            <Button 
+              onClick={() => {
+                setShowDownloadModal(false);
+                // Trigger the download after modal closes
+                const vCard = generateVCard();
+                saveAsVCard(vCard);
+              }}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              OK, I Understand
+            </Button>
           </div>
         </div>
-      )}      
+      </div>
+    )}
       {/* SAVE CONTACT INSTRUCTION MODAL */}
       {showDownloadModal && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
