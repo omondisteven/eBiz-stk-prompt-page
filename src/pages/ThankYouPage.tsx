@@ -420,9 +420,11 @@ const saveAsVCard = (vCard: string) => {
               <X className="w-5 h-5" />
             </button>
           </div>
-
-          <h2 className="text-green-600 text-xl font-bold mb-4 text-center">Our Contacts</h2>
-          <p className="text-blue-500 text-sm text-center">Scan the Qr Code or click the<strong className="text-gray-900"> Save </strong>button to save our contacts to your phone book</p>
+            <div className="flex items-center gap-2">
+              <Contact className="w-5 h-5 text-green-600" />
+              <h2 className="text-lg font-bold text-green-600">Save Our Contacts</h2>
+            </div>
+          <p className="text-blue-500 text-sm text-center">Scan the Qr Code or click the<strong className="text-gray-900"> Save </strong>button to add our contacts to your phone book</p>
 
           <div className="flex justify-center mb-4 w-full p-4 bg-white">
             <QRCode 
