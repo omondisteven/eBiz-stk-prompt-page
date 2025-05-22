@@ -297,7 +297,7 @@ const ThankYouPage = () => {
           {receiptData.businessPromo1 || "Look out for Our Special Offers Here!"}
         </div>
 
-        <br />
+        {/* <br /> */}
 
         {/* {!showContact && ( */}
         <div className="w-full max-w-md mt-6">
