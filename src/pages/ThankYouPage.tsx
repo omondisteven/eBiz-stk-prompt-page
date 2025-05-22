@@ -609,7 +609,7 @@ const ThankYouPage = () => {
         <div className="bg-white rounded-lg p-6 max-w-sm w-full text-center">
           <h3 className="text-lg font-bold mb-4">Open Contact File</h3>
           <p className="mb-4 text-sm text-gray-600">
-            We've downloaded your contact file. Would you like to open it now to add to your contacts?
+            We have downloaded your contact file. Would you like to open it now to add to your contacts?
           </p>
           <div className="flex justify-center gap-4">
             <Button
