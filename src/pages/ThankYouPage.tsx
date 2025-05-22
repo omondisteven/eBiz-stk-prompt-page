@@ -23,6 +23,9 @@ const ThankYouPage = () => {
   const [timestamp, setTimestamp] = useState("");
   const [showContact, setShowContact] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [showVCardPrompt, setShowVCardPrompt] = useState(false);
+  const [vCardUrl, setVCardUrl] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (router.query.data) {
@@ -265,15 +268,16 @@ const ThankYouPage = () => {
       document.body.appendChild(link);
 
       if (isMobile) {
-        // On mobile, try to open directly (can prompt "Add to Contacts")
-        window.open(url, '_blank');
+        // Don't open immediately — show modal instead
       } else {
         link.click();
       }
 
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
       toast.success("Contact downloaded as vCard!");
+      setVCardUrl(url);
+      setShowVCardPrompt(true);
+
 
     } catch (error) {
       console.error('Error saving contact:', error);
@@ -326,7 +330,6 @@ const ThankYouPage = () => {
     URL.revokeObjectURL(url);
     toast.success("Contact downloaded as vCard!");
   };
-
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
@@ -600,6 +603,39 @@ const ThankYouPage = () => {
           </div>
         </div>
       )}
+      {/* Save contact modal */}
+      {showVCardPrompt && vCardUrl && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-sm w-full text-center">
+          <h3 className="text-lg font-bold mb-4">Open Contact File</h3>
+          <p className="mb-4 text-sm text-gray-600">
+            We've downloaded your contact file. Would you like to open it now to add to your contacts?
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button
+              onClick={() => {
+                window.open(vCardUrl, '_blank');
+                setShowVCardPrompt(false);
+                setVCardUrl(null);
+              }}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              Open Now
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowVCardPrompt(false);
+                setVCardUrl(null);
+              }}
+            >
+              Later
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
+
     </div>
   );
 };
