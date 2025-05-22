@@ -228,7 +228,7 @@ const ThankYouPage = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
       {!showContact ? (
         <>
-        <div className="bg-gray-200 shadow-lg p-6 w-full max-w-md overflow-auto biorder gray-500">
+        <div className="bg-white shadow-lg p-6 w-full max-w-md overflow-auto biorder gray-500">
           <div className="animate-ping-once bg-green-500 rounded-full p-3 mb-2">
                 <svg
                   className="w-10 h-10 text-white animate-bounce"
