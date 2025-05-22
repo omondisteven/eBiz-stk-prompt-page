@@ -234,65 +234,50 @@ const ThankYouPage = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     try {
-      // First try the Contacts API if available (mobile)
-      if (isMobile && 'contacts' in navigator && 'ContactsManager' in window) {
-        try {
-          const permissionResult = await (navigator as any).contacts.requestPermission();
-          if (permissionResult !== 'granted') {
-            toast.error("Permission to access contacts was denied");
-            return;
-          }
-
-          const contact = {
-            name: [receiptData.businessName],
-            tel: [{
-              value: receiptData.businessPhone,
-              type: 'work'
-            }],
-            email: receiptData.businessEmail ? [{
-              value: receiptData.businessEmail,
-              type: 'work'
-            }] : undefined,
-            address: receiptData.businessAddress ? [{
-              streetAddress: receiptData.businessAddress,
-              type: 'work'
-            }] : undefined
-          };
-
-          await (navigator as any).contacts.create(contact);
-          toast.success("Contact saved to your device!");
-          return;
-        } catch (apiError) {
-          console.warn('Contacts API failed, falling back to vCard', apiError);
-        }
-      }
-
-      // For all devices - generate and open vCard
-      const vCard = generateVCard();
-      const blob = new Blob([vCard], { type: 'text/vcard' });
-      const url = URL.createObjectURL(blob);
-      
       if (isMobile) {
-        // On mobile, try to open the vCard in a new tab
-        // This should trigger the native contacts app to handle it
-        window.open(url, '_blank');
-        toast("Opening contact card. Please save to your contacts.");
+        // Try Contacts API first if available
+        if ('contacts' in navigator && 'ContactsManager' in window) {
+          try {
+            const permissionResult = await (navigator as any).contacts.requestPermission();
+            if (permissionResult !== 'granted') {
+              toast.error("Permission to access contacts was denied");
+              return;
+            }
+
+            const contact = {
+              name: [receiptData.businessName],
+              tel: [{
+                value: receiptData.businessPhone,
+                type: 'work'
+              }],
+              email: receiptData.businessEmail ? [{
+                value: receiptData.businessEmail,
+                type: 'work'
+              }] : undefined,
+              address: receiptData.businessAddress ? [{
+                streetAddress: receiptData.businessAddress,
+                type: 'work'
+              }] : undefined
+            };
+
+            await (navigator as any).contacts.create(contact);
+            toast.success("Contact saved to your device!");
+            return;
+          } catch (apiError) {
+            console.warn('Contacts API failed, falling back to vCard', apiError);
+            // Continue to vCard fallback
+          }
+        }
+        
+        // Fallback for all mobile devices
+        const vCard = generateVCard();
+        saveAsVCard(vCard);
+        toast("Contact downloaded as vCard. Open it to save to your contacts.");
       } else {
-        // On desktop, create a download link
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${receiptData.businessName || 'contact'}.vcf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success("Contact downloaded as vCard!");
+        // Desktop behavior
+        const vCard = generateVCard();
+        saveAsVCard(vCard);
       }
-      
-      // Clean up after a delay
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 1000);
-      
     } catch (error) {
       console.error('Error saving contact:', error);
       toast.error("Failed to save contact. Please try the download option instead.");
@@ -330,11 +315,20 @@ const ThankYouPage = () => {
     link.href = url;
     link.download = `${receiptData.businessName || 'contact'}.vcf`;
     document.body.appendChild(link);
-    link.click();
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      window.open(url, '_blank');
+    } else {
+      link.click();
+    }
+
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     toast.success("Contact downloaded as vCard!");
   };
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
