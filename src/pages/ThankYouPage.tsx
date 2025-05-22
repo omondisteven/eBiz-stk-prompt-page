@@ -24,7 +24,10 @@ const ThankYouPage = () => {
   const [showContact, setShowContact] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [showVCardPrompt, setShowVCardPrompt] = useState(false);
-  const [vCardUrl, setVCardUrl] = useState<string | null>(null);
+  // const [vCardUrl, setVCardUrl] = useState<string | null>(null);
+
+  const [showVCardModal, setShowVCardModal] = useState(false);
+  const [vCardUrl, setVCardUrl] = useState('');
 
 
   useEffect(() => {
@@ -237,47 +240,61 @@ const ThankYouPage = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     try {
-      // ✅ Use Web Contacts API if available and supported
-      if (isMobile && 'contacts' in navigator && 'ContactsManager' in window && 'save' in (navigator as any).contacts) {
+      // First try the Contacts API if available (mobile)
+      if (isMobile && 'contacts' in navigator && 'ContactsManager' in window) {
         try {
+          const permissionResult = await (navigator as any).contacts.requestPermission();
+          if (permissionResult !== 'granted') {
+            toast.error("Permission to access contacts was denied");
+            return;
+          }
+
           const contact = {
             name: [receiptData.businessName],
-            tel: [{ value: receiptData.businessPhone, type: 'work' }],
-            email: receiptData.businessEmail ? [{ value: receiptData.businessEmail, type: 'work' }] : undefined,
-            address: receiptData.businessAddress ? [{ streetAddress: receiptData.businessAddress, type: 'work' }] : undefined
+            tel: [{
+              value: receiptData.businessPhone,
+              type: 'work'
+            }],
+            email: receiptData.businessEmail ? [{
+              value: receiptData.businessEmail,
+              type: 'work'
+            }] : undefined,
+            address: receiptData.businessAddress ? [{
+              streetAddress: receiptData.businessAddress,
+              type: 'work'
+            }] : undefined
           };
 
-          await (navigator as any).contacts.save(contact);
+          await (navigator as any).contacts.create(contact);
           toast.success("Contact saved to your device!");
           return;
         } catch (apiError) {
           console.warn('Contacts API failed, falling back to vCard', apiError);
-          // fallback to vCard below
         }
       }
 
-      // 🔁 Fallback: generate vCard and download or open
+      // Generate and download vCard
       const vCard = generateVCard();
       const blob = new Blob([vCard], { type: 'text/vcard' });
       const url = URL.createObjectURL(blob);
-      const fileName = `${receiptData.businessName || 'contact'}.vcf`;
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-
-      if (isMobile) {
-        // Don't open immediately — show modal instead
-      } else {
-        link.click();
-      }
-
-      document.body.removeChild(link);
-      toast.success("Contact downloaded as vCard!");
       setVCardUrl(url);
-      setShowVCardPrompt(true);
 
+      // On mobile, try to open directly
+      if (isMobile) {
+        window.open(url, '_blank');
+      } else {
+        // On desktop, show modal to prompt opening
+        setShowVCardModal(true);
+        
+        // Auto-download in background
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${receiptData.businessName || 'contact'}.vcf`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
 
     } catch (error) {
       console.error('Error saving contact:', error);
@@ -604,32 +621,45 @@ const ThankYouPage = () => {
         </div>
       )}
       {/* Save contact modal */}
-      {showVCardPrompt && vCardUrl && (
+      {showVCardModal && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-sm w-full text-center">
-          <h3 className="text-lg font-bold mb-4">Open Contact File</h3>
-          <p className="mb-4 text-sm text-gray-600">
-            We have downloaded your contact file. Would you like to open it now to add to your contacts?
-          </p>
-          <div className="flex justify-center gap-4">
-            <Button
+        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold">Contact Saved</h3>
+            <button 
+              onClick={() => {
+                setShowVCardModal(false);
+                if (vCardUrl) URL.revokeObjectURL(vCardUrl);
+              }}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <p className="mb-4">The contact has been downloaded as a vCard file.</p>
+          
+          <div className="space-y-2">
+            <Button 
               onClick={() => {
                 window.open(vCardUrl, '_blank');
-                setShowVCardPrompt(false);
-                setVCardUrl(null);
+                setShowVCardModal(false);
               }}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="w-full flex items-center justify-center gap-2"
             >
-              Open Now
+              <Contact className="w-5 h-5" />
+              Open Contact File
             </Button>
-            <Button
-              variant="outline"
+            
+            <Button 
               onClick={() => {
-                setShowVCardPrompt(false);
-                setVCardUrl(null);
+                setShowVCardModal(false);
+                if (vCardUrl) URL.revokeObjectURL(vCardUrl);
               }}
+              className="w-full flex items-center justify-center gap-2"
+              variant="outline"
             >
-              Later
+              Close
             </Button>
           </div>
         </div>
