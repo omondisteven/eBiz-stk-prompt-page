@@ -273,17 +273,14 @@ const ThankYouPage = () => {
         }
       }
 
-      // Generate and download vCard
+      // Generate vCard
       const vCard = generateVCard();
       const blob = new Blob([vCard], { type: 'text/vcard' });
       const url = URL.createObjectURL(blob);
       setVCardUrl(url);
 
-      // On mobile, try to open directly
       if (isMobile) {
-        window.open(url, '_blank');
-      } else {
-        // On desktop, show modal to prompt opening
+        // On mobile: Show modal with option to open
         setShowVCardModal(true);
         
         // Auto-download in background
@@ -294,6 +291,16 @@ const ThankYouPage = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+      } else {
+        // On desktop: Direct download as before
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${receiptData.businessName || 'contact'}.vcf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success("Contact downloaded as vCard!");
       }
 
     } catch (error) {
