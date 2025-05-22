@@ -247,7 +247,7 @@ const ThankYouPage = () => {
             className="bg-white text-center border border-gray-400 border-dotted"
           >
             <div className="flex flex-col items-center mb-6">              
-              <div className="overflow-hidden">
+              <div>
                 <p className="text-green-600">
                   Payment Approved!
                 </p>
