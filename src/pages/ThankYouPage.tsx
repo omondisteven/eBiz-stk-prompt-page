@@ -248,7 +248,7 @@ const ThankYouPage = () => {
           >
             <div className="flex flex-col items-center mb-6">              
               <div className="overflow-hidden">
-                <p className="text-green-600 animate-slide-in">
+                <p className="text-green-600">
                   Payment Approved!
                 </p>
               </div>
