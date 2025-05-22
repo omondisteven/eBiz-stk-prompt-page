@@ -226,7 +226,7 @@ const ThankYouPage = () => {
     }
   };
   // ***SAVE CONTACT FUNCTION***
-  const saveContactToDevice = async () => {
+  const saveContactToDevice = () => {
     if (!receiptData.businessName || !receiptData.businessPhone) {
       toast.error("Contact information is incomplete");
       return;
@@ -235,62 +235,28 @@ const ThankYouPage = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     if (isMobile) {
-      // Only show the instruction modal on mobile
       setShowContactInstructionModal(true);
     } else {
-      // For desktop, proceed directly with download
       try {
         const vCard = generateVCard();
         saveAsVCard(vCard);
       } catch (error) {
-        console.error('Error saving contact:', error);
+        console.error("Error saving contact:", error);
         toast.error("Failed to save contact. Please try again.");
       }
     }
   };
 
-  // Move the actual contact saving logic to a separate function
-  const handleSaveContactConfirmation = async () => {
+  const handleSaveContactConfirmation = () => {
     try {
-      // For mobile devices - use Contacts API if available
-      if ('contacts' in navigator && 'ContactsManager' in window) {
-        const permissions = await navigator.permissions.query({ name: 'contacts' } as any);
-        if (permissions.state !== 'granted') {
-          const permissionResult = await (navigator as any).contacts.requestPermission();
-          if (permissionResult !== 'granted') {
-            toast.error("Permission to access contacts was denied");
-            return;
-          }
-        }
-
-        const contact = {
-          name: [receiptData.businessName],
-          tel: [{
-            value: receiptData.businessPhone,
-            type: 'work'
-          }],
-          email: receiptData.businessEmail ? [{
-            value: receiptData.businessEmail,
-            type: 'work'
-          }] : undefined,
-          address: receiptData.businessAddress ? [{
-            streetAddress: receiptData.businessAddress,
-            type: 'work'
-          }] : undefined
-        };
-
-        await (navigator as any).contacts.create(contact);
-        toast.success("Contact saved to your device!");
-      } else {
-        // Fallback for mobile browsers without Contacts API
-        const vCard = generateVCard();
-        saveAsVCard(vCard);
-      }
+      const vCard = generateVCard();
+      saveAsVCard(vCard);
     } catch (error) {
-      console.error('Error saving contact:', error);
+      console.error("Error saving contact:", error);
       toast.error("Failed to save contact. Please try the download option.");
     }
   };
+
 
 // Helper function to generate vCard content
 const generateVCard = () => {
