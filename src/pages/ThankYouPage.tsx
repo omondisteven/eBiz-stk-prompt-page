@@ -555,7 +555,7 @@ const saveAsVCard = (vCard: string) => {
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
               <Contact className="w-5 h-5 text-blue-500" />
-              <h3 className="text-lg font-bold">Adding Contact...</h3>
+              <h3 className="text-lg font-bold">Add to Contacts.</h3>
             </div>
             <button 
               onClick={() => setShowContactInstructionModal(false)}
