@@ -224,6 +224,102 @@ const ThankYouPage = () => {
       window.open(`https://web.whatsapp.com/send?phone=${phoneNumber}`, '_blank');
     }
   };
+  // ***SAVE CONTACT FUNCTION***
+  const saveContactToDevice = async () => {
+    if (!receiptData.businessName || !receiptData.businessPhone) {
+      toast.error("Contact information is incomplete");
+      return;
+    }
+
+    // Check if we're on a mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      try {
+        // For mobile devices - use Contacts API if available
+        if ('contacts' in navigator && 'ContactsManager' in window) {
+          // Request permission first
+          const permissions = await navigator.permissions.query({ name: 'contacts' } as any);
+          if (permissions.state !== 'granted') {
+            const permissionResult = await (navigator as any).contacts.requestPermission();
+            if (permissionResult !== 'granted') {
+              toast.error("Permission to access contacts was denied");
+              return;
+            }
+          }
+
+          // Create contact object
+          const contact = {
+            name: [receiptData.businessName],
+            tel: [{
+              value: receiptData.businessPhone,
+              type: 'work'
+            }],
+            email: receiptData.businessEmail ? [{
+              value: receiptData.businessEmail,
+              type: 'work'
+            }] : undefined,
+            address: receiptData.businessAddress ? [{
+              streetAddress: receiptData.businessAddress,
+              type: 'work'
+            }] : undefined
+          };
+
+          // Save contact
+          await (navigator as any).contacts.create(contact);
+          toast.success("Contact saved to your device!");
+        } else {
+          // Fallback for mobile browsers without Contacts API
+          const vCard = generateVCard();
+          saveAsVCard(vCard);
+        }
+      } catch (error) {
+        console.error('Error saving contact:', error);
+        toast.error("Failed to save contact. Please try the download option.");
+      }
+    } else {
+      // For desktop - download as vCard
+      const vCard = generateVCard();
+      saveAsVCard(vCard);
+    }
+  };
+
+  // Helper function to generate vCard content
+  const generateVCard = () => {
+    let vCard = 'BEGIN:VCARD\n';
+    vCard += 'VERSION:3.0\n';
+    vCard += `FN:${receiptData.businessName}\n`;
+    vCard += `ORG:${receiptData.businessName}\n`;
+    
+    if (receiptData.businessPhone) {
+      vCard += `TEL;TYPE=WORK,VOICE:${receiptData.businessPhone}\n`;
+    }
+    
+    if (receiptData.businessEmail) {
+      vCard += `EMAIL;TYPE=WORK:${receiptData.businessEmail}\n`;
+    }
+    
+    if (receiptData.businessAddress) {
+      vCard += `ADR;TYPE=WORK:;;${receiptData.businessAddress}\n`;
+    }
+    
+    vCard += 'END:VCARD';
+    return vCard;
+  };
+
+  // Helper function to save vCard
+  const saveAsVCard = (vCard: string) => {
+    const blob = new Blob([vCard], { type: 'text/vcard' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${receiptData.businessName || 'contact'}.vcf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Contact downloaded as vCard!");
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
@@ -432,8 +528,32 @@ const ThankYouPage = () => {
               </div>
             )}
           </div>
+          
 
           <div className="flex justify-center gap-4 mt-6">
+            <Button 
+              variant="outline" 
+              onClick={downloadContactQR}
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Download
+            </Button>
+            <Button 
+              onClick={shareContact}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+            >
+              <Share className="w-4 h-4" />
+              Share
+            </Button>
+            <Button 
+              onClick={saveContactToDevice}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              <Contact className="w-4 h-4" />
+              Save Contact
+            </Button>
+          
             <Button 
               variant="outline" 
               onClick={downloadContactQR}
