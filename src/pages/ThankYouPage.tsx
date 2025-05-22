@@ -422,7 +422,7 @@ const saveAsVCard = (vCard: string) => {
           </div>
 
           <h2 className="text-green-600 text-xl font-bold mb-4 text-center">Our Contacts</h2>
-          <p className="text-gray-500 text-sm text-center">Click the<strong className="text-gray-900"> Save </strong>button below to save our contacts</p>
+          <p className="text-blue-500 text-sm text-center">Scan the Qr Code or click the<strong className="text-gray-900"> Save </strong>button to save our contacts</p>
 
           <div className="flex justify-center mb-4 w-full p-4 bg-white">
             <QRCode 
