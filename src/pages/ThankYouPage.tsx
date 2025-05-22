@@ -258,28 +258,59 @@ const ThankYouPage = () => {
   };
 
   // Add this new function to handle direct contact saving
-  const handleAddToContacts = (method: 'native' | 'vcf') => {
+  const handleAddToContacts = async (method: 'native' | 'vcf') => {
     if (!contactFileUrl) return;
 
     if (method === 'native') {
-      // Try to use device-specific methods to open contacts app
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      const isAndroid = /Android/i.test(navigator.userAgent);
-
       try {
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const isAndroid = /Android/i.test(navigator.userAgent);
+
+        // First try device-specific methods
         if (isIOS) {
-          // iOS - try to open contacts app directly
+          // iOS - try contacts:// URL scheme
           window.location.href = `contacts://import-vcard?url=${encodeURIComponent(contactFileUrl)}`;
+          
+          // Fallback check after a delay
+          setTimeout(() => {
+            if (!document.hidden) {
+              toast.error("Couldn't open Contacts app automatically.");
+              setShowContactOptions(true); // Re-show options
+            }
+          }, 1000);
+          
+          return;
         } else if (isAndroid) {
-          // Android - use intent URL
-          window.location.href = `intent://${contactFileUrl}#Intent;action=android.intent.action.VIEW;type=text/x-vcard;end`;
-        } else {
-          // Fallback for other mobile browsers
-          window.open(contactFileUrl, '_blank');
+          // Android - try intent URL
+          window.location.href = `intent://${contactFileUrl}#Intent;action=android.intent.action.VIEW;type=text/x-vcard;package=com.android.contacts;end`;
+          
+          // Fallback to standard vCard handling if intent fails
+          setTimeout(() => {
+            if (!document.hidden) {
+              window.open(contactFileUrl, '_blank');
+            }
+          }, 300);
+          
+          return;
         }
+
+        // For other devices, try standard vCard opening
+        window.open(contactFileUrl, '_blank');
+        
       } catch (e) {
         console.error('Error opening contacts app:', e);
-        toast.error("Couldn't open contacts app. Please try the vCard option.");
+        toast.error(
+          <div>
+            Couldn't open Contacts app. 
+            <button 
+              onClick={() => handleAddToContacts('vcf')} 
+              className="ml-1 underline text-blue-600"
+            >
+              Download vCard instead
+            </button>
+          </div>,
+          { duration: 5000 }
+        );
       }
     } else {
       // vCard download method
@@ -289,7 +320,20 @@ const ThankYouPage = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toast("Downloaded vCard. Open it to save to contacts.");
+      
+      toast.success(
+        <div>
+          vCard downloaded. Open it to save to contacts.
+          <br />
+          <button 
+            onClick={() => window.open(contactFileUrl, '_blank')}
+            className="mt-1 text-sm underline text-blue-600"
+          >
+            Open now
+          </button>
+        </div>,
+        { duration: 5000 }
+      );
     }
 
     setShowContactOptions(false);
@@ -632,7 +676,9 @@ const ThankYouPage = () => {
             </button>
           </div>
           
-          <p className="mb-4">Choose how you want to save this contact:</p>
+          <p className="mb-4 text-sm text-gray-600">
+            Choose how to save {receiptData.businessName}'s contact:
+          </p>
           
           <div className="space-y-3">
             <Button 
@@ -640,8 +686,11 @@ const ThankYouPage = () => {
               className="w-full flex items-center justify-center gap-2"
             >
               <Contact className="w-5 h-5" />
-              Add to Contacts Directly
+              Add Directly to Contacts
+              <span className="text-xs font-normal">(Recommended)</span>
             </Button>
+            
+            <div className="text-center text-xs text-gray-500">- OR -</div>
             
             <Button 
               onClick={() => handleAddToContacts('vcf')}
@@ -650,7 +699,18 @@ const ThankYouPage = () => {
             >
               <Download className="w-5 h-5" />
               Download vCard File
+              <span className="text-xs font-normal">(Fallback option)</span>
             </Button>
+          </div>
+          
+          <div className="mt-4 text-xs text-gray-500">
+            {/iPhone|iPad|iPod/i.test(navigator.userAgent) ? (
+              <p>On iOS, you may need to tap "Share" then "Add to Contacts" after opening</p>
+            ) : /Android/i.test(navigator.userAgent) ? (
+              <p>On Android, select your contacts app when prompted</p>
+            ) : (
+              <p>The vCard file can be imported into most contact apps</p>
+            )}
           </div>
         </div>
       </div>
