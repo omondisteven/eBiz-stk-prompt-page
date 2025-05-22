@@ -309,6 +309,40 @@ const ThankYouPage = () => {
     }
   };
 
+  // Add this function to handle opening the contact file
+  const openContactFile = () => {
+    if (!vCardUrl) return;
+
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+
+    try {
+      if (isIOS) {
+        // Try iOS-specific approach first
+        window.location.href = `contacts://import-vcard?url=${encodeURIComponent(vCardUrl)}`;
+      } else if (isAndroid) {
+        // Try Android intent
+        window.location.href = `intent://${vCardUrl}#Intent;action=android.intent.action.VIEW;type=text/x-vcard;end`;
+      } else {
+        // Fallback to iframe method
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = vCardUrl;
+        document.body.appendChild(iframe);
+        
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      }
+    } catch (e) {
+      console.error('Error opening contact file:', e);
+      toast.error("Couldn't open contacts app. Please open the downloaded file manually.");
+    }
+
+    setShowVCardModal(false);
+    setTimeout(() => URL.revokeObjectURL(vCardUrl), 1000);
+  };
+
 
   // Helper function to generate vCard content
   const generateVCard = () => {
@@ -648,14 +682,11 @@ const ThankYouPage = () => {
           
           <div className="space-y-2">
             <Button 
-              onClick={() => {
-                window.open(vCardUrl, '_blank');
-                setShowVCardModal(false);
-              }}
+              onClick={openContactFile}
               className="w-full flex items-center justify-center gap-2"
             >
               <Contact className="w-5 h-5" />
-              Open Contact File
+              {/iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'Open in Contacts' : 'Add to Contacts'}
             </Button>
             
             <Button 
