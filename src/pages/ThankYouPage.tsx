@@ -301,7 +301,7 @@ const ThankYouPage = () => {
         console.error('Error opening contacts app:', e);
         toast.error(
           <div>
-            Couldn't open Contacts app. 
+            Could not open Contacts app.
             <button 
               onClick={() => handleAddToContacts('vcf')} 
               className="ml-1 underline text-blue-600"
@@ -677,7 +677,7 @@ const ThankYouPage = () => {
           </div>
           
           <p className="mb-4 text-sm text-gray-600">
-            Choose how to save {receiptData.businessName}'s contact:
+            Choose how to save contact:
           </p>
           
           <div className="space-y-3">
@@ -705,7 +705,7 @@ const ThankYouPage = () => {
           
           <div className="mt-4 text-xs text-gray-500">
             {/iPhone|iPad|iPod/i.test(navigator.userAgent) ? (
-              <p>On iOS, you may need to tap "Share" then "Add to Contacts" after opening</p>
+              <p>On iOS, you may need to tap <strong>Share</strong> then <strong>Add to Contacts</strong>  after opening</p>
             ) : /Android/i.test(navigator.userAgent) ? (
               <p>On Android, select your contacts app when prompted</p>
             ) : (
