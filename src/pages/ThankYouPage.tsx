@@ -233,56 +233,47 @@ const ThankYouPage = () => {
       return;
     }
 
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
     try {
-      // Try Contacts API if available
-      if (isMobile && 'contacts' in navigator && 'ContactsManager' in window && 'save' in (navigator as any).contacts) {
-        try {
-          const contact = {
-            name: [receiptData.businessName],
-            tel: [{ value: receiptData.businessPhone, type: 'work' }],
-            email: receiptData.businessEmail ? [{ value: receiptData.businessEmail, type: 'work' }] : undefined,
-            address: receiptData.businessAddress ? [{ streetAddress: receiptData.businessAddress, type: 'work' }] : undefined
-          };
-
-          await (navigator as any).contacts.save(contact);
-          toast.success("Contact saved to your device!");
-          return;
-        } catch (apiError) {
-          console.warn('Contacts API failed, falling back to vCard', apiError);
-        }
-      }
-
-      // Fallback: generate and open .vcf file
+      // Generate vCard
       const vCard = generateVCard();
       const blob = new Blob([vCard], { type: 'text/vcard' });
       const url = URL.createObjectURL(blob);
       const fileName = `${receiptData.businessName || 'contact'}.vcf`;
 
-      // Create invisible link
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-      // Mobile: try opening .vcf directly
-      if (isMobile) {
+      if (isAndroid) {
+        // Try Android Intent URL
+        try {
+          window.location.href = `intent://${url}#Intent;action=android.intent.action.VIEW;type=text/x-vcard;end`;
+          toast.success("Trying to open contact in your preferred app...");
+        } catch (err) {
+          console.warn("Intent fallback failed, using open().", err);
+          window.open(url, '_blank');
+        }
+      } else if (isIOS) {
+        // iOS does not support custom URL schemes for Contacts
         window.open(url, '_blank');
+        toast("Tap 'Open in...' to add to Contacts.");
       } else {
-        // Desktop: standard download
+        // Desktop: just download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
+        toast.success("vCard downloaded. Open it to save to contacts.");
       }
 
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-      toast.success("Contact vCard ready. Open it to save.");
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
     } catch (error) {
       console.error('Error saving contact:', error);
-      toast.error("Failed to save contact. Please try again.");
+      toast.error("Failed to save contact. Please try manually.");
     }
   };
+
   
   // Helper function to generate vCard content
   const generateVCard = () => {
