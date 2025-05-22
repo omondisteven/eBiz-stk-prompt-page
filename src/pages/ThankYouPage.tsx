@@ -234,28 +234,39 @@ const ThankYouPage = () => {
       return;
     }
 
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    
+    if (isAndroid) {
+      const contactUri = `intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.dir/contact;S.name=${encodeURIComponent(receiptData.businessName)};S.phone=${encodeURIComponent(receiptData.businessPhone)}${receiptData.businessEmail ? `;S.email=${encodeURIComponent(receiptData.businessEmail)}` : ''};end`;
 
-    // Generate vCard content
+      // Try to open contact form on Android
+      window.location.href = contactUri;
+      toast.success("Opening contact form...");
+      return;
+    }
+
+    // Fallback to vCard download
     const vCard = generateVCard();
     const blob = new Blob([vCard], { type: 'text/vcard' });
     const url = URL.createObjectURL(blob);
-    setContactFileUrl(url);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${receiptData.businessName || 'contact'}.vcf`;
+    document.body.appendChild(link);
+
+    const isMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (isMobile) {
-      // On mobile, show options modal
-      setShowContactOptions(true);
+      window.open(url, '_blank');
     } else {
-      // On desktop, just download the vCard
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${receiptData.businessName || 'contact'}.vcf`;
-      document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      toast.success("Contact downloaded as vCard!");
     }
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Contact vCard downloaded!");
   };
+
 
   // Add this new function to handle direct contact saving
   const handleAddToContacts = async (method: 'native' | 'vcf') => {
@@ -658,63 +669,6 @@ const ThankYouPage = () => {
           </div>
         </div>
       )}      
-
-      {/* Save contact Modal */}
-      {showContactOptions && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold">Save Contact</h3>
-            <button 
-              onClick={() => {
-                setShowContactOptions(false);
-                URL.revokeObjectURL(contactFileUrl);
-              }}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          <p className="mb-4 text-sm text-gray-600">
-            Choose how to save contact:
-          </p>
-          
-          <div className="space-y-3">
-            <Button 
-              onClick={() => handleAddToContacts('native')}
-              className="w-full flex items-center justify-center gap-2"
-            >
-              <Contact className="w-5 h-5" />
-              Add Directly to Contacts
-              <span className="text-xs font-normal">(Recommended)</span>
-            </Button>
-            
-            <div className="text-center text-xs text-gray-500">- OR -</div>
-            
-            <Button 
-              onClick={() => handleAddToContacts('vcf')}
-              className="w-full flex items-center justify-center gap-2"
-              variant="outline"
-            >
-              <Download className="w-5 h-5" />
-              Download vCard File
-              <span className="text-xs font-normal">(Fallback option)</span>
-            </Button>
-          </div>
-          
-          <div className="mt-4 text-xs text-gray-500">
-            {/iPhone|iPad|iPod/i.test(navigator.userAgent) ? (
-              <p>On iOS, you may need to tap <strong>Share</strong> then <strong>Add to Contacts</strong>  after opening</p>
-            ) : /Android/i.test(navigator.userAgent) ? (
-              <p>On Android, select your contacts app when prompted</p>
-            ) : (
-              <p>The vCard file can be imported into most contact apps</p>
-            )}
-          </div>
-        </div>
-      </div>
-    )}
 
     </div>
   );
