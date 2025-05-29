@@ -1,4 +1,4 @@
-// paybill_stk_api.tsx
+// Till_stk_api.tsx
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 import Cors from 'cors';
@@ -23,14 +23,17 @@ function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Allow all origins
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS'); // Allow POST and OPTIONS
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); // Allow Content-Type header
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    // Allow Content-Type header
 
 
     console.log("Handler started"); //debugging
-  await runMiddleware(req, res, cors);
-    console.log("Middleware finished"); //debugging
+    await runMiddleware(req, res, cors);
+    console.log("Middleware finished");
+    //debugging
 
   if (req.method === 'OPTIONS') {
     console.log("Options request received"); //debugging
@@ -39,13 +42,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { phone, amount, accountnumber } = req.body;
-
-      console.log("Payment details:", { phone, amount, accountnumber });
+      const { phone, amount, accountnumber, businessShortCode } = req.body; // Destructure businessShortCode
+      console.log("Payment details:", { phone, amount, accountnumber, businessShortCode });
 
       const consumerKey = 'JOugZC2lkqSZhy8eLeQMx8S0UbOXZ5A8Yzz26fCx9cyU1vqH';
       const consumerSecret = 'fqyZyrdW3QE3pDozsAcWNkVjwDADAL1dFMF3T9v65gJq8XZeyEeaTqBRXbC5RIvC';
-      const BusinessShortCode = '174379';
+      // Use the dynamic BusinessShortCode from the request body, or a fallback
+      const BusinessShortCode = businessShortCode || '174379'; // Fallback to '174379'
       const Passkey = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
       const Timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3);
       const Password = Buffer.from(`${BusinessShortCode}${Passkey}${Timestamp}`).toString('base64');
@@ -53,36 +56,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const access_token_url = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
       const initiate_url = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
       const CallBackURL = 'https://e-biz-stk-prompt-page.vercel.app/api/stk_api/callback_url';
-      
-      console.log('Using callback URL:', CallBackURL);
 
+      console.log('Using callback URL:', CallBackURL);
       const authResponse = await axios.get(access_token_url, {
         headers: {
           Authorization: `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64')}`,
         },
       });
-
       const access_token = authResponse.data.access_token;
 
       const stkResponse = await axios.post(initiate_url, {
-        BusinessShortCode,
+        BusinessShortCode, // Use the dynamic BusinessShortCode
         Password,
         Timestamp,
         TransactionType: 'CustomerBuyGoodsOnline',
         Amount: amount,
         PartyA: phone,
-        PartyB: BusinessShortCode,
+        PartyB: BusinessShortCode, // PartyB should match BusinessShortCode
         PhoneNumber: phone,
         CallBackURL,
-        AccountReference: accountnumber,
+        AccountReference: accountnumber, // AccountReference for BuyGoods is typically the Till Number
         TransactionDesc: 'Bill Payment',
       }, {
         headers: {
           Authorization: `Bearer ${access_token}`,
           'Content-Type': 'application/json',
         },
-      });      
-
+      });
       res.status(200).json(stkResponse.data);
     } catch (error) {
       console.error("Error in STK Push:", error);
@@ -90,7 +90,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
    } else {
     res.status(405).json({ message: 'Method Not Allowed' });
-  } 
-
+  }
 }
-

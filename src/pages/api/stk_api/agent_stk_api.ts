@@ -1,15 +1,14 @@
 // src/pages/api/stk_api/agent_stk_api.ts
-// agent_stk_api.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { phone, amount, storenumber } = req.body;
-
+    const { phone, amount, storenumber, businessShortCode } = req.body; // Destructure businessShortCode
     const consumerKey = 'JOugZC2lkqSZhy8eLeQMx8S0UbOXZ5A8Yzz26fCx9cyU1vqH';
     const consumerSecret = 'fqyZyrdW3QE3pDozsAcWNkVjwDADAL1dFMF3T9v65gJq8XZeyEeaTqBRXbC5RIvC';
-    const BusinessShortCode = '174379';
+    // Use the dynamic BusinessShortCode from the request body, or a fallback
+    const BusinessShortCode = businessShortCode || '174379'; // Fallback to '174379' if not provided
     const Passkey = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
     const Timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3);
     const Password = Buffer.from(`${BusinessShortCode}${Passkey}${Timestamp}`).toString('base64');
@@ -25,21 +24,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           Authorization: `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64')}`,
         },
       });
-
       const access_token = authResponse.data.access_token;
 
       // Initiate STK push
       const stkResponse = await axios.post(initiate_url, {
-        BusinessShortCode,
+        BusinessShortCode, // Use the dynamic BusinessShortCode
         Password,
         Timestamp,
-        TransactionType: 'CustomerBuyGoodsOnline',
+        TransactionType: 'CustomerWithdrawFromAgent', // Corrected TransactionType for agent withdrawal
         Amount: amount,
         PartyA: phone,
-        PartyB: BusinessShortCode,
+        PartyB: BusinessShortCode, // PartyB should match BusinessShortCode for withdrawal
         PhoneNumber: phone,
         CallBackURL,
-        AccountReference: storenumber,
+        AccountReference: storenumber, // AccountReference for withdrawal is usually the Store Number
         TransactionDesc: 'Cash Withdrawal',
       }, {
         headers: {
@@ -47,7 +45,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           'Content-Type': 'application/json',
         },
       });
-
       res.status(200).json(stkResponse.data);
     } catch (error: any) {
       console.error('Withdraw STK Error:', error?.response?.data || error.message || error);
