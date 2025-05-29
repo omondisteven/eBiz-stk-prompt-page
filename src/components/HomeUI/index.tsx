@@ -424,14 +424,10 @@ const HomeUI = () => {
         <div className="p-4 border-b border-gray-200 bg-white shadow-sm rounded-t-lg mx-2 sm:mx-0 mt-2 sm:mt-0">
           <h2 className="text-xl font-bold text-center"
               style={{color: "#3CB371"}}>
-            {hasQrData ? (
-              transactionType === 'Contact' ? (
-                <>E-BUSINESS CARD SCAN DETAILS</>
-              ) : (
-                <>M-POSTER: M-PESA PAYMENT PROMPT</>
-              )
+            {transactionType === 'Contact' ? (
+              <>E-BUSINESS CARD SCAN DETAILS</>
             ) : (
-              <>Scan an e-Biz Qr Code and enter the resultant URL to proceed with payment</>
+              <>M-POSTER: M-PESA PAYMENT PROMPT</>
             )}
           </h2>
         </div>
