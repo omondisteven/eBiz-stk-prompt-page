@@ -4,11 +4,11 @@ import axios from 'axios';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { phone, amount, storenumber, businessShortCode } = req.body; // Destructure businessShortCode
+    const { phone, amount, storenumber } = req.body;
+
     const consumerKey = 'JOugZC2lkqSZhy8eLeQMx8S0UbOXZ5A8Yzz26fCx9cyU1vqH';
     const consumerSecret = 'fqyZyrdW3QE3pDozsAcWNkVjwDADAL1dFMF3T9v65gJq8XZeyEeaTqBRXbC5RIvC';
-    // Use the dynamic BusinessShortCode from the request body, or a fallback
-    const BusinessShortCode = businessShortCode || '174379'; // Fallback to '174379' if not provided
+    const BusinessShortCode = '174379';
     const Passkey = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
     const Timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3);
     const Password = Buffer.from(`${BusinessShortCode}${Passkey}${Timestamp}`).toString('base64');
@@ -24,20 +24,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           Authorization: `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64')}`,
         },
       });
+
       const access_token = authResponse.data.access_token;
 
       // Initiate STK push
       const stkResponse = await axios.post(initiate_url, {
-        BusinessShortCode, // Use the dynamic BusinessShortCode
+        BusinessShortCode,
         Password,
         Timestamp,
-        TransactionType: 'CustomerWithdrawFromAgent', // Corrected TransactionType for agent withdrawal
+        TransactionType: 'CustomerBuyGoodsOnline',
         Amount: amount,
         PartyA: phone,
-        PartyB: BusinessShortCode, // PartyB should match BusinessShortCode for withdrawal
+        PartyB: BusinessShortCode,
         PhoneNumber: phone,
         CallBackURL,
-        AccountReference: storenumber, // AccountReference for withdrawal is usually the Store Number
+        AccountReference: storenumber,
         TransactionDesc: 'Cash Withdrawal',
       }, {
         headers: {
@@ -45,6 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           'Content-Type': 'application/json',
         },
       });
+
       res.status(200).json(stkResponse.data);
     } catch (error: any) {
       console.error('Withdraw STK Error:', error?.response?.data || error.message || error);
