@@ -1,7 +1,7 @@
 //index.tsx
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
-import { HiOutlineCreditCard, HiCalculator, HiOutlineExclamationCircle } from "react-icons/hi";
+import { HiOutlineCreditCard, HiCalculator } from "react-icons/hi";
 import { HiX } from "react-icons/hi";
 import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
 import { useAppContext } from "@/context/AppContext";
 import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 
 // Add this Calculator component near your other imports
 const Calculator = ({ onCalculate, onClose, onClear }: {
@@ -627,11 +628,14 @@ const HomeUI = () => {
               </>
             ) : (
               <div className="text-center text-xl font-bold text-gray-700 p-8">
-                <div className="flex justify-center mb-2">
-                  <HiOutlineExclamationCircle className="h-8 w-8 text-yellow-500" />
+                <div className="flex flex-col items-center space-y-2">
+                  <AlertTriangle className="text-yellow-500 w-8 h-8" />
+                  <span>
+                    Scan an e-Biz QR Code and enter the resultant URL to proceed with payment
+                  </span>
                 </div>
-                Scan an e-Biz Qr Code and enter the resultant URL to proceed with payment
               </div>
+
             )}
           </div>
         </div>
