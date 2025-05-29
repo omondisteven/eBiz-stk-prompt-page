@@ -627,7 +627,7 @@ const HomeUI = () => {
                 )}
               </>
             ) : (
-              <div className="text-center text-xl font-bold text-gray-600 p-8">
+              <div className="text-center text-xl font-bold text-gray-400 p-8">
                 <div className="flex flex-col items-center space-y-2">
                   <div className="text-5xl">⚠️</div>
                   <span>
