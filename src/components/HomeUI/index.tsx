@@ -629,13 +629,12 @@ const HomeUI = () => {
             ) : (
               <div className="text-center text-xl font-bold text-gray-700 p-8">
                 <div className="flex flex-col items-center space-y-2">
-                  <AlertTriangle className="text-yellow-500 w-8 h-8" />
+                  <div className="text-3xl">⚠️</div>
                   <span>
                     Scan an e-Biz QR Code and enter the resultant URL to proceed with payment
                   </span>
                 </div>
               </div>
-
             )}
           </div>
         </div>
