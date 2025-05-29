@@ -627,9 +627,9 @@ const HomeUI = () => {
                 )}
               </>
             ) : (
-              <div className="text-center text-xl font-bold text-gray-700 p-8">
+              <div className="text-center text-xl font-bold text-gray-600 p-8">
                 <div className="flex flex-col items-center space-y-2">
-                  <div className="text-3xl">⚠️</div>
+                  <div className="text-5xl">⚠️</div>
                   <span>
                     Scan an e-Biz QR Code and enter the resultant URL to proceed with payment
                   </span>
