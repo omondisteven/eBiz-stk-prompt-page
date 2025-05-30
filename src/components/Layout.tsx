@@ -1,9 +1,11 @@
+// /src/components/Layout.tsx (updated)
 import { ReactNode, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import {
   FaBars, FaTimes, FaHome, FaMoneyBill, FaBuilding, FaUsers,
-  FaExchangeAlt, FaCreditCard, FaQrcode, FaChevronDown, FaChevronRight, FaCog, FaTerminal, FaPalette
+  FaExchangeAlt, FaCreditCard, FaQrcode, FaChevronDown, FaChevronRight, 
+  FaCog, FaTerminal, FaPalette, FaHistory
 } from "react-icons/fa";
 
 const Layout = ({ children }: { children: ReactNode }) => {
@@ -11,7 +13,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNonMpesaQrOpen, setIsNonMpesaQrOpen] = useState(false);
   const [isNormalQrOpen, setIsNormalQrOpen] = useState(false);
-  const [textColor, setTextColor] = useState("#000000"); // Default text color
+  const [textColor, setTextColor] = useState("#000000");
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   const isActive = (path: string) => router.pathname === path;
@@ -49,11 +51,24 @@ const Layout = ({ children }: { children: ReactNode }) => {
           </button>
         </div>
 
+        {/* Main Tabs */}
+        <div className="flex border-b border-gray-700 mb-4">
+          <Link 
+            href="/" 
+            className={`flex-1 py-2 text-center ${isActive("/") ? "border-b-2 border-green-500" : "text-gray-400"}`}
+          >
+            <FaHome className="inline mr-1" /> Home
+          </Link>
+          <Link 
+            href="/History" 
+            className={`flex-1 py-2 text-center ${isActive("/History") ? "border-b-2 border-green-500" : "text-gray-400"}`}
+          >
+            <FaHistory className="inline mr-1" /> History
+          </Link>
+        </div>
+
         <nav className="space-y-2">
           <h2 className="text-xl font-bold">eBiz</h2>
-          <Link href="/" className={`flex items-center p-3 rounded-md transition-all ${isActive("/") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaHome className="mr-2" /> Home
-          </Link>
 
           {/* Divider with centered label */}
           <div className="flex items-center my-2">
@@ -61,6 +76,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
             <h3 className="text-sm font-bold text-gray-400 px-3 whitespace-nowrap">M-PESA TRANSACTIONS</h3>
             <div className="flex-grow border-t border-gray-100"></div>
           </div>
+          
           <Link href="/Paybill" className={`flex items-center p-3 rounded-md transition-all ${isActive("/Paybill") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
             <FaBuilding className="mr-2" /> Pay Bill
           </Link>
