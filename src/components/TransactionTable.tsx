@@ -1,5 +1,5 @@
 // src/components/TransactionTable.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { format } from 'date-fns';
 import { useAppContext } from '@/context/AppContext';
