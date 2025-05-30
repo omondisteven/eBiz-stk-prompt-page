@@ -1,11 +1,14 @@
-// /src/index.tsx
+// src/pages/index.tsx
+import Layout from "@/components/Layout";
 import HomeUI from "@/components/HomeUI";
 
 const Home = () => {
   return (
-    <div>
-      <HomeUI />
-    </div>
+    <Layout>
+      <div className="mb-16 md:mb-0">
+        <HomeUI />
+      </div>
+    </Layout>
   );
 };
 
