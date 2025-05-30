@@ -1,5 +1,4 @@
 // /src/index.tsx
-import Layout from "@/components/Layout";
 import HomeUI from "@/components/HomeUI";
 
 const Home = () => {
