@@ -1,182 +1,53 @@
-// /src/components/Layout.tsx (updated)
-import { ReactNode, useState, useRef } from "react";
-import { useRouter } from "next/router";
-import Link from "next/link";
-import {
-  FaBars, FaTimes, FaHome, FaMoneyBill, FaBuilding, FaUsers,
-  FaExchangeAlt, FaCreditCard, FaQrcode, FaChevronDown, FaChevronRight, 
-  FaCog, FaTerminal, FaPalette, FaHistory
-} from "react-icons/fa";
+// src/components/Layout.tsx
+import { useState } from 'react';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
-const Layout = ({ children }: { children: ReactNode }) => {
+export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isNonMpesaQrOpen, setIsNonMpesaQrOpen] = useState(false);
-  const [isNormalQrOpen, setIsNormalQrOpen] = useState(false);
-  const [textColor, setTextColor] = useState("#000000");
-  const mainContentRef = useRef<HTMLDivElement>(null);
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const [activeTab, setActiveTab] = useState(router.pathname === '/history' ? 'history' : 'home');
 
-  const isActive = (path: string) => router.pathname === path;
-  const closeSidebar = () => setIsSidebarOpen(false);
-
-  const handleColorChange = (color: string) => {
-    setTextColor(color);
-  };
+  const tabs = [
+    { id: 'home', label: 'Home', path: '/' },
+    { id: 'history', label: 'History', path: '/history' },
+  ];
 
   return (
-    <div className="h-screen flex flex-col md:flex-row">
-      {/* Mobile Menu Button */}
-      <header className="bg-blue-700 text-white p-4 flex items-center justify-between shadow-md md:hidden">
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          className="text-white text-3xl cursor-pointer"
-          aria-label="Open Menu"
-        >
-          <FaBars />
-        </button>
-        <h1 className="text-lg font-bold">eBiz Business Payment Platform</h1>
-      </header>
-
-      {/* Sidebar Navigation */}
-      <aside
-        className={`fixed top-0 left-0 w-4/5 md:w-1/5 bg-gray-900 text-white flex flex-col p-4 space-y-4 shadow-lg h-full z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:relative ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-        id="sidebar"
-      >
-        {/* Close Button (Mobile Only) */}
-        <div className="flex justify-end items-center md:hidden">
-          <button onClick={closeSidebar} className="text-white text-3xl cursor-pointer">
-            <FaTimes />
-          </button>
+    <div className="flex flex-col min-h-screen">
+      {isMobile ? (
+        // Mobile bottom navigation
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-2 z-10">
+          {tabs.map((tab) => (
+            <Link href={tab.path} key={tab.id} passHref>
+              <button
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex flex-col items-center p-2 ${activeTab === tab.id ? 'text-green-600' : 'text-gray-500'}`}
+              >
+                <span className="text-sm">{tab.label}</span>
+              </button>
+            </Link>
+          ))}
         </div>
-
-        {/* Main Tabs */}
-        <div className="flex border-b border-gray-700 mb-4">
-          <Link 
-            href="/" 
-            className={`flex-1 py-2 text-center ${isActive("/") ? "border-b-2 border-green-500" : "text-gray-400"}`}
-          >
-            <FaHome className="inline mr-1" /> Home
-          </Link>
-          <Link 
-            href="/History" 
-            className={`flex-1 py-2 text-center ${isActive("/History") ? "border-b-2 border-green-500" : "text-gray-400"}`}
-          >
-            <FaHistory className="inline mr-1" /> History
-          </Link>
+      ) : (
+        // Desktop tabs
+        <div className="bg-white border-b border-gray-200">
+          <div className="flex space-x-8 px-4">
+            {tabs.map((tab) => (
+              <Link href={tab.path} key={tab.id} passHref>
+                <button
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                >
+                  {tab.label}
+                </button>
+              </Link>
+            ))}
+          </div>
         </div>
-
-        <nav className="space-y-2">
-          <h2 className="text-xl font-bold">eBiz</h2>
-
-          {/* Divider with centered label */}
-          <div className="flex items-center my-2">
-            <div className="flex-grow border-t border-gray-100"></div>
-            <h3 className="text-sm font-bold text-gray-400 px-3 whitespace-nowrap">M-PESA TRANSACTIONS</h3>
-            <div className="flex-grow border-t border-gray-100"></div>
-          </div>
-          
-          <Link href="/Paybill" className={`flex items-center p-3 rounded-md transition-all ${isActive("/Paybill") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaBuilding className="mr-2" /> Pay Bill
-          </Link>
-          <Link href="/Till" className={`flex items-center p-3 rounded-md transition-all ${isActive("/Till") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaMoneyBill className="mr-2" /> Buy Goods
-          </Link>
-          <Link href="/SendMoney" className={`flex items-center p-3 rounded-md transition-all ${isActive("/SendMoney") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaExchangeAlt className="mr-2" /> Send Money
-          </Link>
-          <Link href="/Agent" className={`flex items-center p-3 rounded-md transition-all ${isActive("/Agent") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaUsers className="mr-2" /> Withdraw Money
-          </Link>
-
-          {/* Divider with centered label */}
-          <div className="flex items-center my-2">
-            <div className="flex-grow border-t border-gray-100"></div>
-            <h3 className="text-sm font-bold text-gray-400 px-3 whitespace-nowrap">QR CODES</h3>
-            <div className="flex-grow border-t border-gray-100"></div>
-          </div>
-
-          {/* Collapsible "Normal Qr" Section */}
-          <button
-            className="flex items-center w-full p-3 rounded-md transition-all hover:bg-gray-700 focus:outline-none"
-            onClick={() => setIsNormalQrOpen(!isNormalQrOpen)}
-          >
-            <FaQrcode className="mr-2" />
-            Normal Qr (with short URL)
-            <span className="ml-auto">{isNormalQrOpen ? <FaChevronDown /> : <FaChevronRight />}</span>
-          </button>
-          {isNormalQrOpen && (
-            <div className="ml-6 space-y-2 transition-all">
-              <Link href="/QrToURLGenerator" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrToURLGenerator") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-                <FaQrcode className="mr-2" /> Generate Qr
-              </Link>
-              <Link href="/QrScannerNormal" className={`flex items-center p-3 rounded-md transition-all ${isActive("/QrScannerNormal") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-                <FaCreditCard className="mr-2" /> Scan QR
-              </Link>
-            </div>
-          )}
-
-          {/* Divider with centered label */}
-          <div className="flex items-center my-2">
-            <div className="flex-grow border-t border-gray-100"></div>
-            <h3 className="text-sm font-bold text-gray-400 px-3 whitespace-nowrap">CLI</h3><h4 className="text-yellow-300">(New!)</h4>
-            <div className="flex-grow border-t border-gray-100"></div>
-          </div>
-
-          {/* CLI Link */}
-          <Link href="/CLI" className={`flex items-center p-3 rounded-md transition-all ${isActive("/CLI") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaTerminal className="mr-2" /> Use Comand Line Interface (CLI)
-          </Link>
-
-          {/* Divider with centered label */}
-          <div className="flex items-center my-2">
-            <div className="flex-grow border-t border-gray-100"></div>
-            <h3 className="text-sm font-bold text-gray-400 px-3 whitespace-nowrap">ADVANCED</h3>
-            <div className="flex-grow border-t border-gray-100"></div>
-          </div>
-
-          {/* Settings Link */}
-          <Link href="/Settings" className={`flex items-center p-3 rounded-md transition-all ${isActive("/Settings") ? "bg-green-500 text-white" : "hover:bg-gray-700"}`}>
-            <FaCog className="mr-2" /> Settings
-          </Link>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col md:ml-1/5" ref={mainContentRef} onClick={() => isSidebarOpen && closeSidebar()}>
-        <header className="hidden md:flex bg-blue-700 text-white p-4 items-center shadow-md">
-          <FaCreditCard className="text-3xl mr-2" />
-          <h1 className="text-2xl font-bold">Welcome to eBiz Business Payment Platform</h1>
-          {/* Color Picker Button */}
-          <div className="ml-auto flex items-center">
-            <input
-              type="color"
-              value={textColor}
-              onChange={(e) => handleColorChange(e.target.value)}
-              className="w-8 h-8 cursor-pointer"
-            />
-            <FaPalette className="text-2xl ml-2" />
-          </div>
-        </header>
-
-        <main className="flex-1 bg-gray-100 text-gray-900 p-6 rounded-lg shadow-md overflow-y-auto" style={{ color: textColor }}>
-          {children}
-        </main>
-
-        {/* Footer */}
-        <footer className="text-center py-2 text-white bg-gray-500">
-          Built in 🇰🇪 by
-          <Link href="https://bltasolutions.co.ke/" target="_blank" className="font-bold underline ml-1">
-            BLTA Solutions (K) Limited
-          </Link>
-        </footer>
-      </div>
-
-      {/* Overlay for Mobile */}
-      {isSidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={closeSidebar}></div>}
+      )}
+      <main className="flex-1 pb-16 md:pb-0">{children}</main>
     </div>
   );
-};
-
-export default Layout;
+}
