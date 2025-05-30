@@ -59,6 +59,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       receiptNumber: receiptObj?.Value as string
     };
 
+    // Store the phone number in the database if this is the first transaction
+    if (statusUpdate.phoneNumber && statusUpdate.phoneNumber !== "254") {
+      try {
+        const userDocRef = doc(db, 'users', statusUpdate.phoneNumber);
+        await setDoc(userDocRef, { phoneNumber: statusUpdate.phoneNumber }, { merge: true });
+      } catch (err) {
+        console.error('Error storing user phone number:', err);
+      }
+    }
+
     console.log('Processing payment:', {
       requestId: CheckoutRequestID,
       status: statusUpdate.status,

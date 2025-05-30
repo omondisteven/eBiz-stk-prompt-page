@@ -32,7 +32,7 @@ export interface AppContextType {
   setData: (data: Partial<FormData>) => void;
 }
 
-export const AppContext = createContext<AppContextType | null>(null);
+// export const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [db, saveDb] = useLocalStorage<FormData>(PESAQR_DB, defaultData);
@@ -57,18 +57,37 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setData((prev) => ({ ...prev, ...newData }));
   };
 
+  // Function to store phone number after first transaction
+  const storePhoneNumber = (phoneNumber: string) => {
+    if (!data.defaultPhoneNumber || data.defaultPhoneNumber === "254") {
+      updateData({ defaultPhoneNumber: phoneNumber });
+    }
+  };
+
   return (
-    <AppContext.Provider value={{ data, setData: updateData }}>
+    <AppContext.Provider value={{ data, setData: updateData, storePhoneNumber }}>
       {children}
     </AppContext.Provider>
   );
 };
 
-// Export the useAppContext hook
+// Update the context type
+export interface AppContextType {
+  data: FormData;
+  setData: (data: Partial<FormData>) => void;
+  storePhoneNumber?: (phoneNumber: string) => void;
+}
+
+const defaultContextValue: AppContextType = {
+  data: defaultData,
+  setData: () => {},
+  storePhoneNumber: () => {}
+};
+
+export const AppContext = createContext<AppContextType>(defaultContextValue);
+
+// Custom hook to use the context
 export const useAppContext = () => {
   const context = useContext(AppContext);
-  if (!context) {
-    throw new Error("useAppContext must be used within an AppProvider");
-  }
-  return context;
+  return context; // No need for null check since we have default value
 };

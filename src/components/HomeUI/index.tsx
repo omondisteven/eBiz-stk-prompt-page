@@ -1,6 +1,6 @@
 //index.tsx
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { HiOutlineCreditCard, HiCalculator } from "react-icons/hi";
 import { HiX } from "react-icons/hi";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
 import { useAppContext } from "@/context/AppContext";
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
 
 // Add this Calculator component near your other imports
 const Calculator = ({ onCalculate, onClose, onClear }: {
