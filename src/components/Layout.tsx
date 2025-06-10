@@ -8,15 +8,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [activeTab, setActiveTab] = useState(router.pathname === '/history' ? 'history' : 'home');
+  const [prevPath, setPrevPath] = useState<string | null>(null);
 
   // Handle back navigation
   const handleTabClick = (path: string) => {
     if (path === '/') {
-      // If going back to home, use router.back() if coming from home
-      if (document.referrer.includes(window.location.hostname)) {
-        router.back();
+      if (prevPath === '/history') {
+        router.back(); // Go back to home without reloading
       } else {
-        router.push('/');
+        router.push('/'); // Default to full push
       }
     } else {
       router.push(path);
@@ -26,13 +26,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   // Update active tab when route changes
   useEffect(() => {
     const handleRouteChange = (url: string) => {
+      setPrevPath(router.pathname); // Store current path before changing
       setActiveTab(url === '/history' ? 'history' : 'home');
     };
-    router.events.on('routeChangeComplete', handleRouteChange);
+
+    router.events.on('routeChangeStart', handleRouteChange);
     return () => {
-      router.events.off('routeChangeComplete', handleRouteChange);
+      router.events.off('routeChangeStart', handleRouteChange);
     };
-  }, [router.events]);
+  }, [router.pathname]);
+
 
   return (
     <div className="flex flex-col min-h-screen">
