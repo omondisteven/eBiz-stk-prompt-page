@@ -1,5 +1,4 @@
 // src/pages/api/stk_api/sendMoney_stk_api.ts
-// sendMoney_stk_api.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 
