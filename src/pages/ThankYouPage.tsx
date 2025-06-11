@@ -89,7 +89,7 @@ const ThankYouPage = () => {
         // Set the data
         setReceiptData(parsedData);
         
-        setReceiptNumber(parsedData.Receipt || 'N/A');
+        setReceiptNumber(parsedData.ReceiptNumber || 'N/A');
 
         if (parsedData.Timestamp) {
           const parsedDate = new Date(parsedData.Timestamp);
