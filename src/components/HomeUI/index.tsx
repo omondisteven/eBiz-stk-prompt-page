@@ -180,7 +180,11 @@ const HomeUI = () => {
                 setTransactionType(parsedData.TransactionType);
                 setData(parsedData);
                 setAmount(parsedData.Amount || "");
-                setPhoneNumber(parsedData.PhoneNumber || "254");
+                if (parsedData.PhoneNumber) {
+                  setPhoneNumber(parsedData.PhoneNumber);
+                  localStorage.setItem('payerPhoneNumber', parsedData.PhoneNumber);
+                }
+
                 setHasQrData(true); // QR data processed successfully
 
             } catch (e) {
