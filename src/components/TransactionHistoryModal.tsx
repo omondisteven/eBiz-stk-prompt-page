@@ -2,11 +2,11 @@
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
-import TransactionTable from "./ui/TransactionTable";
 import { HiX } from "react-icons/hi";
-import  {Badge}  from "./ui/Badge";
+import { Badge } from "./ui/Badge";
 import { Button } from "./ui/button";
 import toast from "react-hot-toast";
+import TransactionTable from "./ui/TransactionTable";
 
 export default function TransactionHistoryModal({ phoneNumber, onClose }: {
   phoneNumber: string;
@@ -20,12 +20,10 @@ export default function TransactionHistoryModal({ phoneNumber, onClose }: {
     const fetchTransactions = async () => {
       try {
         setLoading(true);
-        // Ensure phoneNumber is a string and properly formatted
         const formattedPhone = String(phoneNumber).startsWith('254') 
           ? String(phoneNumber) 
           : `254${String(phoneNumber).slice(-9)}`;
 
-        // Create a query that matches the actual data structure
         const q = query(
           collection(db, "transactions"),
           where("phoneNumber", "==", formattedPhone),
@@ -84,49 +82,10 @@ export default function TransactionHistoryModal({ phoneNumber, onClose }: {
               <p className="text-sm mt-2">Transactions will appear here after you make payments</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full table-auto border-collapse text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="p-3 text-left">Receipt</th>
-                    <th className="p-3 text-left">Date</th>
-                    <th className="p-3 text-right">Amount</th>
-                    <th className="p-3 text-left">Status</th>
-                    <th className="p-3">Details</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((tx) => (
-                    <tr key={tx.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3">{tx.receiptNumber || "N/A"}</td>
-                      <td className="p-3">
-                        {tx.timestamp ? new Date(tx.timestamp).toLocaleString() : "N/A"}
-                      </td>
-                      <td className="p-3 text-right">
-                        KES {tx.amount?.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="p-3">
-                        <Badge variant={
-                          tx.status === "Success" ? "success" :
-                          tx.status === "Failed" ? "destructive" :
-                          tx.status === "Cancelled" ? "warning" : "default"
-                        }>
-                          {tx.status}
-                        </Badge>
-                      </td>
-                      <td className="p-3 text-center">
-                        <button
-                          className="text-blue-600 hover:underline"
-                          onClick={() => setSelectedTx(tx)}
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <TransactionTable 
+              transactions={transactions} 
+              onView={setSelectedTx} 
+            />
           )}
         </div>
 
