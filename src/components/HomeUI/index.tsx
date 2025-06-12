@@ -175,22 +175,19 @@ const HomeUI = () => {
           }
 
           let parsedData = JSON.parse(decodedData);
-
           if (!parsedData.TransactionType) {
             toast.error("Missing transaction type in QR data");
             setHasQrData(false);
             return;
           }
 
-          // 👇 Eliminate PhoneNumber from QR before using
-          if (parsedData.PhoneNumber) {
-            console.log("Removing PhoneNumber from decoded QR data:", parsedData.PhoneNumber);
-            delete parsedData.PhoneNumber;
-          }
-
           setTransactionType(parsedData.TransactionType);
           setData(parsedData);
           setAmount(parsedData.Amount || "");
+          if (parsedData.PhoneNumber) {
+            setPhoneNumber(parsedData.PhoneNumber);
+            localStorage.setItem('payerPhoneNumber', parsedData.PhoneNumber);
+          }
           setHasQrData(true);
 
         } catch (e) {
@@ -202,7 +199,6 @@ const HomeUI = () => {
         setHasQrData(false);
       }
     }, [router.query]);
-
 
     // Phone number validation
     const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
