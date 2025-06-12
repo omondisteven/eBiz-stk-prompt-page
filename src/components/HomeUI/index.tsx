@@ -110,6 +110,10 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
 };
 
 const HomeUI = () => {
+  useEffect(() => {
+    console.log("Phone number initialized:", phoneNumber);
+  }, []);
+
     const router = useRouter();
     const [transactionType, setTransactionType] = useState("");
     const [data, setData] = useState<any>({});
@@ -158,44 +162,44 @@ const HomeUI = () => {
     }, [isMobile, paymentStatus]);
     // QR code data processing
     useEffect(() => {
-        if (router.query.data) {
-            try {
-                let rawData = router.query.data as string;
-                let decodedData;
+      if (router.query.data) {
+        try {
+          let rawData = router.query.data as string;
+          let decodedData;
 
-                try {
-                    decodedData = decodeURIComponent(escape(atob(rawData)));
-                } catch (base64Err) {
-                    console.warn("Base64 decode failed, trying URI decode");
-                    decodedData = decodeURIComponent(rawData);
-                }
+          try {
+            decodedData = decodeURIComponent(escape(atob(rawData)));
+          } catch (base64Err) {
+            console.warn("Base64 decode failed, trying URI decode");
+            decodedData = decodeURIComponent(rawData);
+          }
 
-                let parsedData = JSON.parse(decodedData);
-                if (!parsedData.TransactionType) {
-                    toast.error("Missing transaction type in QR data");
-                    setHasQrData(false); // No valid transaction type
-                    return;
-                }
+          let parsedData = JSON.parse(decodedData);
+          if (!parsedData.TransactionType) {
+            toast.error("Missing transaction type in QR data");
+            setHasQrData(false);
+            return;
+          }
 
-                setTransactionType(parsedData.TransactionType);
-                setData(parsedData);
-                setAmount(parsedData.Amount || "");
-                if (parsedData.PhoneNumber) {
-                  setPhoneNumber(parsedData.PhoneNumber);
-                  localStorage.setItem('payerPhoneNumber', parsedData.PhoneNumber);
-                }
+          setTransactionType(parsedData.TransactionType);
+          setData(parsedData);
+          setAmount(parsedData.Amount || "");
+          if (parsedData.PhoneNumber) {
+            setPhoneNumber(parsedData.PhoneNumber);
+            localStorage.setItem('payerPhoneNumber', parsedData.PhoneNumber);
+          }
+          setHasQrData(true);
 
-                setHasQrData(true); // QR data processed successfully
-
-            } catch (e) {
-                console.error("Error processing QR code data:", e);
-                toast.error("Failed to process QR code");
-                setHasQrData(false); // Error in processing QR data
-            }
-        } else {
-            setHasQrData(false); // No QR data in URL
+        } catch (e) {
+          console.error("Error processing QR code data:", e);
+          toast.error("Failed to process QR code");
+          setHasQrData(false);
         }
+      } else {
+        setHasQrData(false);
+      }
     }, [router.query]);
+
     // Phone number validation
     const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       let value = e.target.value;
