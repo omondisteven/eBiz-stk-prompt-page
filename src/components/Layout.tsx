@@ -1,33 +1,26 @@
 // src/components/Layout.tsx
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const [activeTab, setActiveTab] = useState(router.pathname === '/history' ? 'history' : 'home');
+  const [activeTab, setActiveTab] = useState(router.pathname === '/history' ? 'history' : '');
   const [prevPath, setPrevPath] = useState<string | null>(null);
 
-  // Handle back navigation
   const handleTabClick = (path: string) => {
-    if (path === '/') {
-      if (prevPath === '/history') {
-        router.back(); // Go back to home without reloading
-      } else {
-        router.push('/'); // Default to full push
-      }
+    if (path === 'back') {
+      router.back(); // Always navigate to previous page
     } else {
       router.push(path);
     }
   };
 
-  // Update active tab when route changes
   useEffect(() => {
     const handleRouteChange = (url: string) => {
-      setPrevPath(router.pathname); // Store current path before changing
-      setActiveTab(url === '/history' ? 'history' : 'home');
+      setPrevPath(router.pathname);
+      setActiveTab(url === '/history' ? 'history' : '');
     };
 
     router.events.on('routeChangeStart', handleRouteChange);
@@ -36,14 +29,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     };
   }, [router.pathname]);
 
-
   return (
     <div className="flex flex-col min-h-screen">
       {/* Main content with padding to avoid overlap with bottom nav */}
       <main className="flex-1 pb-16 md:pb-0">{children}</main>
 
       {isMobile ? (
-        // Mobile bottom navigation - fixed at bottom with shadow
+        // Mobile bottom navigation
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-2 z-50 shadow-lg">
           {tabs.map((tab) => (
             <button
@@ -58,7 +50,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           ))}
         </div>
       ) : (
-        // Desktop tabs - at the top
+        // Desktop tabs
         <div className="bg-white border-b border-gray-200">
           <div className="flex space-x-8 px-4">
             {tabs.map((tab) => (
@@ -82,6 +74,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 }
 
 const tabs = [
-  { id: 'home', label: 'Home', path: '/' },
+  { id: 'home', label: 'Back', path: 'back' }, // changed to Back
   { id: 'history', label: 'History', path: '/history' },
 ];
