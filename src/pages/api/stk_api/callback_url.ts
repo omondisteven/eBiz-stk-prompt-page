@@ -55,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status: ResultCode === 0 ? 'Success' : 'Failed',
       details: CallbackMetadata?.Item || ResultDesc,
       amount: amountObj?.Value as number,
-      phoneNumber: phoneObj?.Value as string,
+      phoneNumber: String(phoneObj?.Value), // Convert to string
       receiptNumber: receiptObj?.Value as string
     };
 
