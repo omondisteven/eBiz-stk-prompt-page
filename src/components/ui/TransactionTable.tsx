@@ -1,10 +1,23 @@
 // /src/components/ui/TransactionTable.tsx
-import Badge from "./Badge";
+import { Badge } from "./Badge";
 
 export default function TransactionTable({ transactions, onView }: {
   transactions: any[],
   onView: (transaction: any) => void
 }) {
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case "Success":
+        return "success";
+      case "Failed":
+        return "destructive";
+      case "Cancelled":
+        return "warning";
+      default:
+        return "default";
+    }
+  };
+
   return (
     <table className="w-full table-auto border-collapse text-sm">
       <thead className="bg-gray-100">
@@ -22,7 +35,11 @@ export default function TransactionTable({ transactions, onView }: {
             <td className="p-2">{tx.receiptNumber || "N/A"}</td>
             <td className="p-2">{new Date(tx.timestamp).toLocaleString()}</td>
             <td className="p-2 text-right">KES {tx.amount?.toFixed(2)}</td>
-            <td className="p-2"><Badge status={tx.status} /></td>
+            <td className="p-2">
+              <Badge variant={getStatusVariant(tx.status)}>
+                {tx.status}
+              </Badge>
+            </td>
             <td className="p-2 text-center">
               <button
                 className="text-blue-600 hover:underline"
