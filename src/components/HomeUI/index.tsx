@@ -114,7 +114,13 @@ const HomeUI = () => {
     const [transactionType, setTransactionType] = useState("");
     const [data, setData] = useState<any>({});
     const { data: appData } = useAppContext();
-    const [phoneNumber, setPhoneNumber] = useState("254");
+    const [phoneNumber, setPhoneNumber] = useState(() => {
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem('payerPhoneNumber') || '254';
+      }
+      return '254';
+    });
+
     const [amount, setAmount] = useState(data.Amount || "");
     const [warning, setWarning] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -188,27 +194,29 @@ const HomeUI = () => {
     }, [router.query]);
     // Phone number validation
     const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let value = e.target.value;
-        if (!value.startsWith("254")) {
-            value = "254";
-            setWarning("Phone number must start with '254'.");
-        } else {
-            setWarning(null);
-        }
+      let value = e.target.value;
+      if (!value.startsWith("254")) {
+        value = "254";
+        setWarning("Phone number must start with '254'.");
+      } else {
+        setWarning(null);
+      }
 
-        if (value.length > 3) {
-            const afterPrefix = value.slice(3);
-            if (/^0/.test(afterPrefix)) {
-                setError("The digit after '254' cannot be zero.");
-            } else {
-                setError(null);
-            }
+      if (value.length > 3) {
+        const afterPrefix = value.slice(3);
+        if (/^0/.test(afterPrefix)) {
+          setError("The digit after '254' cannot be zero.");
         } else {
-            setError(null);
+          setError(null);
         }
+      } else {
+        setError(null);
+      }
 
-        setPhoneNumber(value);
+      setPhoneNumber(value);
+      localStorage.setItem('payerPhoneNumber', value); // 🔥 Save Updated Phone Number to localStorage on Change
     };
+
     const handlePhoneNumberBlur = () => {
         if (phoneNumber.length !== 12) {
             setError("Phone number must be exactly 12 digits.");

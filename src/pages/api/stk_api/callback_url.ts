@@ -89,7 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (statusUpdate.status === 'Success' && statusUpdate.phoneNumber) {
       // Store phone number in localStorage for transaction history
-      localStorage.setItem('payerPhoneNumber', statusUpdate.phoneNumber);
+      // localStorage.setItem('payerPhoneNumber', statusUpdate.phoneNumber);
     }
 
   } catch (error) {
