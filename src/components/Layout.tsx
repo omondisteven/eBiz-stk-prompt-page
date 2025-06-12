@@ -74,6 +74,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 }
 
 const tabs = [
-  { id: 'home', label: 'Back', path: 'back' }, // changed to Back
+  { id: 'home', label: 'Home', path: 'back' }, // changed to Back
   { id: 'history', label: 'History', path: '/history' },
 ];
