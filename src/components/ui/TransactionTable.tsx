@@ -1,3 +1,4 @@
+// /src/components/ui/TransactionTable.tsx
 import Badge from "./Badge";
 
 export default function TransactionTable({ transactions, onView }: {

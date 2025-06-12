@@ -1,3 +1,4 @@
+// /src/components/TransactionHistoryModal.tsx
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
@@ -15,7 +16,7 @@ export default function TransactionHistoryModal({ phoneNumber, onClose }: {
     const fetchTransactions = async () => {
       const q = query(
         collection(db, "transactions"),
-        where("phoneNumber", "==", phoneNumber),
+        where("PhoneNumber", "==", Number(phoneNumber)),
         orderBy("timestamp", "desc")
       );
       const snapshot = await getDocs(q);

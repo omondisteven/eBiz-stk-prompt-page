@@ -1,4 +1,4 @@
-//index.tsx
+// /src/components/index.tsx
 import { useRouter } from "next/router";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { HiOutlineCreditCard, HiCalculator } from "react-icons/hi";
