@@ -27,8 +27,8 @@ export default function TransactionHistoryModal({ phoneNumber, onClose }: {
         const q = query(
             collection(db, "transactions"),
             where("phoneNumber", "==", formattedPhone),
-            orderBy("timestamp", "desc"),
-            orderBy("__name__") // Add this to match the index exactly
+            // orderBy("timestamp", "desc"),
+            // orderBy("__name__") // Add this to match the index exactly
             );
 
         const snapshot = await getDocs(q);

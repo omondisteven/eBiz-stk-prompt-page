@@ -87,10 +87,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('Transaction saved to Firestore:', CheckoutRequestID);
 
-    if (statusUpdate.status === 'Success' && statusUpdate.phoneNumber) {
+    // if (statusUpdate.status === 'Success' && statusUpdate.phoneNumber) {
       // Store phone number in localStorage for transaction history
-      localStorage.setItem('payerPhoneNumber', statusUpdate.phoneNumber);
-    }
+    //   localStorage.setItem('payerPhoneNumber', statusUpdate.phoneNumber);
+    // }
 
   } catch (error) {
     console.error('Callback processing error:', error);
