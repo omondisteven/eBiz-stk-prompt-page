@@ -25,10 +25,11 @@ export default function TransactionHistoryModal({ phoneNumber, onClose }: {
           : `254${String(phoneNumber).slice(-9)}`;
 
         const q = query(
-          collection(db, "transactions"),
-          where("phoneNumber", "==", formattedPhone),
-          orderBy("timestamp", "desc")
-        );
+            collection(db, "transactions"),
+            where("phoneNumber", "==", formattedPhone),
+            orderBy("timestamp", "desc"),
+            orderBy("__name__") // Add this to match the index exactly
+            );
 
         const snapshot = await getDocs(q);
         const txData = snapshot.docs.map(doc => {
