@@ -6,12 +6,12 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const [activeTab, setActiveTab] = useState(router.pathname === '/history' ? 'history' : '');
+  const [activeTab, setActiveTab] = useState(router.pathname === '/history' ? 'history' : 'home');
   const [prevPath, setPrevPath] = useState<string | null>(null);
 
   const handleTabClick = (path: string) => {
     if (path === 'back') {
-      router.back(); // Always navigate to previous page
+      router.back();
     } else {
       router.push(path);
     }
@@ -20,7 +20,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleRouteChange = (url: string) => {
       setPrevPath(router.pathname);
-      setActiveTab(url === '/history' ? 'history' : '');
+      setActiveTab(url === '/history' ? 'history' : 'home');
     };
 
     router.events.on('routeChangeStart', handleRouteChange);

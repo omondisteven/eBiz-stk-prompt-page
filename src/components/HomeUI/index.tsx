@@ -3,14 +3,14 @@ import { useRouter } from "next/router";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { HiOutlineCreditCard, HiCalculator } from "react-icons/hi";
 import { HiX } from "react-icons/hi";
-import { History } from "lucide-react";
+// import { History } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
 import { useAppContext } from "@/context/AppContext";
 import Link from "next/link";
-import TransactionHistoryModal from "../TransactionHistoryModal";
+// import TransactionHistoryModal from "../TransactionHistoryModal";
 
 // Add this Calculator component near your other imports
 const Calculator = ({ onCalculate, onClose, onClear }: {
@@ -132,7 +132,7 @@ const HomeUI = () => {
     const [showCalculator, setShowCalculator] = useState(false);
     const [hasQrData, setHasQrData] = useState(false); // New state for QR data presence
 
-    const [showHistory, setShowHistory] = useState(false);
+    // const [showHistory, setShowHistory] = useState(false);
 
     const [isAwaitingPayment, setIsAwaitingPayment] = useState(false);
     const [countdown, setCountdown] = useState(30);
@@ -744,7 +744,7 @@ const HomeUI = () => {
         </div>
 
         {/* Transaction History Button */}
-          <div className="flex justify-center mb-4">
+          {/* <div className="flex justify-center mb-4">
             <button
               onClick={() => setShowHistory(true)}
               className="flex items-center text-sm text-gray-700 hover:text-green-700 hover:underline"
@@ -752,15 +752,15 @@ const HomeUI = () => {
               <History className="w-4 h-4 mr-1" />
               View History
             </button>
-          </div>
+          </div> */}
 
           {/* History Modal */}
-          {showHistory && (
+          {/* {showHistory && (
             <TransactionHistoryModal
               phoneNumber={phoneNumber}
               onClose={() => setShowHistory(false)}
             />
-          )}
+          )} */}
 
         {/* Footer Section */}
         <div className="py-4 text-center text-sm text-gray-500">
