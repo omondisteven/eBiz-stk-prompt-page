@@ -79,6 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     // Save to Firestore
     await setDoc(doc(db, 'transactions', CheckoutRequestID), {
+      phoneNumber: statusUpdate.phoneNumber || 'unknown', // ✅ Ensure it's there
       ...statusUpdate,
       processedAt: new Date(),
       transactionType: ResultCode === 0 ? 'completed' : 'failed',
