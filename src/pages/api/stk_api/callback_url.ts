@@ -78,13 +78,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
     
     // Save to Firestore
-    await setDoc(doc(db, 'transactions', CheckoutRequestID), {
-      phoneNumber: statusUpdate.phoneNumber || 'unknown', // ✅ Ensure it's there
-      ...statusUpdate,
-      processedAt: new Date(),
-      transactionType: ResultCode === 0 ? 'completed' : 'failed',
-      receiptNumber: statusUpdate.receiptNumber || null
-    });
+    // In callback_url.ts, modify the Firestore write section:
+      try {
+        await setDoc(doc(db, 'transactions', CheckoutRequestID), {
+          phoneNumber: statusUpdate.phoneNumber || 'unknown',
+          ...statusUpdate,
+          processedAt: new Date(),
+          transactionType: ResultCode === 0 ? 'completed' : 'failed',
+          receiptNumber: statusUpdate.receiptNumber || null
+        });
+        console.log('Transaction saved to Firestore:', CheckoutRequestID);
+      } catch (error) {
+        console.error('Firestore write error:', error);
+        // Consider sending this to an error tracking service
+      }
 
     console.log('Transaction saved to Firestore:', CheckoutRequestID);
 
