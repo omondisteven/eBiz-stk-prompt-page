@@ -146,13 +146,13 @@ export default function TransactionHistoryPage() {
               </div>
             </div>
 
-            <div className="mt-4">
+            {/* <div className="mt-4">
               <h4 className="font-medium mb-2">Transaction Details:</h4>
               <div className="flex justify-between">
                 <span className="text-gray-600">Phone:</span>
                 <span>{selectedTx.phoneNumber}</span>
                </div>
-            </div>
+            </div> */}
 
             <Button 
               onClick={() => setSelectedTx(null)}
