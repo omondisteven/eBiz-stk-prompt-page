@@ -1,7 +1,8 @@
 // src/pages/api/stk_api/callback_url.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+// import { doc, setDoc } from 'firebase/firestore';
+// import { db } from '../../../lib/firebase';
+import { adminDb } from '../../../lib/firebase-admin'; // ✅ correct for server
 
 type CallbackMetadataItem = {
   Name: string;
@@ -62,8 +63,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Store the phone number in the database if this is the first transaction
     if (statusUpdate.phoneNumber && statusUpdate.phoneNumber !== "254") {
       try {
-        const userDocRef = doc(db, 'users', statusUpdate.phoneNumber);
-        await setDoc(userDocRef, { phoneNumber: statusUpdate.phoneNumber }, { merge: true });
+        await adminDb
+        .collection('users')
+        .doc(statusUpdate.phoneNumber!)
+        .set({ phoneNumber: statusUpdate.phoneNumber }, { merge: true });
+
       } catch (err) {
         console.error('Error storing user phone number:', err);
       }
@@ -80,13 +84,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Save to Firestore
     // In callback_url.ts, modify the Firestore write section:
       try {
-        await setDoc(doc(db, 'transactions', CheckoutRequestID), {
-          phoneNumber: statusUpdate.phoneNumber || 'unknown',
-          ...statusUpdate,
-          processedAt: new Date(),
-          transactionType: ResultCode === 0 ? 'completed' : 'failed',
-          receiptNumber: statusUpdate.receiptNumber || null
-        });
+        await adminDb
+          .collection('transactions')
+          .doc(CheckoutRequestID)
+          .set({
+            phoneNumber: statusUpdate.phoneNumber || 'unknown',
+            ...statusUpdate,
+            processedAt: new Date(),
+            transactionType: ResultCode === 0 ? 'completed' : 'failed',
+            receiptNumber: statusUpdate.receiptNumber || null
+          });
+
         console.log('Transaction saved to Firestore:', CheckoutRequestID);
       } catch (error) {
         console.error('Firestore write error:', error);
