@@ -119,6 +119,29 @@ const HomeUI = () => {
     const [data, setData] = useState<any>({});
     const { data: appData } = useAppContext();
     const [phoneNumber, setPhoneNumber] = useState(() => {
+      // First check if we have QR data in router.query
+      if (router.query.data) {
+        try {
+          const rawData = router.query.data as string;
+          let decodedData;
+          
+          try {
+            decodedData = decodeURIComponent(escape(atob(rawData)));
+          } catch (base64Err) {
+            decodedData = decodeURIComponent(rawData);
+          }
+          
+          const parsedData = JSON.parse(decodedData);
+          if (parsedData.PhoneNumber) {
+            localStorage.setItem('payerPhoneNumber', parsedData.PhoneNumber);
+            return parsedData.PhoneNumber;
+          }
+        } catch (e) {
+          console.error("Error processing initial QR data:", e);
+        }
+      }
+      
+      // Fall back to localStorage if no QR data or if QR data has no phone number
       if (typeof window !== 'undefined') {
         return localStorage.getItem('payerPhoneNumber') || '254';
       }
