@@ -81,7 +81,7 @@ export default function TransactionHistoryPage() {
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Transaction History</h1>
+      <h1 className="text-2xl text-white font-bold mb-6">Transaction History</h1>
       
       {loading ? (
         <div className="flex justify-center items-center h-32">
