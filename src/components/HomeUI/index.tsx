@@ -185,6 +185,10 @@ const HomeUI = () => {
           setTransactionType(parsedData.TransactionType);
           setData(parsedData);
           setAmount(parsedData.Amount || "");
+          // if (parsedData.PhoneNumber) {
+          //   setPhoneNumber(parsedData.PhoneNumber);
+          //   localStorage.setItem('payerPhoneNumber', parsedData.PhoneNumber);
+          // }
           if (parsedData.PhoneNumber) {
             console.log("Ignoring QR phone number:", parsedData.PhoneNumber);
           }
@@ -383,6 +387,10 @@ const HomeUI = () => {
             toast.error("Please fill in all the fields.");
             return;
         }
+
+        // For Send Money, BusinessShortCode is typically a specific short code (e.g., 247247 for personal transactions)
+        // or the business short code if it's a business initiating a 'send money' equivalent.
+        // Assuming '174379' from your API code is the default for sandbox.
         handlePayment("/api/stk_api/sendmoney_stk_api", {
             phone: phoneNumber.trim(), // The sender's phone number
             amount: amount.toString(),
@@ -440,9 +448,9 @@ const HomeUI = () => {
   };
 
   return (
-    <div className="flex flex-col items-center bg-gray-50 min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gray-50 items-center">
       {/* Container with width constraints */}
-      <div className="w-full max-w-md flex flex-col flex-grow">
+      <div className="w-full md:w-1/3 lg:w-1/3 xl:w-1/3 2xl:w-1/3 flex flex-col flex-grow">
         {/* Header Section */}
         <div className="p-4 border-b border-gray-200 bg-white shadow-sm rounded-t-lg mx-2 sm:mx-0 mt-2 sm:mt-0">
           <h2 className="text-xl font-bold text-center"
@@ -734,6 +742,25 @@ const HomeUI = () => {
               </div>
           )}
         </div>
+
+        {/* Transaction History Button */}
+          {/* <div className="flex justify-center mb-4">
+            <button
+              onClick={() => setShowHistory(true)}
+              className="flex items-center text-sm text-gray-700 hover:text-green-700 hover:underline"
+            >
+              <History className="w-4 h-4 mr-1" />
+              View History
+            </button>
+          </div> */}
+
+          {/* History Modal */}
+          {/* {showHistory && (
+            <TransactionHistoryModal
+              phoneNumber={phoneNumber}
+              onClose={() => setShowHistory(false)}
+            />
+          )} */}
 
         {/* Footer Section */}
         <div className="py-4 text-center text-sm text-gray-500">

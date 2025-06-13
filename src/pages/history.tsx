@@ -81,7 +81,7 @@ export default function TransactionHistoryPage() {
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Transaction History</h1>
+      <h1 className="text-2xl text-white font-bold mb-6">Transaction History</h1>
       
       {loading ? (
         <div className="flex justify-center items-center h-32">
@@ -148,9 +148,10 @@ export default function TransactionHistoryPage() {
 
             <div className="mt-4">
               <h4 className="font-medium mb-2">Transaction Details:</h4>
-              <pre className="bg-gray-100 p-3 rounded text-sm overflow-auto max-h-40">
-                {JSON.stringify(selectedTx.details, null, 2)}
-              </pre>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Phone:</span>
+                <span>{selectedTx.phoneNumber}</span>
+               </div>
             </div>
 
             <Button 
