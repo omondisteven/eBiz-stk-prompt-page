@@ -185,9 +185,10 @@ const HomeUI = () => {
           setData(parsedData);
           setAmount(parsedData.Amount || "");
           if (parsedData.PhoneNumber) {
-            setPhoneNumber(parsedData.PhoneNumber);
-            localStorage.setItem('payerPhoneNumber', parsedData.PhoneNumber);
+            console.log("Ignoring QR PhoneNumber:", parsedData.PhoneNumber);
+            delete parsedData.PhoneNumber; // Optional: remove it from the QR data entirely
           }
+
           setHasQrData(true);
 
         } catch (e) {
