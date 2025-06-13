@@ -1,9 +1,12 @@
-// /src/components/ui/TransactionTable.tsx
+// src/components/ui/TransactionTable.tsx
 import { Badge } from "./Badge";
 
-export default function TransactionTable({ transactions, onView }: {
-  transactions: any[],
-  onView: (transaction: any) => void
+export default function TransactionTable({
+  transactions,
+  onView,
+}: {
+  transactions: any[];
+  onView: (transaction: any) => void;
 }) {
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -19,38 +22,41 @@ export default function TransactionTable({ transactions, onView }: {
   };
 
   return (
-    <table className="w-full table-auto border-collapse text-sm">
-      <thead className="bg-gray-100">
-        <tr>
-          <th className="p-2 text-left">Receipt</th>
-          <th className="p-2 text-left">Date</th>
-          <th className="p-2 text-right">Amount</th>
-          <th className="p-2 text-left">Status</th>
-          <th className="p-2">Details</th>
-        </tr>
-      </thead>
-      <tbody>
-        {transactions.map((tx) => (
-          <tr key={tx.id} className="border-b hover:bg-gray-50">
-            <td className="p-2">{tx.receiptNumber || "N/A"}</td>
-            <td className="p-2">{new Date(tx.timestamp).toLocaleString()}</td>
-            <td className="p-2 text-right">KES {tx.amount?.toFixed(2)}</td>
-            <td className="p-2">
-              <Badge variant={getStatusVariant(tx.status)}>
-                {tx.status}
-              </Badge>
-            </td>
-            <td className="p-2 text-center">
-              <button
-                className="text-blue-600 hover:underline"
-                onClick={() => onView(tx)}
-              >
-                View
-              </button>
-            </td>
+    <div className="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
+      <table className="w-full text-sm text-left text-gray-800">
+        <thead className="bg-gray-100 text-xs uppercase text-gray-600 border-b">
+          <tr>
+            <th className="px-4 py-3">Receipt</th>
+            <th className="px-4 py-3">Date</th>
+            <th className="px-4 py-3 text-right">Amount</th>
+            <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3 text-center">Action</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {transactions.map((tx, idx) => (
+            <tr
+              key={tx.id}
+              className={`border-b ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`}
+            >
+              <td className="px-4 py-2">{tx.receiptNumber || "N/A"}</td>
+              <td className="px-4 py-2">{new Date(tx.timestamp).toLocaleString()}</td>
+              <td className="px-4 py-2 text-right">KES {tx.amount?.toFixed(2)}</td>
+              <td className="px-4 py-2">
+                <Badge variant={getStatusVariant(tx.status)}>{tx.status}</Badge>
+              </td>
+              <td className="px-4 py-2 text-center">
+                <button
+                  className="text-blue-600 hover:underline font-medium"
+                  onClick={() => onView(tx)}
+                >
+                  View
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
