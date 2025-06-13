@@ -33,28 +33,29 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Main content with padding to avoid overlap with bottom nav */}
-      <main className="flex-1 pb-16 md:pb-0">{children}</main>
+      <main className="flex-1 md:pb-0">{children}</main>
 
       {isMobile ? (
         // Mobile bottom navigation
-        <div className="fixed bottom-0 left-0 right-0 bg-blue-900 flex justify-around divide-x divide-gray-300 py-2 z-50 shadow-lg">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.path)}
-                className={`flex items-center justify-center gap-1 w-full px-2 ${
-                  activeTab === tab.id ? 'text-green-400' : 'text-white'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-sm">{tab.label}</span>
-              </button>
-            );
-          })}
+        <div className="fixed bottom-0 left-0 right-0 bg-blue-1000 flex justify-around divide-x divide-gray-300 py-2 z-50 shadow-lg md:hidden">
+          <div className="w-full max-w-md mx-auto flex justify-around">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabClick(tab.path)}
+                  className={`flex items-center justify-center gap-1 w-full px-2 ${
+                    activeTab === tab.id ? 'text-green-400' : 'text-white'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="text-sm">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-
 
       ) : (
         // Desktop tabs
