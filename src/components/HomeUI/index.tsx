@@ -184,7 +184,7 @@ const HomeUI = () => {
 
           setTransactionType(parsedData.TransactionType);
           setData(parsedData);
-
+          setAmount(parsedData.Amount || "");
           if (parsedData.PhoneNumber) {
             console.log("Ignoring QR phone number:", parsedData.PhoneNumber);
           }
