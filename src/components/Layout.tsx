@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { Home, Clock } from 'lucide-react'; // icons for Home and History
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -36,19 +37,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {isMobile ? (
         // Mobile bottom navigation
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-2 z-50 shadow-lg">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabClick(tab.path)}
-              className={`flex flex-col items-center p-2 w-full ${
-                activeTab === tab.id ? 'text-green-600' : 'text-gray-500'
-              }`}
-            >
-              <span className="text-sm">{tab.label}</span>
-            </button>
-          ))}
+        <div className="fixed bottom-0 left-0 right-0 bg-blue-900 flex justify-around divide-x divide-gray-300 py-2 z-50 shadow-lg">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabClick(tab.path)}
+                className={`flex items-center justify-center gap-1 w-full px-2 ${
+                  activeTab === tab.id ? 'text-green-400' : 'text-white'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-sm">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
+
+
       ) : (
         // Desktop tabs
         <div className="bg-white border-b border-gray-200">
@@ -74,6 +81,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 }
 
 const tabs = [
-  { id: 'home', label: 'Home', path: 'back' }, // changed to Back
-  { id: 'history', label: 'History', path: '/history' },
+  { id: 'home', label: 'Home', path: 'back', icon: Home },
+  { id: 'history', label: 'History', path: '/history', icon: Clock },
 ];
+
