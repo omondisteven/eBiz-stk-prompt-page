@@ -37,7 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {isMobile ? (
         // Mobile bottom navigation
-        <div className="fixed bottom-0 left-0 right-0 bg-blue-1000 flex justify-around divide-x divide-gray-300 py-2 z-50 shadow-lg md:hidden">
+        <div className="fixed bottom-0 left-0 right-0 bg-blue-900 flex justify-around divide-x divide-gray-300 py-2 z-50 shadow-lg md:hidden">
           <div className="w-full max-w-md mx-auto flex justify-around">
             {tabs.map((tab) => {
               const Icon = tab.icon;
