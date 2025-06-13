@@ -5,33 +5,45 @@ import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/button";
 import TransactionTable from "@/components/ui/TransactionTable";
-import { useAppContext } from "@/context/AppContext";
-import Layout from "@/components/Layout";
 import { useRouter } from "next/router";
+import Layout from "@/components/Layout";
 
 export default function TransactionHistoryPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [selectedTx, setSelectedTx] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
-  const { data: appData } = useAppContext();
+  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const router = useRouter();
 
-  // Get phone number from app context or localStorage
-  const phoneNumber = appData?.phoneNumber || 
-    (typeof window !== 'undefined' ? localStorage.getItem('payerPhoneNumber') : null);
+  useEffect(() => {
+    // Get phone number from localStorage
+    const getPhoneNumber = () => {
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem('payerPhoneNumber') || null;
+      }
+      return null;
+    };
+
+    const phone = getPhoneNumber();
+    setPhoneNumber(phone);
+
+    if (!phone) {
+      router.push('/');
+      return;
+    }
+  }, [router]);
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        if (!phoneNumber) {
-          router.push('/');
-          return;
-        }
+        if (!phoneNumber) return;
 
         setLoading(true);
         const formattedPhone = String(phoneNumber).startsWith('254') 
           ? String(phoneNumber) 
           : `254${String(phoneNumber).slice(-9)}`;
+
+        console.log("Fetching transactions for:", formattedPhone); // Debug log
 
         const q = query(
           collection(db, "transactions"),
@@ -48,11 +60,12 @@ export default function TransactionHistoryPage() {
             amount: data.amount,
             phoneNumber: data.phoneNumber,
             status: data.status,
-            timestamp: data.timestamp || data.processedAt?.toDate()?.toISOString(),
+            timestamp: data.timestamp?.toDate?.()?.toISOString() || data.timestamp || data.processedAt?.toDate?.()?.toISOString(),
             details: data.details
           };
         });
 
+        console.log("Fetched transactions:", txData); // Debug log
         setTransactions(txData);
       } catch (error) {
         console.error("Error fetching transactions:", error);
@@ -64,7 +77,7 @@ export default function TransactionHistoryPage() {
     if (phoneNumber && phoneNumber.length >= 12) {
       fetchTransactions();
     }
-  }, [phoneNumber, router]);
+  }, [phoneNumber]);
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
