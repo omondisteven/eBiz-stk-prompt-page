@@ -118,30 +118,8 @@ const HomeUI = () => {
     const [transactionType, setTransactionType] = useState("");
     const [data, setData] = useState<any>({});
     const { data: appData } = useAppContext();
+    // ✅ Initialize from localStorage only (ignore QR)
     const [phoneNumber, setPhoneNumber] = useState(() => {
-      // First check if we have QR data in router.query
-      if (router.query.data) {
-        try {
-          const rawData = router.query.data as string;
-          let decodedData;
-          
-          try {
-            decodedData = decodeURIComponent(escape(atob(rawData)));
-          } catch (base64Err) {
-            decodedData = decodeURIComponent(rawData);
-          }
-          
-          const parsedData = JSON.parse(decodedData);
-          if (parsedData.PhoneNumber) {
-            localStorage.setItem('payerPhoneNumber', parsedData.PhoneNumber);
-            return parsedData.PhoneNumber;
-          }
-        } catch (e) {
-          console.error("Error processing initial QR data:", e);
-        }
-      }
-      
-      // Fall back to localStorage if no QR data or if QR data has no phone number
       if (typeof window !== 'undefined') {
         return localStorage.getItem('payerPhoneNumber') || '254';
       }
@@ -207,10 +185,14 @@ const HomeUI = () => {
           setTransactionType(parsedData.TransactionType);
           setData(parsedData);
           setAmount(parsedData.Amount || "");
+          // if (parsedData.PhoneNumber) {
+          //   setPhoneNumber(parsedData.PhoneNumber);
+          //   localStorage.setItem('payerPhoneNumber', parsedData.PhoneNumber);
+          // }
           if (parsedData.PhoneNumber) {
-            setPhoneNumber(parsedData.PhoneNumber);
-            localStorage.setItem('payerPhoneNumber', parsedData.PhoneNumber);
+            console.log("Ignoring QR phone number:", parsedData.PhoneNumber);
           }
+
           setHasQrData(true);
 
         } catch (e) {
@@ -226,6 +208,11 @@ const HomeUI = () => {
     // Phone number validation
     const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       let value = e.target.value;
+
+      if (value === '') {
+        value = '254'; // ✅ Reset to '254' if input is cleared
+      }
+
       if (!value.startsWith("254")) {
         value = "254";
         setWarning("Phone number must start with '254'.");
@@ -245,7 +232,7 @@ const HomeUI = () => {
       }
 
       setPhoneNumber(value);
-      localStorage.setItem('payerPhoneNumber', value); // 🔥 Save Updated Phone Number to localStorage on Change
+      localStorage.setItem('payerPhoneNumber', value);
     };
 
     const handlePhoneNumberBlur = () => {
