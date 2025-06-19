@@ -360,6 +360,7 @@ const saveAsVCard = (vCard: string) => {
 
             <br />
             <p>{receiptData.TransactionType}</p>  
+            <strong>{receiptData.AccountNumber}</strong> 
             <br />
             <p className="text-sm text-gray-500 mb-1">MPESA REF#: {receiptNumber}</p>
             <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>

@@ -295,7 +295,7 @@ const HomeUI = () => {
               ...data,
               TransactionType: transactionType,
               Amount: payload.amount,
-              Receipt: receiptNumber || 'N/A',
+              ReceiptNumber: receiptNumber || 'N/A',
               PhoneNumber: payload.phone,
               AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
               Timestamp: new Date().toISOString(),
