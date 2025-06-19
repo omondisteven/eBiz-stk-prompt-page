@@ -450,7 +450,7 @@ const HomeUI = () => {
             {transactionType === 'Contact' ? (
               <>E-BUSINESS CARD SCAN DETAILS</>
             ) : (
-              <>e-BIZ: M-PESA PAYMENT PAGE - MAIN COPY</>
+              <>e-BIZ: M-PESA PAYMENT PAGE</>
             )}
           </h2>
         </div>
