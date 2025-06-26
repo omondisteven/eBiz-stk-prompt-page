@@ -109,6 +109,13 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
   );
 };
 
+ // Add this helper function
+    function getReceiptFromDetails(details: any): string | null {
+      if (!details || !Array.isArray(details)) return null;
+      const receiptItem = details.find((item: any) => item.Name === "MpesaReceiptNumber");
+      return receiptItem ? receiptItem.Value : null;
+    }
+
 const HomeUI = () => {
   useEffect(() => {
     console.log("Phone number initialized:", phoneNumber);
@@ -288,6 +295,7 @@ const HomeUI = () => {
           if (!checkRes.ok) throw new Error(await checkRes.text());
           const { status, details, resultCode, receiptNumber } = await checkRes.json();
           console.log(`[${transactionId}] Status: ${status}, ResultCode: ${resultCode}, Receipt: ${receiptNumber}`);
+          
           if (status === 'Success') {
             setPaymentStatus('success');
             cleanup();
@@ -295,7 +303,7 @@ const HomeUI = () => {
               ...data,
               TransactionType: transactionType,
               Amount: payload.amount,
-              ReceiptNumber: receiptNumber || 'N/A',
+              ReceiptNumber: receiptNumber || getReceiptFromDetails(details) || 'N/A', // Updated line
               PhoneNumber: payload.phone,
               AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
               Timestamp: new Date().toISOString(),
@@ -320,7 +328,7 @@ const HomeUI = () => {
         } catch (error) {
           console.error(`[${transactionId}] Poll error:`, error);
         }
-      };
+      };     
 
       // Start polling
       const pollInterval = setInterval(pollPaymentStatus, 3000);

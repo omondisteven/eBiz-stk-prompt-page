@@ -15,7 +15,7 @@ type PaymentStatus = {
   details: CallbackMetadataItem[] | string;
   amount?: number;
   phoneNumber?: string;
-  receiptNumber?: string;
+  receiptNumber?: string | null; // Updated to allow null
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -50,17 +50,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const amountObj = CallbackMetadata?.Item?.find((i: CallbackMetadataItem) => i.Name === "Amount");
     const receiptObj = CallbackMetadata?.Item?.find((i: CallbackMetadataItem) => i.Name === "MpesaReceiptNumber");
     const phoneObj = CallbackMetadata?.Item?.find((i: CallbackMetadataItem) => i.Name === "PhoneNumber");
+    const receiptNumber = receiptObj?.Value as string;
 
     const statusUpdate: PaymentStatus = {
-      timestamp: new Date().toISOString(),
-      status: ResultCode === 0 ? 'Success' : 'Failed',
-      details: CallbackMetadata?.Item || ResultDesc,
-      amount: amountObj?.Value as number,
-      phoneNumber: String(phoneObj?.Value),
-      receiptNumber: receiptObj?.Value as string  // This should be properly set
-    };
+    timestamp: new Date().toISOString(),
+    status: ResultCode === 0 ? 'Success' : 'Failed',
+    details: CallbackMetadata?.Item || ResultDesc,
+    amount: amountObj?.Value as number,
+    phoneNumber: String(phoneObj?.Value),
+    receiptNumber: receiptNumber || null // Make sure this is set
+  };
 
-  // Then when saving to Firestore:
+    // When saving to Firestore:
     await adminDb
       .collection('transactions')
       .doc(CheckoutRequestID)
@@ -69,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ...statusUpdate,
         processedAt: new Date(),
         transactionType: ResultCode === 0 ? 'completed' : 'failed',
-        receiptNumber: statusUpdate.receiptNumber || null  // Ensure this is saved
+        receiptNumber: statusUpdate.receiptNumber || null
       });
 
     // Store the phone number in the database if this is the first transaction
