@@ -67,7 +67,7 @@ async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
       ? "https://api.safaricom.co.ke"
       : "https://sandbox.safaricom.co.ke";
 
-    // Generate token
+    // Generate OAuth token
     const auth = Buffer.from(
       `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
     ).toString('base64');
@@ -83,9 +83,10 @@ async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
 
     const token = tokenResponse.data.access_token;
 
+    // Prepare STK Query payload
     const date = new Date();
     const timestamp =
-      date.getFullYear() +
+      date.getFullYear().toString() +
       ("0" + (date.getMonth() + 1)).slice(-2) +
       ("0" + date.getDate()).slice(-2) +
       ("0" + date.getHours()).slice(-2) +
@@ -112,36 +113,38 @@ async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
     );
 
     const queryData = queryResponse.data;
-    
-    // Extract receipt number from callback metadata if available
-    let receiptNumber = null;
-    if (queryData.ResultCode === '0' && queryData.CallbackMetadata && queryData.CallbackMetadata.Item) {
-      const receiptObj = queryData.CallbackMetadata.Item.find((i: any) => i.Name === "MpesaReceiptNumber");
-      receiptNumber = receiptObj?.Value || null;
+
+    // ✅ Extract receipt number if available
+    let receiptNumber: string | null = null;
+    if (queryData.CallbackMetadata?.Item) {
+      const receiptItem = queryData.CallbackMetadata.Item.find((item: any) => item.Name === "MpesaReceiptNumber");
+      receiptNumber = receiptItem?.Value || null;
     }
 
     return res.status(200).json({
       status: queryData.ResultCode === '0' ? 'Success' : 'Failed',
       details: queryData.ResultDesc || 'No details available',
       resultCode: queryData.ResultCode,
-      receiptNumber
+      receiptNumber: receiptNumber || null,
     });
 
   } catch (error: any) {
-    console.error('STK Query error:', error);
-    
+    console.error('STK Query error:', error?.response?.data || error);
+
     if (error.response?.data?.errorCode === '500.001.1001') {
       return res.status(200).json({
         status: 'Pending',
         details: 'The transaction is still processing',
-        resultCode: '500.001.1001'
+        resultCode: '500.001.1001',
+        receiptNumber: null,
       });
     }
 
-    return res.status(200).json({
-      status: 'Pending',
-      details: 'Status check in progress',
-      resultCode: '500.001.1001'
+    return res.status(500).json({
+      status: 'Error',
+      details: 'Failed to query STK status',
+      resultCode: '500',
+      receiptNumber: null,
     });
   }
 }

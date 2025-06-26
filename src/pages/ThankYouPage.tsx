@@ -99,7 +99,7 @@ const ThankYouPage = () => {
         setReceiptNumber(
           parsedData.ReceiptNumber || 
           parsedData.MpesaReceiptNumber || 
-          (parsedData.details?.find ? 
+          (Array.isArray(parsedData.details) ? 
             parsedData.details.find((item: any) => item.Name === "MpesaReceiptNumber")?.Value : null) || 
           'N/A'
         );
