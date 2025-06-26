@@ -26,21 +26,21 @@ const ThankYouPage = () => {
   const [showContactInstructionModal, setShowContactInstructionModal] = useState(false);
 
   useEffect(() => {
-    if (router.query.data) {
+  if (router.query.data) {
+    try {
+      let rawData = router.query.data as string;
+      console.log("✅ Raw data received from QR:", rawData);
+
+      let decodedData;
+      let parsedData;
+
+      // Attempt 1: Direct Base64 decode (new format)
       try {
-        let rawData = router.query.data as string;
-        console.log("✅ Raw data received from QR:", rawData);
-
-        let decodedData;
-        let parsedData;
-
-        // Attempt 1: Direct Base64 decode (new format)
-        try {
-          decodedData = decodeURIComponent(escape(atob(rawData)));
-          parsedData = JSON.parse(decodedData);
-          console.log("✅ Successfully decoded with Base64 method");
-        } catch (base64Err) {
-          console.warn("⚠️ Base64 decode failed, trying alternative methods:", base64Err);
+        decodedData = decodeURIComponent(escape(atob(rawData)));
+        parsedData = JSON.parse(decodedData);
+        console.log("✅ Successfully decoded with Base64 method");
+      } catch (base64Err) {
+        console.warn("⚠️ Base64 decode failed, trying alternative methods:", base64Err);
 
           // Attempt 2: Double URI decode (legacy format)
           try {
@@ -89,7 +89,20 @@ const ThankYouPage = () => {
         // Set the data
         setReceiptData(parsedData);
         
-        setReceiptNumber(parsedData.ReceiptNumber || 'N/A');
+        // After parsing, ensure we're getting the receipt number correctly
+      console.log("Parsed data:", parsedData); // Add this for debugging
+      
+      // Set the data
+      setReceiptData(parsedData);
+      
+      // Update this line to check both ReceiptNumber and MpesaReceiptNumber
+        setReceiptNumber(
+          parsedData.ReceiptNumber || 
+          parsedData.MpesaReceiptNumber || 
+          (parsedData.details?.find ? 
+            parsedData.details.find((item: any) => item.Name === "MpesaReceiptNumber")?.Value : null) || 
+          'N/A'
+        );
 
         if (parsedData.Timestamp) {
           const parsedDate = new Date(parsedData.Timestamp);

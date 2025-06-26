@@ -56,9 +56,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status: ResultCode === 0 ? 'Success' : 'Failed',
       details: CallbackMetadata?.Item || ResultDesc,
       amount: amountObj?.Value as number,
-      phoneNumber: String(phoneObj?.Value), // Convert to string
-      receiptNumber: receiptObj?.Value as string
+      phoneNumber: String(phoneObj?.Value),
+      receiptNumber: receiptObj?.Value as string  // This should be properly set
     };
+
+  // Then when saving to Firestore:
+    await adminDb
+      .collection('transactions')
+      .doc(CheckoutRequestID)
+      .set({
+        phoneNumber: statusUpdate.phoneNumber || 'unknown',
+        ...statusUpdate,
+        processedAt: new Date(),
+        transactionType: ResultCode === 0 ? 'completed' : 'failed',
+        receiptNumber: statusUpdate.receiptNumber || null  // Ensure this is saved
+      });
 
     // Store the phone number in the database if this is the first transaction
     if (statusUpdate.phoneNumber && statusUpdate.phoneNumber !== "254") {
