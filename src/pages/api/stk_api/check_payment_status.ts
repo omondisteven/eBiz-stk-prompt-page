@@ -115,10 +115,12 @@ async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
     const queryData = queryResponse.data;
 
     // ✅ Extract receipt number if available
-    let receiptNumber: string | null = null;
-    if (queryData.CallbackMetadata?.Item) {
-      const receiptItem = queryData.CallbackMetadata.Item.find((item: any) => item.Name === "MpesaReceiptNumber");
-      receiptNumber = receiptItem?.Value || null;
+    let receiptNumber = null;
+    if (queryData.ResultCode === '0' && queryData.CallbackMetadata && queryData.CallbackMetadata.Item) {
+      const receiptObj = queryData.CallbackMetadata.Item.find((i: any) => 
+        i.Name === "MpesaReceiptNumber" || i.Name === "ReceiptNumber"
+      );
+      receiptNumber = receiptObj?.Value || null;
     }
 
     return res.status(200).json({

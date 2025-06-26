@@ -356,6 +356,7 @@ const HomeUI = () => {
       console.error(`[${transactionId}] Payment error:`, error);
       toast.error(error instanceof Error ? error.message : 'Payment failed');
     }
+    
   };
     // ******PAYMENT METHODS******
     const handlePayBill = () => {

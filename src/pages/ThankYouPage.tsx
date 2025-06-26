@@ -99,8 +99,10 @@ const ThankYouPage = () => {
         setReceiptNumber(
           parsedData.ReceiptNumber || 
           parsedData.MpesaReceiptNumber || 
-          (Array.isArray(parsedData.details) ? 
-            parsedData.details.find((item: any) => item.Name === "MpesaReceiptNumber")?.Value : null) || 
+          (parsedData.details?.find ? 
+            parsedData.details.find((item: any) => 
+              item.Name === "MpesaReceiptNumber" || item.Name === "ReceiptNumber"
+            )?.Value : null) || 
           'N/A'
         );
 
@@ -375,7 +377,9 @@ const saveAsVCard = (vCard: string) => {
             <p>{receiptData.TransactionType}</p>  
             <strong>{receiptData.AccountNumber}</strong> 
             <br />
-            <p className="text-sm text-gray-500 mb-1">MPESA REF#: {receiptNumber}</p>
+            <p className="text-sm text-gray-500 mb-1">
+              MPESA REF#: {receiptNumber === 'N/A' ? 'Not available - please contact support' : receiptNumber}
+            </p>
             <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
             <br />
             <div className="w-full text-red-600 font-semibold italic p-4 rounded-3xl shadow-lg animate-blink">
