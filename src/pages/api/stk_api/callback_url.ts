@@ -84,19 +84,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
 
     // Save to Firestore
-    try {
-      await adminDb
-        .collection('transactions')
-        .doc(CheckoutRequestID)
-        .set(transactionData);
-
-      console.log('Transaction saved to Firestore:', {
-        requestId: CheckoutRequestID,
-        status: statusUpdate.status,
-        amount,
-        phone: phoneNumber,
-        receipt: receiptNumber
-      });
+    // Save to Firestore
+  try {
+    await adminDb
+      .collection('transactions')
+      .doc(CheckoutRequestID)
+      .set({
+        Amount: statusUpdate.amount || 0,
+        MpesaReceiptNumber: statusUpdate.receiptNumber || null,
+        Balance: null, // Update if available
+        TransactionDate: statusUpdate.timestamp.replace(/\D/g, '').slice(0, 14), // Format as YYYYMMDDHHmmss
+        PhoneNumber: statusUpdate.phoneNumber || 'unknown',
+        phoneNumber: statusUpdate.phoneNumber || 'unknown',
+        processedAt: new Date(),
+        receiptNumber: statusUpdate.receiptNumber || null,
+        status: statusUpdate.status === 'Success' ? 'Success' : 'Failed',
+        timestamp: statusUpdate.timestamp,
+        transactionType: statusUpdate.status === 'Success' ? 'completed' : 'failed'
+      }, { merge: true });
 
       // Store the phone number in users collection if valid
       if (phoneNumber && phoneNumber !== "254") {

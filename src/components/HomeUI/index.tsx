@@ -303,7 +303,8 @@ const HomeUI = () => {
               ...data,
               TransactionType: transactionType,
               Amount: payload.amount,
-              ReceiptNumber: receiptNumber || getReceiptFromDetails(details) || 'N/A', // Updated line
+              MpesaReceiptNumber: receiptNumber || (Array.isArray(details) ? 
+                details.find((item: any) => item.Name === "MpesaReceiptNumber")?.Value : 'N/A'),
               PhoneNumber: payload.phone,
               AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
               Timestamp: new Date().toISOString(),
@@ -312,7 +313,7 @@ const HomeUI = () => {
             toast.success('Payment successful!');
             router.push({
               pathname: '/ThankYouPage',
-              query: { data: JSON.stringify(paymentDetails) }
+              query: { data: btoa(JSON.stringify(paymentDetails)) } // Encode as Base64
             });
           } else if (status === 'Failed') {
             setPaymentStatus('failed');

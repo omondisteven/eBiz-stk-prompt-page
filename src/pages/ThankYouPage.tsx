@@ -97,14 +97,10 @@ const ThankYouPage = () => {
       
       // Update this line to check both ReceiptNumber and MpesaReceiptNumber
         setReceiptNumber(
-          parsedData.ReceiptNumber || 
           parsedData.MpesaReceiptNumber || 
-          (parsedData.details?.find ? 
-            parsedData.details.find((item: any) => 
-              item.Name === "MpesaReceiptNumber" || item.Name === "ReceiptNumber"
-            )?.Value : null) || 
-          'N/A'
-        );
+          parsedData.ReceiptNumber || 
+          (Array.isArray(parsedData.details) ? 
+            parsedData.details.find((item: any) => item.Name === "MpesaReceiptNumber")?.Value : 'N/A'));
 
         if (parsedData.Timestamp) {
           const parsedDate = new Date(parsedData.Timestamp);
