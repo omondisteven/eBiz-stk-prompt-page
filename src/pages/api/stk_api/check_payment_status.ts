@@ -1,10 +1,11 @@
 // src/pages/api/stk_api/check_payment_status.ts
+
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
-import { adminDb } from '../../../lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
 import axios from 'axios';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { adminDb } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 type PaymentStatus = {
   timestamp: string;
@@ -26,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // First check Firestore
+    // 1. Check Firestore for the transaction
     const docRef = doc(db, 'transactions', checkout_id);
     const docSnap = await getDoc(docRef);
 
@@ -40,57 +41,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // If not in DB and force_query is true, perform STK query
+    // 2. If not found, and force_query is true, fallback to STK Query
     if (force_query === 'true') {
       return await queryStkStatus(checkout_id, res);
     }
 
-    // Default pending response
-    return res.status(200).json({ 
+    // 3. Default pending response
+    return res.status(200).json({
       status: 'Pending',
       details: 'Waiting for payment confirmation',
       resultCode: '500.001.1001'
     });
 
   } catch (error) {
-    console.error('Status check error:', error);
+    console.error('🔥 Top-level status check error:', error);
     return res.status(500).json({
       status: 'Error',
-      details: 'Failed to check status',
-      resultCode: '500.001.1001'
+      details: 'Unexpected server error during status check',
+      resultCode: '500.001.1000'
     });
   }
 }
 
-export async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
+async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
   try {
     const mpesaEnv = process.env.MPESA_ENVIRONMENT;
-    const MPESA_BASE_URL = mpesaEnv === "live"
-      ? "https://api.safaricom.co.ke"
-      : "https://sandbox.safaricom.co.ke";
+    const MPESA_BASE_URL = mpesaEnv === 'live'
+      ? 'https://api.safaricom.co.ke'
+      : 'https://sandbox.safaricom.co.ke';
 
     const shortcode = process.env.MPESA_SHORTCODE!;
     const passkey = process.env.MPESA_PASSKEY!;
     const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, '').slice(0, 14);
     const password = Buffer.from(`${shortcode}${passkey}${timestamp}`).toString('base64');
 
-    // Generate OAuth token
     const auth = Buffer.from(`${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`).toString('base64');
-    const { data: tokenRes } = await axios.get(`${MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`, {
+
+    const tokenRes = await axios.get(`${MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`, {
       headers: { Authorization: `Basic ${auth}` }
     });
-    const accessToken = tokenRes.access_token;
 
-    const queryUrl = `${MPESA_BASE_URL}/mpesa/stkpushquery/v1/query`;
-    const { data: queryRes } = await axios.post(queryUrl, {
+    const accessToken = tokenRes.data.access_token;
+    if (!accessToken) throw new Error('❌ No access token received');
+
+    const stkQueryUrl = `${MPESA_BASE_URL}/mpesa/stkpushquery/v1/query`;
+    const stkQueryPayload = {
       BusinessShortCode: shortcode,
       Password: password,
       Timestamp: timestamp,
-      CheckoutRequestID: checkoutId
-    }, {
+      CheckoutRequestID: checkoutId,
+    };
+
+    const queryRes = await axios.post(stkQueryUrl, stkQueryPayload, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       }
     });
 
@@ -99,30 +104,30 @@ export async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
       ResultDesc,
       MpesaReceiptNumber,
       Amount,
-      PhoneNumber,
-      TransactionDate
-    } = queryRes;
+      PhoneNumber
+    } = queryRes.data;
 
-    const status = ResultCode === "0" ? 'Success' : 'Failed';
+    const status: PaymentStatus['status'] = ResultCode === '0' ? 'Success' : 'Failed';
+    const timestampNow = new Date().toISOString();
 
     if (status === 'Success') {
-      const transactionData = {
+      const txData = {
         Amount: Amount || 0,
         MpesaReceiptNumber: MpesaReceiptNumber || null,
         PhoneNumber: PhoneNumber || 'unknown',
         phoneNumber: PhoneNumber || 'unknown',
         receiptNumber: MpesaReceiptNumber || null,
         status: 'Success',
-        timestamp: new Date().toISOString(),
+        timestamp: timestampNow,
         transactionType: 'completed',
         processedAt: new Date(),
-        TransactionDate: new Date().toISOString().replace(/\D/g, '').slice(0, 14)
+        TransactionDate: timestampNow.replace(/\D/g, '').slice(0, 14),
+        source: 'STK_QUERY'
       };
 
-      // Save to Firestore
-      await adminDb.collection('transactions').doc(checkoutId).set(transactionData, { merge: true });
+      await adminDb.collection('transactions').doc(checkoutId).set(txData, { merge: true });
 
-      // Update user collection
+      // Optionally update users collection
       if (PhoneNumber && PhoneNumber !== '254') {
         await adminDb.collection('users').doc(PhoneNumber).set({
           phoneNumber: PhoneNumber,
@@ -136,15 +141,15 @@ export async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
       status,
       resultCode: ResultCode,
       receiptNumber: MpesaReceiptNumber || null,
-      details: queryRes
+      details: queryRes.data
     });
 
-  } catch (error) {
-    console.error("STK Query Error:", error);
+  } catch (error: any) {
+    console.error('❌ STK Query Error:', error?.response?.data || error.message || error);
     return res.status(500).json({
       status: 'Error',
-      resultCode: '500.001.1002',
-      details: 'Failed to query STK push status'
+      resultCode: '500.001.1003',
+      details: error?.response?.data || 'Unhandled server error in queryStkStatus'
     });
   }
 }
