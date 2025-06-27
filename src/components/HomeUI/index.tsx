@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
 import { useAppContext } from "@/context/AppContext";
 import Link from "next/link";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 // import TransactionHistoryModal from "../TransactionHistoryModal";
 
 // Add this Calculator component near your other imports
@@ -286,22 +284,6 @@ const HomeUI = () => {
       if (!result.CheckoutRequestID) throw new Error('No CheckoutRequestID received');
       const checkoutId = result.CheckoutRequestID;
       console.log(`[${transactionId}] CheckoutRequestID: ${checkoutId}`);
-
-      const verifyFirebaseWrite = async (checkoutId: string) => {
-        try {
-          const docRef = doc(db, 'transactions', checkoutId);
-          const docSnap = await getDoc(docRef);
-          
-          if (!docSnap.exists()) {
-            console.error('Transaction not found in Firestore for ID:', checkoutId);
-            // Optional: Retry logic or flag for later sync
-          } else {
-            console.log('✅ Transaction found in Firestore:', checkoutId);
-          }
-        } catch (error) {
-          console.error('Firebase verification error:', error);
-        }
-      };
       toast.success('Enter your M-PESA PIN when prompted');
       // Enhanced polling with STK Query
       const pollPaymentStatus = async () => {

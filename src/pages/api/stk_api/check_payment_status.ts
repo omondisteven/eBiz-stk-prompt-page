@@ -1,5 +1,4 @@
 // src/pages/api/stk_api/check_payment_status.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 import { doc, getDoc } from 'firebase/firestore';
