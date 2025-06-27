@@ -1,3 +1,4 @@
+// callback_url.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { adminDb } from '../../../lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -47,14 +48,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Extract payment details
     const amountObj = CallbackMetadata?.Item?.find((i: CallbackMetadataItem) => i.Name === "Amount");
-    const receiptObj = CallbackMetadata?.Item?.find((i: CallbackMetadataItem) => i.Name === "MpesaReceiptNumber" || i.Name === "ReceiptNumber");
+    // const receiptObj = CallbackMetadata?.Item?.find((i: CallbackMetadataItem) => i.Name === "MpesaReceiptNumber" || i.Name === "ReceiptNumber");
     const phoneObj = CallbackMetadata?.Item?.find((i: CallbackMetadataItem) => i.Name === "PhoneNumber");
     const balanceObj = CallbackMetadata?.Item?.find((i: CallbackMetadataItem) => i.Name === "Balance");
     
-    const receiptNumber = receiptObj?.Value as string;
+    // const receiptNumber = receiptObj?.Value as string;
     const phoneNumber = phoneObj?.Value ? String(phoneObj.Value) : undefined;
     const amount = amountObj?.Value as number;
     const balance = balanceObj?.Value as number;
+
+    const callbackItems = stkCallback.CallbackMetadata?.Item || [];
+    const receiptObj = callbackItems.find((i: CallbackMetadataItem) =>
+      i.Name === "MpesaReceiptNumber" || i.Name === "ReceiptNumber"
+    );
+
+    const receiptNumber = receiptObj?.Value as string;
 
     const statusUpdate: PaymentStatus = {
       timestamp: new Date().toISOString(),
