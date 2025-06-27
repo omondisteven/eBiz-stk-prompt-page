@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import 'react-toastify/dist/ReactToastify.css';
 import { useAppContext } from "@/context/AppContext";
 import Link from "next/link";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 // import TransactionHistoryModal from "../TransactionHistoryModal";
 
@@ -285,23 +285,7 @@ const HomeUI = () => {
       const result = await response.json();
       if (!result.CheckoutRequestID) throw new Error('No CheckoutRequestID received');
       const checkoutId = result.CheckoutRequestID;
-      console.log(`[${transactionId}] CheckoutRequestID: ${checkoutId}`);
-
-      const verifyFirebaseWrite = async (checkoutId: string) => {
-        try {
-          const docRef = doc(db, 'transactions', checkoutId);
-          const docSnap = await getDoc(docRef);
-          
-          if (!docSnap.exists()) {
-            console.error('Transaction not found in Firestore for ID:', checkoutId);
-            // Optional: Retry logic or flag for later sync
-          } else {
-            console.log('✅ Transaction found in Firestore:', checkoutId);
-          }
-        } catch (error) {
-          console.error('Firebase verification error:', error);
-        }
-      };
+      console.log(`[${transactionId}] CheckoutRequestID: ${checkoutId}`);      
       toast.success('Enter your M-PESA PIN when prompted');
       // Enhanced polling with STK Query
       const pollPaymentStatus = async () => {
@@ -327,11 +311,29 @@ const HomeUI = () => {
               AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
               Timestamp: new Date().toISOString(),
             };
+
+            // Write to Firebase
+            try {
+              const docRef = doc(db, 'transactions', checkoutId);
+              await setDoc(docRef, {
+                ...paymentDetails,
+                processedAt: new Date(),
+                status: 'Success',
+                transactionType: 'completed'
+              });
+              console.log('Transaction saved to Firebase');
+            } catch (error) {
+              console.error('Error saving to Firebase:', error);
+            }
+
             console.log(`[${transactionId}] Payment successful!`, paymentDetails);
             toast.success('Payment successful!');
+
+            // ✅ Call Firebase verification before redirect
+              await verifyFirebaseWrite(checkoutId);
             router.push({
               pathname: '/ThankYouPage',
-              query: { data: btoa(JSON.stringify(paymentDetails)) } // Encode as Base64
+              query: { data: btoa(JSON.stringify(paymentDetails)) }
             });
           } else if (status === 'Failed') {
             setPaymentStatus('failed');
@@ -466,6 +468,24 @@ const HomeUI = () => {
       toast.success("Contact saved as CSV!");
     }
   };
+
+  const verifyFirebaseWrite = async (checkoutId: string) => {
+      try {
+        const docRef = doc(db, 'transactions', checkoutId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          console.error('❌ Transaction not found in Firestore for ID:', checkoutId);
+          toast.error("Transaction not saved. Please retry or contact support.");
+          // Optional: Implement retry or backup save logic here
+        } else {
+          console.log('✅ Transaction found in Firestore:', checkoutId);
+        }
+      } catch (error) {
+        console.error('Firebase verification error:', error);
+        toast.error("Error verifying transaction. Check internet or try again.");
+      }
+    };
 
   return (
     <div className="flex flex-col items-center bg-gray-50 min-h-screen">
