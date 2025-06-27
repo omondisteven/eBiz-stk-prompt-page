@@ -84,7 +84,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
 
     // Save to Firestore
-    // Save to Firestore
   try {
     await adminDb
       .collection('transactions')

@@ -2,6 +2,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
+import { adminDb } from '../../../lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import axios from 'axios';
 
 type PaymentStatus = {
@@ -60,93 +62,89 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
-async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
+export async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
   try {
     const mpesaEnv = process.env.MPESA_ENVIRONMENT;
     const MPESA_BASE_URL = mpesaEnv === "live"
       ? "https://api.safaricom.co.ke"
       : "https://sandbox.safaricom.co.ke";
 
+    const shortcode = process.env.MPESA_SHORTCODE!;
+    const passkey = process.env.MPESA_PASSKEY!;
+    const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, '').slice(0, 14);
+    const password = Buffer.from(`${shortcode}${passkey}${timestamp}`).toString('base64');
+
     // Generate OAuth token
-    const auth = Buffer.from(
-      `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
-    ).toString('base64');
+    const auth = Buffer.from(`${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`).toString('base64');
+    const { data: tokenRes } = await axios.get(`${MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`, {
+      headers: { Authorization: `Basic ${auth}` }
+    });
+    const accessToken = tokenRes.access_token;
 
-    const tokenResponse = await axios.get(
-      `${MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`,
-      {
-        headers: {
-          authorization: `Basic ${auth}`,
-        },
+    const queryUrl = `${MPESA_BASE_URL}/mpesa/stkpushquery/v1/query`;
+    const { data: queryRes } = await axios.post(queryUrl, {
+      BusinessShortCode: shortcode,
+      Password: password,
+      Timestamp: timestamp,
+      CheckoutRequestID: checkoutId
+    }, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
       }
-    );
+    });
 
-    const token = tokenResponse.data.access_token;
+    const {
+      ResultCode,
+      ResultDesc,
+      MpesaReceiptNumber,
+      Amount,
+      PhoneNumber,
+      TransactionDate
+    } = queryRes;
 
-    // Prepare STK Query payload
-    const date = new Date();
-    const timestamp =
-      date.getFullYear().toString() +
-      ("0" + (date.getMonth() + 1)).slice(-2) +
-      ("0" + date.getDate()).slice(-2) +
-      ("0" + date.getHours()).slice(-2) +
-      ("0" + date.getMinutes()).slice(-2) +
-      ("0" + date.getSeconds()).slice(-2);
+    const status = ResultCode === "0" ? 'Success' : 'Failed';
 
-    const password = Buffer.from(
-      `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`
-    ).toString('base64');
+    if (status === 'Success') {
+      const transactionData = {
+        Amount: Amount || 0,
+        MpesaReceiptNumber: MpesaReceiptNumber || null,
+        PhoneNumber: PhoneNumber || 'unknown',
+        phoneNumber: PhoneNumber || 'unknown',
+        receiptNumber: MpesaReceiptNumber || null,
+        status: 'Success',
+        timestamp: new Date().toISOString(),
+        transactionType: 'completed',
+        processedAt: new Date(),
+        TransactionDate: new Date().toISOString().replace(/\D/g, '').slice(0, 14)
+      };
 
-    const queryResponse = await axios.post(
-      `${MPESA_BASE_URL}/mpesa/stkpushquery/v1/query`,
-      {
-        BusinessShortCode: process.env.MPESA_SHORTCODE,
-        Password: password,
-        Timestamp: timestamp,
-        CheckoutRequestID: checkoutId,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      // Save to Firestore
+      await adminDb.collection('transactions').doc(checkoutId).set(transactionData, { merge: true });
+
+      // Update user collection
+      if (PhoneNumber && PhoneNumber !== '254') {
+        await adminDb.collection('users').doc(PhoneNumber).set({
+          phoneNumber: PhoneNumber,
+          lastTransaction: new Date(),
+          totalTransactions: FieldValue.increment(1)
+        }, { merge: true });
       }
-    );
-
-    const queryData = queryResponse.data;
-
-    // ✅ Extract receipt number if available
-    let receiptNumber = null;
-    if (queryData.ResultCode === '0' && queryData.CallbackMetadata && queryData.CallbackMetadata.Item) {
-      const receiptObj = queryData.CallbackMetadata.Item.find((i: any) => 
-        i.Name === "MpesaReceiptNumber" || i.Name === "ReceiptNumber"
-      );
-      receiptNumber = receiptObj?.Value || null;
     }
 
     return res.status(200).json({
-      status: queryData.ResultCode === '0' ? 'Success' : 'Failed',
-      details: queryData.ResultDesc || 'No details available',
-      resultCode: queryData.ResultCode,
-      receiptNumber: receiptNumber || null,
+      status,
+      resultCode: ResultCode,
+      receiptNumber: MpesaReceiptNumber || null,
+      details: queryRes
     });
 
-  } catch (error: any) {
-    console.error('STK Query error:', error?.response?.data || error);
-
-    if (error.response?.data?.errorCode === '500.001.1001') {
-      return res.status(200).json({
-        status: 'Pending',
-        details: 'The transaction is still processing',
-        resultCode: '500.001.1001',
-        receiptNumber: null,
-      });
-    }
-
+  } catch (error) {
+    console.error("STK Query Error:", error);
     return res.status(500).json({
       status: 'Error',
-      details: 'Failed to query STK status',
-      resultCode: '500',
-      receiptNumber: null,
+      resultCode: '500.001.1002',
+      details: 'Failed to query STK push status'
     });
   }
 }
