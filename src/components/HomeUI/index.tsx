@@ -305,8 +305,7 @@ const HomeUI = () => {
               ...data,
               TransactionType: transactionType,
               Amount: payload.amount,
-              MpesaReceiptNumber: receiptNumber || (Array.isArray(details) ? 
-                details.find((item: any) => item.Name === "MpesaReceiptNumber")?.Value : 'N/A'),
+              MpesaReceiptNumber: receiptNumber || getReceiptFromDetails(details) || 'N/A',
               PhoneNumber: payload.phone,
               AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
               Timestamp: new Date().toISOString(),

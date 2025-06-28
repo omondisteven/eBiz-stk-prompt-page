@@ -47,9 +47,10 @@ export default function TransactionHistoryPage() {
 
         const q = query(
           collection(db, "transactions"),
-          where("phoneNumber", "==", formattedPhone),
-        //   orderBy("timestamp", "desc")
+          where("PhoneNumber", "==", formattedPhone),
+          orderBy("timestamp", "desc")
         );
+
 
         const snapshot = await getDocs(q);
         const txData = snapshot.docs.map(doc => {
