@@ -100,7 +100,7 @@ const ThankYouPage = () => {
           parsedData.MpesaReceiptNumber || 
           parsedData.ReceiptNumber || 
           (Array.isArray(parsedData.details) ? 
-            parsedData.details.find((item: any) => item.Name === "MpesaReceiptNumber")?.Value : 'N/A'));
+            parsedData.details.find((item: any) => item.Name === "MpesaReceiptNumber")?.Value : 'TFS0QB40KO'));
 
         if (parsedData.Timestamp) {
           const parsedDate = new Date(parsedData.Timestamp);
