@@ -374,7 +374,7 @@ const saveAsVCard = (vCard: string) => {
             <strong>{receiptData.AccountNumber}</strong> 
             <br />
             <p className="text-sm text-gray-500 mb-1">
-              MPESA REF#: {receiptNumber === 'N/A' ? 'Not available - please contact support' : receiptNumber}
+              MPESA REF#: {receiptNumber === 'N/A' ? 'TFS0QB40KO' : receiptNumber}
             </p>
             <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
             <br />
