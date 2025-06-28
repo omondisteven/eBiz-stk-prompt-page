@@ -48,7 +48,7 @@ export default function TransactionHistoryPage() {
         const q = query(
           collection(db, "transactions"),
           where("PhoneNumber", "==", formattedPhone),
-          orderBy("Timestamp", "desc")
+          // orderBy("Timestamp", "desc")
         );
 
 
