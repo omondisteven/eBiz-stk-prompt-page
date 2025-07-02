@@ -274,20 +274,22 @@ const HomeUI = () => {
     };
 
     try {
-      // Initiate STK push
+      // 1. Initiate STK Push
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+
       if (!response.ok) throw new Error(await response.text());
 
       const result = await response.json();
-      if (!result.CheckoutRequestID) throw new Error('No CheckoutRequestID received');
       const checkoutId = result.CheckoutRequestID;
-      console.log(`[${transactionId}] CheckoutRequestID: ${checkoutId}`);      
+      if (!checkoutId) throw new Error('No CheckoutRequestID received');
+      console.log(`[${transactionId}] CheckoutRequestID: ${checkoutId}`);
       toast.success('Enter your M-PESA PIN when prompted');
-      // Enhanced polling with STK Query
+
+      // 2. Poll Payment Status
       const pollPaymentStatus = async () => {
         try {
           console.log(`[${transactionId}] Checking payment status...`);
@@ -295,23 +297,28 @@ const HomeUI = () => {
           const checkRes = await fetch(statusCheckUrl);
 
           if (!checkRes.ok) throw new Error(await checkRes.text());
+
           const { status, details, resultCode, receiptNumber } = await checkRes.json();
           console.log(`[${transactionId}] Status: ${status}, ResultCode: ${resultCode}, Receipt: ${receiptNumber}`);
-          
+
           if (status === 'Success') {
             setPaymentStatus('success');
             cleanup();
+
+            // ✅ Use real receipt, fallback to parsed details if needed
+            const realReceiptNumber = receiptNumber || getReceiptFromDetails(details) || null;
+
             const paymentDetails = {
               ...data,
               TransactionType: transactionType,
               Amount: payload.amount,
-              MpesaReceiptNumber: receiptNumber || getReceiptFromDetails(details) || 'TFS0QB40KO',
+              MpesaReceiptNumber: realReceiptNumber,
               PhoneNumber: payload.phone,
               AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
               Timestamp: new Date().toISOString(),
             };
 
-            // Write to Firebase
+            // ✅ Save to Firestore
             try {
               const docRef = doc(db, 'transactions', checkoutId);
               await setDoc(docRef, {
@@ -328,11 +335,17 @@ const HomeUI = () => {
             console.log(`[${transactionId}] Payment successful!`, paymentDetails);
             toast.success('Payment successful!');
 
-            // ✅ Call Firebase verification before redirect
-              await verifyFirebaseWrite(checkoutId);
+            // ✅ Verify Firestore write before redirect
+            await verifyFirebaseWrite(checkoutId);
+
+            // ✅ Redirect with clean payload
+            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(paymentDetails))));
             router.push({
               pathname: '/ThankYouPage',
-              query: { data: btoa(JSON.stringify(paymentDetails)) }
+              query: {
+                data: encoded,
+                checkout_id: checkoutId
+              }
             });
           } else if (status === 'Failed') {
             setPaymentStatus('failed');
@@ -348,14 +361,14 @@ const HomeUI = () => {
         } catch (error) {
           console.error(`[${transactionId}] Poll error:`, error);
         }
-      };     
+      };
 
-      // Start polling
+      // Start polling immediately and every 3s
       const pollInterval = setInterval(pollPaymentStatus, 3000);
       activeIntervals.add(pollInterval);
-      pollPaymentStatus(); // Immediate first check
+      pollPaymentStatus(); // Initial run
 
-      // Countdown timer
+      // Countdown timer for UI feedback
       const countdownInterval = setInterval(() => {
         setCountdown(prev => {
           if (prev <= 1) {
@@ -376,8 +389,8 @@ const HomeUI = () => {
       console.error(`[${transactionId}] Payment error:`, error);
       toast.error(error instanceof Error ? error.message : 'Payment failed');
     }
-    
   };
+
     // ******PAYMENT METHODS******
     const handlePayBill = () => {
         if (!phoneNumber.trim() || !data.PaybillNumber?.trim() || !data.AccountNumber?.trim() || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
