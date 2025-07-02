@@ -59,10 +59,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const callbackItems = stkCallback.CallbackMetadata?.Item || [];
     const receiptObj = callbackItems.find((i: CallbackMetadataItem) =>
-      i.Name === "MpesaReceiptNumber" || i.Name === "ReceiptNumber"
+      i.Name?.toLowerCase() === "mpesareceiptnumber" || i.Name?.toLowerCase() === "receiptnumber"
     );
-
-    const receiptNumber = receiptObj?.Value as string;
+    const receiptNumber = receiptObj?.Value?.toString() || null;
+    console.log("CallbackMetadata Items:", JSON.stringify(callbackItems, null, 2));
 
     const statusUpdate: PaymentStatus = {
       timestamp: new Date().toISOString(),
@@ -98,13 +98,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .doc(CheckoutRequestID)
       .set({
         Amount: statusUpdate.amount || 0,
-        MpesaReceiptNumber: statusUpdate.receiptNumber || null,
+        MpesaReceiptNumber: receiptNumber,
         Balance: null, // Update if available
         TransactionDate: statusUpdate.timestamp.replace(/\D/g, '').slice(0, 14), // Format as YYYYMMDDHHmmss
         PhoneNumber: statusUpdate.phoneNumber || 'unknown',
         phoneNumber: statusUpdate.phoneNumber || 'unknown',
         processedAt: new Date(),
-        receiptNumber: statusUpdate.receiptNumber || null,
+        receiptNumber: receiptNumber,
         status: statusUpdate.status === 'Success' ? 'Success' : 'Failed',
         timestamp: statusUpdate.timestamp,
         transactionType: statusUpdate.status === 'Success' ? 'completed' : 'failed'

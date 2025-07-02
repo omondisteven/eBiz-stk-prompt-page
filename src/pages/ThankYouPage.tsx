@@ -55,11 +55,19 @@ const ThankYouPage = () => {
 
         setReceiptData(parsedData);
 
+        // ✅ Enhanced fallback for receipt number
+        const getReceiptFromDetails = (details: any[]) => {
+          if (!Array.isArray(details)) return null;
+          const receipt = details.find((item) =>
+            item?.Name?.toLowerCase() === "mpesareceiptnumber" ||
+            item?.Name?.toLowerCase() === "receiptnumber"
+          );
+          return receipt?.Value?.toString() || null;
+        };
+
         const localReceipt = parsedData.MpesaReceiptNumber ||
           parsedData.ReceiptNumber ||
-          (Array.isArray(parsedData.details)
-            ? parsedData.details.find((i: any) => i.Name === "MpesaReceiptNumber")?.Value
-            : null);
+          getReceiptFromDetails(parsedData.details);
 
         if (localReceipt) {
           setReceiptNumber(localReceipt);
@@ -74,7 +82,7 @@ const ThankYouPage = () => {
           setTimestamp(formatted);
         }
 
-        // 🔁 Fallback: fetch from Firestore if no receipt number found
+        // 🔁 Firestore fallback if still no receipt
         if (!localReceipt && router.query.checkout_id) {
           fetch(`/api/stk_api/check_payment_status?checkout_id=${router.query.checkout_id}`)
             .then(res => res.json())
@@ -90,6 +98,7 @@ const ThankYouPage = () => {
       }
     }
   }, [router.query]);
+
 
   const handleDownload = async (format: 'pdf' | 'png') => {
     const input = showContact ? contactRef.current : receiptRef.current;
