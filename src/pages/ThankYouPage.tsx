@@ -26,99 +26,67 @@ const ThankYouPage = () => {
   const [showContactInstructionModal, setShowContactInstructionModal] = useState(false);
 
   useEffect(() => {
-  if (router.query.data) {
-    try {
-      let rawData = router.query.data as string;
-      console.log("✅ Raw data received from QR:", rawData);
-
-      let decodedData;
-      let parsedData;
-
-      // Attempt 1: Direct Base64 decode (new format)
+    if (router.query.data) {
       try {
-        decodedData = decodeURIComponent(escape(atob(rawData)));
-        parsedData = JSON.parse(decodedData);
-        console.log("✅ Successfully decoded with Base64 method");
-      } catch (base64Err) {
-        console.warn("⚠️ Base64 decode failed, trying alternative methods:", base64Err);
+        let rawData = router.query.data as string;
+        let decodedData, parsedData;
 
-          // Attempt 2: Double URI decode (legacy format)
+        try {
+          decodedData = decodeURIComponent(escape(atob(rawData)));
+          parsedData = JSON.parse(decodedData);
+        } catch {
           try {
             decodedData = decodeURIComponent(decodeURIComponent(rawData));
             parsedData = JSON.parse(decodedData);
-            console.log("✅ Successfully decoded with double URI method");
-          } catch (doubleDecodeErr) {
-            console.warn("⚠️ Double decode failed, trying single decode:", doubleDecodeErr);
-
-            // Attempt 3: Single URI decode
+          } catch {
             try {
               decodedData = decodeURIComponent(rawData);
               parsedData = JSON.parse(decodedData);
-              console.log("✅ Successfully decoded with single URI method");
-            } catch (singleDecodeErr) {
-              console.warn("⚠️ Single decode failed, trying raw JSON parse:", singleDecodeErr);
-
-              // Attempt 4: Direct JSON parse (might work for some legacy codes)
+            } catch {
               try {
                 parsedData = JSON.parse(rawData);
-                console.log("✅ Successfully parsed raw JSON");
-              } catch (finalErr) {
-                console.error("❌ All decode attempts failed:", finalErr);
-                toast.error("Invalid QR code format. Please try scanning again.");
+              } catch {
+                toast.error("Invalid QR code format");
                 return;
               }
             }
           }
         }
 
-        // Validate the parsed data
-        if (!parsedData || typeof parsedData !== 'object') {
-          console.error("❌ Parsed data is not an object:", parsedData);
-          toast.error("Invalid QR data structure");
-          return;
-        }
-
-        if (!parsedData.TransactionType && !parsedData.businessName) {
-          console.error("❌ Required fields missing from parsed data:", parsedData);
-          toast.error("QR code missing required data fields");
-          return;
-        }
-
-        console.log("✅ Final parsed data object:", parsedData);
-
-        // Set the data
         setReceiptData(parsedData);
-        
-        // After parsing, ensure we're getting the receipt number correctly
-      console.log("Parsed data:", parsedData); // Add this for debugging
-      
-      // Set the data
-      setReceiptData(parsedData);
-      
-      // Update this line to check both ReceiptNumber and MpesaReceiptNumber
-        setReceiptNumber(
-          parsedData.MpesaReceiptNumber || 
-          parsedData.ReceiptNumber || 
-          (Array.isArray(parsedData.details) ? 
-            parsedData.details.find((item: any) => item.Name === "MpesaReceiptNumber")?.Value : 'TFS0QB40KO'));
+
+        const localReceipt = parsedData.MpesaReceiptNumber ||
+          parsedData.ReceiptNumber ||
+          (Array.isArray(parsedData.details)
+            ? parsedData.details.find((i: any) => i.Name === "MpesaReceiptNumber")?.Value
+            : null);
+
+        if (localReceipt) {
+          setReceiptNumber(localReceipt);
+        }
 
         if (parsedData.Timestamp) {
           const parsedDate = new Date(parsedData.Timestamp);
-          const formattedTimestamp = parsedDate.toLocaleString("en-KE", {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
+          const formatted = parsedDate.toLocaleString("en-KE", {
+            year: "numeric", month: "short", day: "2-digit",
+            hour: "2-digit", minute: "2-digit", second: "2-digit",
           });
-          setTimestamp(formattedTimestamp);
-        } else {
-          setTimestamp('N/A');
+          setTimestamp(formatted);
         }
+
+        // 🔁 Fallback: fetch from Firestore if no receipt number found
+        if (!localReceipt && router.query.checkout_id) {
+          fetch(`/api/stk_api/check_payment_status?checkout_id=${router.query.checkout_id}`)
+            .then(res => res.json())
+            .then(result => {
+              if (result?.receiptNumber) {
+                setReceiptNumber(result.receiptNumber);
+              }
+            });
+        }
+
       } catch (e) {
-        console.error("❌ Error processing QR code data:", e);
-        toast.error("Failed to process QR code. Please try again.");
+        toast.error("Failed to process QR data");
       }
     }
   }, [router.query]);
@@ -374,7 +342,7 @@ const saveAsVCard = (vCard: string) => {
             <strong>{receiptData.AccountNumber}</strong> 
             <br />
             <p className="text-sm text-gray-500 mb-1">
-              MPESA REF#: {receiptNumber === 'N/A' ? 'TFS0QB40KO' : receiptNumber}
+              MPESA REF#: {receiptNumber === 'N/A' ? 'DUMMY-MPESA-REF' : receiptNumber}
             </p>
             <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
             <br />
