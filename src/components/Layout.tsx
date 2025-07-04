@@ -73,7 +73,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   key={tab.id}
                   onClick={() => handleTabClick(tab.path)}
                   className={`flex items-center justify-center gap-1 w-full h-full px-2 ${
-                    isActive ? 'text-green-400 bg-gray-400' : 'text-white hover:bg-gray-800'
+                    isActive ? 'text-green-400 bg-gray-600' : 'text-white hover:bg-gray-800'
                   } transition-colors duration-200`}
                 >
                   <div className="flex flex-col items-center">
