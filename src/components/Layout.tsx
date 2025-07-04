@@ -62,20 +62,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Bottom nav on mobile */}
       {isMobile && (
-        <div className="fixed bottom-0 left-0 right-0 bg-blue-900 flex justify-around divide-x divide-gray-300 py-2 z-50 shadow-lg md:hidden">
-          <div className="w-full max-w-md mx-auto flex justify-around">
+        <div className="fixed bottom-0 left-0 right-0 bg-blue-900 h-16 z-50 shadow-lg md:hidden">
+          <div className="w-full max-w-md mx-auto h-full flex">
             {tabs.map((tab) => {
               const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+
               return (
                 <button
                   key={tab.id}
                   onClick={() => handleTabClick(tab.path)}
-                  className={`flex items-center justify-center gap-1 w-full px-2 ${
-                    activeTab === tab.id ? 'text-green-400 bg-gray-800' : 'text-white hover:bg-gray-800'
-                  } py-2 rounded-md transition-colors duration-200`}
+                  className={`flex items-center justify-center gap-1 w-full h-full px-2 ${
+                    isActive ? 'text-green-400 bg-gray-400' : 'text-white hover:bg-gray-800'
+                  } transition-colors duration-200`}
                 >
-                  <Icon className="w-5 h-5" />
-                  <span className="text-sm">{tab.label}</span>
+                  <div className="flex flex-col items-center">
+                    <Icon className="w-5 h-5" />
+                    <span className="text-sm">{tab.label}</span>
+                  </div>
                 </button>
               );
             })}
