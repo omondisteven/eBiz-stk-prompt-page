@@ -12,6 +12,7 @@ import { useAppContext } from "@/context/AppContext";
 import Link from "next/link";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getReceiptFromDetails } from '@/utils/getReceiptFromDetails';
 // import TransactionHistoryModal from "../TransactionHistoryModal";
 
 // Add this Calculator component near your other imports
@@ -112,11 +113,19 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
 };
 
  // Add this helper function
-    function getReceiptFromDetails(details: any): string | null {
-      if (!details || !Array.isArray(details)) return null;
-      const receiptItem = details.find((item: any) => item.Name === "MpesaReceiptNumber");
-      return receiptItem ? receiptItem.Value : null;
-    }
+    // function getReceiptFromDetails(details: any) {
+    //   if (Array.isArray(details)) {
+    //     const receiptItem = details.find((item) =>
+    //       item?.Name?.toLowerCase() === 'MpesaReceiptNumber' ||
+    //       item?.Name?.toLowerCase() === 'receiptNumber'
+    //     );
+    //     if (receiptItem && typeof receiptItem.Value === 'string') {
+    //       return receiptItem.Value;
+    //     }
+    //   }
+    //   return null;
+    // }
+
 
 const HomeUI = () => {
   useEffect(() => {
@@ -255,7 +264,6 @@ const HomeUI = () => {
     const transactionId = `tx_${Date.now()}`;
     console.log(`[${transactionId}] Initiating payment`);
 
-    // Reset state
     isCompleteRef.current = false;
     setPaymentStatus('pending');
     setIsPaying(true);
@@ -274,7 +282,6 @@ const HomeUI = () => {
     };
 
     try {
-      // 1. Initiate STK Push
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -286,67 +293,51 @@ const HomeUI = () => {
       const result = await response.json();
       const checkoutId = result.CheckoutRequestID;
       if (!checkoutId) throw new Error('No CheckoutRequestID received');
+
       console.log(`[${transactionId}] CheckoutRequestID: ${checkoutId}`);
       toast.success('Enter your M-PESA PIN when prompted');
 
-      // 2. Poll Payment Status
+      const MAX_RECEIPT_RETRIES = 3;
+      let receiptRetryCount = 0;
+
       const pollPaymentStatus = async () => {
         try {
           console.log(`[${transactionId}] Checking payment status...`);
           const statusCheckUrl = `/api/stk_api/check_payment_status?checkout_id=${checkoutId}&t=${Date.now()}&force_query=${countdown < 45}`;
           const checkRes = await fetch(statusCheckUrl);
+          const result = await checkRes.json();
 
-          if (!checkRes.ok) throw new Error(await checkRes.text());
+          const { status, details, resultCode, receiptNumber } = result;
 
-          const { status, details, resultCode, receiptNumber } = await checkRes.json();
           console.log(`[${transactionId}] Status: ${status}, ResultCode: ${resultCode}, Receipt: ${receiptNumber}`);
 
           if (status === 'Success') {
-            setPaymentStatus('success');
-            cleanup();
+            const finalReceipt = receiptNumber || getReceiptFromDetails(details);
 
-            // ✅ Use real receipt, fallback to parsed details if needed
-            const realReceiptNumber = receiptNumber || getReceiptFromDetails(details) || null;
+            if (!finalReceipt) {
+              receiptRetryCount++;
+              console.warn(`[${transactionId}] ❗ Receipt missing (attempt ${receiptRetryCount}/${MAX_RECEIPT_RETRIES})`);
 
-            const paymentDetails = {
-              ...data,
-              TransactionType: transactionType,
-              Amount: payload.amount,
-              MpesaReceiptNumber: realReceiptNumber,
-              PhoneNumber: payload.phone,
-              AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
-              Timestamp: new Date().toISOString(),
-            };
+              if (receiptRetryCount >= MAX_RECEIPT_RETRIES) {
+                console.warn(`[${transactionId}] ❗ Max retries reached — retrying with forced query`);
 
-            // ✅ Save to Firestore
-            try {
-              const docRef = doc(db, 'transactions', checkoutId);
-              await setDoc(docRef, {
-                ...paymentDetails,
-                processedAt: new Date(),
-                status: 'Success',
-                transactionType: 'completed'
-              });
-              console.log('Transaction saved to Firebase');
-            } catch (error) {
-              console.error('Error saving to Firebase:', error);
+                try {
+                  const forceRes = await fetch(`/api/stk_api/check_payment_status?checkout_id=${checkoutId}&force_query=true`);
+                  const forceResult = await forceRes.json();
+                  const forcedReceipt = forceResult?.receiptNumber || getReceiptFromDetails(forceResult?.details);
+
+                  console.log(`[${transactionId}] 🔁 Forced receipt check result:`, forcedReceipt);
+
+                  proceedWithSuccess(forcedReceipt || null);
+                } catch (forceErr) {
+                  console.error(`[${transactionId}] 🔴 Forced check failed`, forceErr);
+                  proceedWithSuccess(null);
+                }
+              }
+              return;
             }
 
-            console.log(`[${transactionId}] Payment successful!`, paymentDetails);
-            toast.success('Payment successful!');
-
-            // ✅ Verify Firestore write before redirect
-            await verifyFirebaseWrite(checkoutId);
-
-            // ✅ Redirect with clean payload
-            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(paymentDetails))));
-            router.push({
-              pathname: '/ThankYouPage',
-              query: {
-                data: encoded,
-                checkout_id: checkoutId
-              }
-            });
+            proceedWithSuccess(finalReceipt);
           } else if (status === 'Failed') {
             setPaymentStatus('failed');
             cleanup();
@@ -363,12 +354,48 @@ const HomeUI = () => {
         }
       };
 
-      // Start polling immediately and every 3s
+      const proceedWithSuccess = (receipt: string | null) => {
+        setPaymentStatus('success');
+        cleanup();
+
+        const paymentDetails = {
+          ...data,
+          TransactionType: transactionType,
+          Amount: payload.amount,
+          receiptNumber: receipt,
+          PhoneNumber: payload.phone,
+          AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
+          Timestamp: new Date().toISOString(),
+        };
+
+        try {
+          const docRef = doc(db, 'transactions', checkoutId);
+          setDoc(docRef, {
+            ...paymentDetails,
+            processedAt: new Date(),
+            status: 'Success',
+            transactionType: 'completed',
+          });
+        } catch (err) {
+          console.error('Error saving transaction:', err);
+        }
+
+        verifyFirebaseWrite(checkoutId);
+
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(paymentDetails))));
+        router.push({
+          pathname: '/ThankYouPage',
+          query: {
+            data: encoded,
+            checkout_id: checkoutId,
+          },
+        });
+      };
+
       const pollInterval = setInterval(pollPaymentStatus, 3000);
       activeIntervals.add(pollInterval);
-      pollPaymentStatus(); // Initial run
+      pollPaymentStatus();
 
-      // Countdown timer for UI feedback
       const countdownInterval = setInterval(() => {
         setCountdown(prev => {
           if (prev <= 1) {
@@ -390,6 +417,20 @@ const HomeUI = () => {
       toast.error(error instanceof Error ? error.message : 'Payment failed');
     }
   };
+
+  // Helper function to extract receipt from details
+  // function getReceiptFromDetails(details: any) {
+  //   if (Array.isArray(details)) {
+  //     const receiptItem = details.find((item) =>
+  //       item?.Name?.toLowerCase() === 'mpesareceiptnumber' ||
+  //       item?.Name?.toLowerCase() === 'receiptnumber'
+  //     );
+  //     if (receiptItem && typeof receiptItem.Value === 'string') {
+  //       return receiptItem.Value;
+  //     }
+  //   }
+  //   return null;
+  // }
 
     // ******PAYMENT METHODS******
     const handlePayBill = () => {

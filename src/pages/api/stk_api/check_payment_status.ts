@@ -1,54 +1,44 @@
-// src/pages/api/stk_api/check_payment_status.ts
+// pages/api/stk_api/check_payment_status.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
-import axios from 'axios';
-
-type PaymentStatus = {
-  timestamp: string;
-  status: 'Pending' | 'Success' | 'Failed' | 'Cancelled';
-  details: any;
-  resultCode?: string;
-  receiptNumber?: string;
-};
+import axios, { AxiosError } from 'axios';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { checkout_id, force_query } = req.query;
 
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  if (!checkout_id || typeof checkout_id !== 'string') {
-    return res.status(400).json({ error: 'Invalid checkout_id' });
-  }
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+  if (!checkout_id || typeof checkout_id !== 'string') return res.status(400).json({ error: 'Invalid checkout_id' });
 
   try {
-    // First check Firestore
     const docRef = doc(db, 'transactions', checkout_id);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
       const data = docSnap.data();
+
+      // ✅ Enhanced receipt extraction
+      const receiptNumber = extractReceiptNumber(data);
+
+      const isSuccess = data.status === 'Success' && !!receiptNumber;
+
       return res.status(200).json({
-        status: data.status === 'Success' ? 'Success' : 'Failed',
+        status: isSuccess ? 'Success' : 'Pending',
         details: data.details,
-        resultCode: data.status === 'Success' ? '0' : '1',
-        // receiptNumber: data.receiptNumber || null
-        receiptNumber: data.MpesaReceiptNumber || null,
+        resultCode: isSuccess ? '0' : '500.001.1001',
+        receiptNumber,
       });
     }
 
-    // If not in DB and force_query is true, perform STK query
+    // Optional: force query Safaricom API
     if (force_query === 'true') {
       return await queryStkStatus(checkout_id, res);
     }
 
-    // Default pending response
-    return res.status(200).json({ 
+    return res.status(200).json({
       status: 'Pending',
       details: 'Waiting for payment confirmation',
-      resultCode: '500.001.1001'
+      resultCode: '500.001.1001',
     });
 
   } catch (error) {
@@ -56,49 +46,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({
       status: 'Error',
       details: 'Failed to check status',
-      resultCode: '500.001.1001'
+      resultCode: '500',
     });
   }
 }
 
+// ✅ Helper to extract receipt number robustly from details
+function extractReceiptNumber(data: any): string | null {
+  const details = data.details;
+
+  if (!Array.isArray(details)) return data.receiptNumber || null;
+
+  const receiptItem = details.find((item: any) =>
+    typeof item?.Name === 'string' &&
+    /receipt/i.test(item.Name)
+  );
+
+  return receiptItem?.Value?.toString() || data.receiptNumber || null;
+}
+
+// ✅ Query Safaricom if needed
 async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
   try {
-    const mpesaEnv = process.env.MPESA_ENVIRONMENT;
-    const MPESA_BASE_URL = mpesaEnv === "live"
-      ? "https://api.safaricom.co.ke"
-      : "https://sandbox.safaricom.co.ke";
+    const MPESA_BASE_URL =
+      process.env.MPESA_ENVIRONMENT === 'live'
+        ? 'https://api.safaricom.co.ke'
+        : 'https://sandbox.safaricom.co.ke';
 
-    // Generate OAuth token
     const auth = Buffer.from(
       `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
     ).toString('base64');
 
-    const tokenResponse = await axios.get(
+    const tokenRes = await axios.get(
       `${MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`,
-      {
-        headers: {
-          authorization: `Basic ${auth}`,
-        },
-      }
+      { headers: { authorization: `Basic ${auth}` } }
     );
 
-    const token = tokenResponse.data.access_token;
-
-    // Prepare STK Query payload
-    const date = new Date();
-    const timestamp =
-      date.getFullYear().toString() +
-      ("0" + (date.getMonth() + 1)).slice(-2) +
-      ("0" + date.getDate()).slice(-2) +
-      ("0" + date.getHours()).slice(-2) +
-      ("0" + date.getMinutes()).slice(-2) +
-      ("0" + date.getSeconds()).slice(-2);
+    const token = tokenRes.data.access_token;
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/\D/g, '').slice(0, 14);
 
     const password = Buffer.from(
       `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`
     ).toString('base64');
 
-    const queryResponse = await axios.post(
+    const queryRes = await axios.post(
       `${MPESA_BASE_URL}/mpesa/stkpushquery/v1/query`,
       {
         BusinessShortCode: process.env.MPESA_SHORTCODE,
@@ -113,41 +105,34 @@ async function queryStkStatus(checkoutId: string, res: NextApiResponse) {
       }
     );
 
-    const queryData = queryResponse.data;
+    const queryData = queryRes.data;
 
-    // ✅ Extract receipt number if available
+    const metadataItems = queryData.CallbackMetadata?.Item || [];
+
     let receiptNumber = null;
-    if (queryData.ResultCode === '0' && queryData.CallbackMetadata && queryData.CallbackMetadata.Item) {
-      const receiptObj = queryData.CallbackMetadata.Item.find((i: any) => 
-        i.Name === "MpesaReceiptNumber" || i.Name === "ReceiptNumber"
-      );
-      receiptNumber = receiptObj?.Value || null;
+
+    const receiptItem = metadataItems.find(
+      (i: any) => typeof i?.Name === 'string' && /receipt/i.test(i.Name)
+    );
+
+    if (receiptItem) {
+      receiptNumber = receiptItem.Value?.toString();
     }
 
     return res.status(200).json({
       status: queryData.ResultCode === '0' ? 'Success' : 'Failed',
-      details: queryData.ResultDesc || 'No details available',
+      details: metadataItems,
       resultCode: queryData.ResultCode,
-      receiptNumber: receiptNumber || null,
+      receiptNumber,
     });
 
-  } catch (error: any) {
-    console.error('STK Query error:', error?.response?.data || error);
-
-    if (error.response?.data?.errorCode === '500.001.1001') {
-      return res.status(200).json({
-        status: 'Pending',
-        details: 'The transaction is still processing',
-        resultCode: '500.001.1001',
-        receiptNumber: null,
-      });
-    }
-
-    return res.status(500).json({
-      status: 'Error',
-      details: 'Failed to query STK status',
-      resultCode: '500',
-      receiptNumber: null,
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    console.error('STK query error:', axiosError?.response?.data || axiosError.message || error);
+    return res.status(200).json({
+      status: 'Pending',
+      details: 'Transaction still processing',
+      resultCode: '500.001.1001',
     });
   }
 }

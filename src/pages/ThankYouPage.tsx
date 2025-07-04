@@ -13,6 +13,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import { toPng } from "html-to-image";
 import { saveAs } from "file-saver";
 import { MousePointerClick } from "lucide-react";
+import { getReceiptFromDetails } from '@/utils/getReceiptFromDetails';
 
 const ThankYouPage = () => {
   const router = useRouter();
@@ -56,18 +57,16 @@ const ThankYouPage = () => {
         setReceiptData(parsedData);
 
         // ✅ Enhanced fallback for receipt number
-        const getReceiptFromDetails = (details: any[]) => {
-          if (!Array.isArray(details)) return null;
-          const receipt = details.find((item) =>
-            item?.Name?.toLowerCase() === "mpesareceiptnumber" ||
-            item?.Name?.toLowerCase() === "receiptnumber"
-          );
-          return receipt?.Value?.toString() || null;
-        };
+        // const getReceiptFromDetails = (details: any[]) => {
+        //   if (!Array.isArray(details)) return null;
+        //   const receipt = details.find((item) =>
+        //     item?.Name?.toLowerCase() === "mpesareceiptnumber" ||
+        //     item?.Name?.toLowerCase() === "receiptnumber"
+        //   );
+        //   return receipt?.Value?.toString() || null;
+        // };
 
-        const localReceipt = parsedData.MpesaReceiptNumber ||
-          parsedData.ReceiptNumber ||
-          getReceiptFromDetails(parsedData.details);
+        const localReceipt = parsedData.receiptNumber || getReceiptFromDetails(parsedData.details);
 
         if (localReceipt) {
           setReceiptNumber(localReceipt);
@@ -84,14 +83,14 @@ const ThankYouPage = () => {
 
         // 🔁 Firestore fallback if still no receipt
         if (!localReceipt && router.query.checkout_id) {
-          fetch(`/api/stk_api/check_payment_status?checkout_id=${router.query.checkout_id}`)
-            .then(res => res.json())
-            .then(result => {
-              if (result?.receiptNumber) {
-                setReceiptNumber(result.receiptNumber);
-              }
-            });
-        }
+        fetch(`/api/stk_api/check_payment_status?checkout_id=${router.query.checkout_id}`)
+          .then(res => res.json())
+          .then(result => {
+            if (result?.receiptNumber) {
+              setReceiptNumber(result.receiptNumber);
+            }
+          });
+      }
 
       } catch (e) {
         toast.error("Failed to process QR data");
@@ -351,7 +350,7 @@ const saveAsVCard = (vCard: string) => {
             <strong>{receiptData.AccountNumber}</strong> 
             <br />
             <p className="text-sm text-gray-500 mb-1">
-              MPESA REF#: {receiptNumber === 'N/A' ? 'DUMMY-MPESA-REF' : receiptNumber}
+              MPESA REF#: {receiptNumber}
             </p>
             <p className="text-sm text-gray-500 mb-4">Date: {timestamp}</p>
             <br />
