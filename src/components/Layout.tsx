@@ -71,8 +71,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   key={tab.id}
                   onClick={() => handleTabClick(tab.path)}
                   className={`flex items-center justify-center gap-1 w-full px-2 ${
-                    activeTab === tab.id ? 'text-green-400' : 'text-white'
-                  }`}
+                    activeTab === tab.id ? 'text-green-400 bg-gray-800' : 'text-white hover:bg-gray-800'
+                  } py-2 rounded-md transition-colors duration-200`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="text-sm">{tab.label}</span>
