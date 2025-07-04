@@ -501,7 +501,7 @@ const HomeUI = () => {
     };
 
   return (
-    <div className="flex flex-col items-center bg-gray-50 min-h-screen">
+    <div className="flex flex-col items-center bg-[#0a0a23] text-white min-h-screen">
       {/* Container with width constraints */}
       <div className="w-full max-w-md flex flex-col flex-grow">
         {/* Header Section */}
@@ -545,7 +545,7 @@ const HomeUI = () => {
                         onChange={handleAmountChange}
                         placeholder="Enter Amount (KES)"
                         type="number"
-                        className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm pr-10 w-full"
+                        className="border border-gray-600 bg-black text-white placeholder-gray-400 focus:border-gray-400 focus:ring-gray-400 rounded-md shadow-sm pr-10 w-full"
                       />
                       <button
                         onClick={() => setShowCalculator(true)}
@@ -574,7 +574,7 @@ const HomeUI = () => {
                         onChange={handleAmountChange}
                         placeholder="Enter Amount (KES)"
                         type="number"
-                        className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm pr-10 w-full"
+                        className="border border-gray-600 bg-black text-white placeholder-gray-400 focus:border-gray-400 focus:ring-gray-400 rounded-md shadow-sm pr-10 w-full"
                       />
                       <button
                         onClick={() => setShowCalculator(true)}
@@ -603,7 +603,7 @@ const HomeUI = () => {
                         onChange={handleAmountChange}
                         placeholder="Enter Amount (KES)"
                         type="number"
-                        className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm pr-10 w-full"
+                        className="border border-gray-600 bg-black text-white placeholder-gray-400 focus:border-gray-400 focus:ring-gray-400 rounded-md shadow-sm pr-10 w-full"
                       />
                       <button
                         onClick={() => setShowCalculator(true)}
@@ -633,7 +633,7 @@ const HomeUI = () => {
                         onChange={handleAmountChange}
                         placeholder="Enter Amount (KES)"
                         type="number"
-                        className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm pr-10 w-full"
+                        className="border border-gray-600 bg-black text-white placeholder-gray-400 focus:border-gray-400 focus:ring-gray-400 rounded-md shadow-sm pr-10 w-full"
                       />
                       <button
                         onClick={() => setShowCalculator(true)}
@@ -692,7 +692,7 @@ const HomeUI = () => {
                       type="tel" // Change to tel input type
                       inputMode="tel" // Ensure numeric keyboard on mobile
                       pattern="[0-9\- ]*" // Only allow numbers, dashes and spaces
-                      className="border-gray-300 focus:border-gray-500 focus:ring-gray-500 rounded-md shadow-sm"
+                      className="border border-gray-600 bg-black text-white placeholder-gray-400 focus:border-gray-400 focus:ring-gray-400 rounded-md shadow-sm"
                       onKeyDown={(e) => {
                         // Only allow numbers, dashes, spaces, and navigation keys
                         const allowedKeys = [
