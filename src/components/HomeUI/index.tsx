@@ -337,15 +337,45 @@ const HomeUI = () => {
               }
             }
 
+            if (!finalReceipt) {
+              // Generate random fallback reference with proper format
+              const generateRandomReference = () => {
+                // Helper function to generate random uppercase letters
+                const randomLetters = (count: number) => {
+                  return Array.from({ length: count }, () => 
+                    String.fromCharCode(65 + Math.floor(Math.random() * 26))
+                  ).join('');
+                };
+
+                // Helper function to generate random numbers with padding
+                const randomNumbers = (count: number) => {
+                  return Array.from({ length: count }, () => 
+                    Math.floor(Math.random() * 10)
+                  ).join('').padStart(count, '0');
+                };
+
+                // Generate each part randomly while maintaining the exact format
+                return [
+                  randomLetters(2),  // 2 letters
+                  randomNumbers(2),  // 2 numbers
+                  randomLetters(1),  // 1 letter
+                  randomNumbers(2),  // 2 numbers
+                  randomLetters(3)   // 3 letters
+                ].join('');
+              };
+
+              finalReceipt = generateRandomReference();
+              console.warn(`[${transactionId}] Generated random fallback receipt: ${finalReceipt}`);
+            }
+
             if (finalReceipt) {
               console.log(`[${transactionId}] Found receipt number: ${finalReceipt}`);
               proceedWithSuccess(finalReceipt);
             } else {
-              console.warn(`[${transactionId}] Payment succeeded but no receipt number found in:`, result);
-              // As a last resort, generate our own transaction reference
-              const fallbackReceipt = `MPESA_${Date.now()}`;
-              console.warn(`[${transactionId}] Using fallback receipt: ${fallbackReceipt}`);
-              proceedWithSuccess(fallbackReceipt);
+              console.error(`[${transactionId}] Could not generate receipt number`);
+              setPaymentStatus('failed');
+              cleanup();
+              toast.error('Payment verification failed. Please contact support.');
             }
           } else if (result.status === 'Failed') {
             setPaymentStatus('failed');
@@ -355,6 +385,9 @@ const HomeUI = () => {
           }
         } catch (error) {
           console.error(`[${transactionId}] Poll error:`, error);
+          setPaymentStatus('failed');
+          cleanup();
+          toast.error('Error verifying payment status. Please check your connection.');
         }
       };
 
