@@ -12,7 +12,7 @@ import { useAppContext } from "@/context/AppContext";
 import Link from "next/link";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { getReceiptFromDetails } from '@/utils/getReceiptFromDetails';
+import { getReceiptFromDetails, CallbackMetadataItem, generateRandomReference } from '@/utils/getReceiptFromDetails';
 // import TransactionHistoryModal from "../TransactionHistoryModal";
 
 // Add this Calculator component near your other imports
@@ -300,48 +300,18 @@ const HomeUI = () => {
             console.log(`[${transactionId}] Full status response:`, result);
 
             if (result.status === 'Success') {
-              // Use getReceiptFromDetails to extract receipt number from multiple possible locations
+              // Try to get receipt number from multiple sources
               let finalReceipt = result.receiptNumber || 
-                              getReceiptFromDetails(result.details) || 
+                              getReceiptFromDetails(result.details) ||
                               getReceiptFromDetails(result.rawData?.Body?.stkCallback?.CallbackMetadata);
 
               if (!finalReceipt) {
-                // Generate random fallback reference with proper format
-                const generateRandomReference = () => {
-                  const randomLetters = (count: number) => {
-                    return Array.from({ length: count }, () => 
-                      String.fromCharCode(65 + Math.floor(Math.random() * 26))
-                    ).join('');
-                  };
-
-                  const randomNumbers = (count: number) => {
-                    return Array.from({ length: count }, () => 
-                      Math.floor(Math.random() * 10)
-                    ).join('').padStart(count, '0');
-                  };
-
-                  return [
-                    randomLetters(2),  // 2 letters
-                    randomNumbers(2),  // 2 numbers
-                    randomLetters(1),  // 1 letter
-                    randomNumbers(2),  // 2 numbers
-                    randomLetters(3)   // 3 letters
-                  ].join('');
-                };
-
+                // Generate random fallback reference only if absolutely necessary
                 finalReceipt = generateRandomReference();
                 console.warn(`[${transactionId}] Generated random fallback receipt: ${finalReceipt}`);
               }
 
-              if (finalReceipt) {
-                console.log(`[${transactionId}] Found receipt number: ${finalReceipt}`);
-                proceedWithSuccess(finalReceipt);
-              } else {
-                console.error(`[${transactionId}] Could not generate receipt number`);
-                setPaymentStatus('failed');
-                cleanup();
-                toast.error('Payment verification failed. Please contact support.');
-              }
+              proceedWithSuccess(finalReceipt, result.details);
             } else if (result.status === 'Failed') {
               setPaymentStatus('failed');
               cleanup();
@@ -356,21 +326,19 @@ const HomeUI = () => {
           }
         };
 
-        const proceedWithSuccess = (receipt: string | null) => {
+        const proceedWithSuccess = (receipt: string, details?: CallbackMetadataItem[]) => {
           setPaymentStatus('success');
           cleanup();
-
-          // Use getReceiptFromDetails again when saving to Firestore for extra verification
-          const verifiedReceipt = receipt || getReceiptFromDetails(data) || 'MANUAL_' + Date.now();
 
           const paymentDetails = {
             ...data,
             TransactionType: transactionType,
-            Amount: payload.amount,
-            receiptNumber: verifiedReceipt,
-            PhoneNumber: payload.phone,
-            AccountNumber: payload.accountnumber || payload.storenumber || 'N/A',
+            Amount: amount,
+            receiptNumber: receipt,
+            PhoneNumber: phoneNumber,
+            AccountNumber: data.AccountNumber || data.TillNumber || data.RecepientPhoneNumber || data.StoreNumber || 'N/A',
             Timestamp: new Date().toISOString(),
+            details: details || [] // Include the original metadata items
           };
 
           try {
@@ -380,7 +348,7 @@ const HomeUI = () => {
               processedAt: new Date(),
               status: 'Success',
               transactionType: 'completed',
-              receiptSource: receipt ? 'official' : 'fallback' // Track receipt source
+              receiptSource: details ? 'official' : 'fallback'
             });
           } catch (err) {
             console.error('Error saving transaction:', err);
