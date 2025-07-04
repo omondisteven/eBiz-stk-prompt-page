@@ -816,7 +816,7 @@ const HomeUI = () => {
   );
 };
 
-HomeUI.getLayout = function getLayout(page: React.ReactNode) {
+export default HomeUI.getLayout = function getLayout(page: React.ReactNode) {
   return <Layout>{page}</Layout>;
 };
 
