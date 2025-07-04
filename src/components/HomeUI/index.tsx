@@ -507,7 +507,7 @@ const HomeUI = () => {
         {/* Header Section */}
         <div className="p-4 border-b border-gray-200 bg-[#0a0a23] shadow-sm rounded-t-lg mx-2 sm:mx-0 mt-2 sm:mt-0">
           <h2 className="text-xl font-bold text-center"
-              style={{color: "#3CB371"}}>
+              style={{color: "#4add8c"}}>
             {transactionType === 'Contact' ? (
               <>E-BUSINESS CARD SCAN DETAILS</>
             ) : (
