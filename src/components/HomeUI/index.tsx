@@ -13,7 +13,6 @@ import Link from "next/link";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getReceiptFromDetails, CallbackMetadataItem, generateRandomReference } from '@/utils/getReceiptFromDetails';
-// import { useRouter } from "next/router";
 import Layout from "@/components/Layout";
 // import TransactionHistoryModal from "../TransactionHistoryModal";
 
@@ -505,8 +504,7 @@ const HomeUI = () => {
     };
 
   return (
-    <Layout>
-      <div className="flex flex-col items-center bg-gray-50 min-h-screen">
+    <div className="flex flex-col items-center bg-gray-50 min-h-screen">
       {/* Container with width constraints */}
       <div className="w-full max-w-md flex flex-col flex-grow">
         {/* Header Section */}
@@ -814,10 +812,12 @@ const HomeUI = () => {
           </Link>
         </div>
       </div>
-    </div>
-    </Layout>
-    
+    </div>    
   );
 };
 
-export default HomeUI;
+HomeUI.getLayout = function getLayout(page: React.ReactNode) {
+  return <Layout>{page}</Layout>;
+};
+
+// export default HomeUI;
