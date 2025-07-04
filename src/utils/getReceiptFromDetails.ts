@@ -3,23 +3,29 @@ type CallbackMetadataItem = {
   Value: string | number;
 };
 
-export function getReceiptFromDetails(details: any): string | null {
-  if (!Array.isArray(details)) return null;
-
-  // Normalize and search for common receipt name patterns
-  const knownKeys = ['MpesaReceiptNumber', 'ReceiptNumber', 'TransactionReceipt'];
-
-  for (const key of knownKeys) {
-    const item = details.find((i: CallbackMetadataItem) =>
-      i?.Name?.toLowerCase().replace(/\s/g, '') === key.toLowerCase().replace(/\s/g, '')
-    );
-    if (item?.Value) return item.Value.toString();
+// Replace the getReceiptFromDetails function with this more robust version
+export function getReceiptFromDetails(details: any) {
+  if (!details) return null;
+  
+  // Handle array format (from callback)
+  if (Array.isArray(details)) {
+    for (const item of details) {
+      if (!item || !item.Name) continue;
+      
+      const name = item.Name.toLowerCase().replace(/\s/g, '');
+      if (name.includes('receipt') || name.includes('mpesareceipt')) {
+        return item.Value?.toString() || null;
+      }
+    }
   }
-
-  // Fallback: find anything that loosely matches "receipt" (case-insensitive)
-  const fallback = details.find((i: CallbackMetadataItem) =>
-    typeof i?.Name === 'string' && /receipt/i.test(i.Name)
-  );
-
-  return fallback?.Value?.toString() || null;
+  
+  // Handle object format (from Firestore)
+  if (typeof details === 'object' && !Array.isArray(details)) {
+    if (details.MpesaReceiptNumber) return details.MpesaReceiptNumber;
+    if (details.ReceiptNumber) return details.ReceiptNumber;
+    if (details.receiptnumber) return details.receiptnumber;
+    if (details.mpesareceiptnumber) return details.mpesareceiptnumber;
+  }
+  
+  return null;
 }

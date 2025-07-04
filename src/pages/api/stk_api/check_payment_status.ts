@@ -4,6 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import axios, { AxiosError } from 'axios';
 
+// Replace the existing status check with this improved version
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { checkout_id, force_query } = req.query;
 
@@ -16,21 +17,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (docSnap.exists()) {
       const data = docSnap.data();
-
-      // ✅ Enhanced receipt extraction
-      const receiptNumber = extractReceiptNumber(data);
+      
+      // Enhanced receipt number extraction
+      const receiptNumber = data.receiptNumber || 
+                          (Array.isArray(data.details) ? 
+                            data.details.find((i: any) => 
+                              i?.Name?.toLowerCase().includes('receipt')
+                            )?.Value : null);
 
       const isSuccess = data.status === 'Success' && !!receiptNumber;
 
       return res.status(200).json({
-        status: isSuccess ? 'Success' : 'Pending',
+        status: isSuccess ? 'Success' : data.status || 'Pending',
         details: data.details,
-        resultCode: isSuccess ? '0' : '500.001.1001',
-        receiptNumber,
+        resultCode: isSuccess ? '0' : data.resultCode || '500.001.1001',
+        receiptNumber: receiptNumber?.toString() || null,
       });
     }
 
-    // Optional: force query Safaricom API
+    // If not in Firestore and force_query is true, query Safaricom directly
     if (force_query === 'true') {
       return await queryStkStatus(checkout_id, res);
     }
@@ -40,7 +45,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       details: 'Waiting for payment confirmation',
       resultCode: '500.001.1001',
     });
-
   } catch (error) {
     console.error('Status check error:', error);
     return res.status(500).json({
