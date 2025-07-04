@@ -13,6 +13,8 @@ import Link from "next/link";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getReceiptFromDetails, CallbackMetadataItem, generateRandomReference } from '@/utils/getReceiptFromDetails';
+// import { useRouter } from "next/router";
+import Layout from "@/components/Layout";
 // import TransactionHistoryModal from "../TransactionHistoryModal";
 
 // Add this Calculator component near your other imports
@@ -503,7 +505,8 @@ const HomeUI = () => {
     };
 
   return (
-    <div className="flex flex-col items-center bg-gray-50 min-h-screen">
+    <Layout>
+      <div className="flex flex-col items-center bg-gray-50 min-h-screen">
       {/* Container with width constraints */}
       <div className="w-full max-w-md flex flex-col flex-grow">
         {/* Header Section */}
@@ -812,6 +815,8 @@ const HomeUI = () => {
         </div>
       </div>
     </div>
+    </Layout>
+    
   );
 };
 
