@@ -13,10 +13,7 @@ import Link from "next/link";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getReceiptFromDetails, CallbackMetadataItem, generateRandomReference } from '@/utils/getReceiptFromDetails';
-import Layout from "@/components/Layout";
-// import TransactionHistoryModal from "../TransactionHistoryModal";
 
-// Add this Calculator component near your other imports
 const Calculator = ({ onCalculate, onClose, onClear }: {
   onCalculate: (result: string) => void,
   onClose: () => void,
@@ -816,8 +813,4 @@ const HomeUI = () => {
   );
 };
 
-export default HomeUI.getLayout = function getLayout(page: React.ReactNode) {
-  return <Layout>{page}</Layout>;
-};
-
-// export default HomeUI;
+export default HomeUI;
