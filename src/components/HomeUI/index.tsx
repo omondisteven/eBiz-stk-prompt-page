@@ -337,15 +337,105 @@ const HomeUI = () => {
               }
             }
 
+            if (!finalReceipt) {
+              // Generate fallback reference with proper format
+              const generateFallbackReference = async (lastRef = "TG47L93CIJ") => {
+                // Helper function to increment letters (right to left)
+                const incrementLetters = (str: string) => {
+                  const chars = str.split('');
+                  let i = chars.length - 1;
+                  
+                  while (i >= 0) {
+                    if (chars[i] === 'Z') {
+                      chars[i] = 'A';
+                      i--;
+                    } else {
+                      chars[i] = String.fromCharCode(chars[i].charCodeAt(0) + 1);
+                      break;
+                    }
+                  }
+                  
+                  return chars.join('');
+                };
+
+                // Helper function to increment numbers with padding
+                const incrementNumbers = (numStr: string) => {
+                  const num = parseInt(numStr);
+                  const nextNum = (num + 1) % 100;
+                  return nextNum.toString().padStart(2, '0');
+                };
+
+                // Parse the reference parts
+                const parts = {
+                  letters1: lastRef.slice(0, 2),
+                  numbers1: lastRef.slice(2, 4),
+                  letter2: lastRef.slice(4, 5),
+                  numbers2: lastRef.slice(5, 7),
+                  letters3: lastRef.slice(7)
+                };
+
+                // Increment each part
+                let newLetters3 = incrementLetters(parts.letters3);
+                let carry = newLetters3 === 'AAA' ? 1 : 0;
+
+                let newNumbers2 = carry > 0 
+                  ? incrementNumbers(parts.numbers2)
+                  : parts.numbers2;
+                carry = carry > 0 && newNumbers2 === '00' ? 1 : 0;
+
+                let newLetter2 = carry > 0
+                  ? incrementLetters(parts.letter2)
+                  : parts.letter2;
+                carry = carry > 0 && newLetter2 === 'A' ? 1 : 0;
+
+                let newNumbers1 = carry > 0
+                  ? incrementNumbers(parts.numbers1)
+                  : parts.numbers1;
+                carry = carry > 0 && newNumbers1 === '00' ? 1 : 0;
+
+                let newLetters1 = carry > 0
+                  ? incrementLetters(parts.letters1)
+                  : parts.letters1;
+
+                // Build the new reference
+                finalReceipt = `${newLetters1}${newNumbers1}${newLetter2}${newNumbers2}${newLetters3}`;
+
+                // Store the new reference in Firestore for next time
+                try {
+                  await setDoc(doc(db, 'system', 'lastFallbackReference'), {
+                    value: finalReceipt,
+                    updatedAt: new Date()
+                  });
+                } catch (error) {
+                  console.error('Error storing fallback reference:', error);
+                }
+
+                return finalReceipt;
+              };
+
+              // Get the last used reference or use default
+              let lastReference = "TG47L93CIJ";
+              try {
+                const lastRefDoc = await getDoc(doc(db, 'system', 'lastFallbackReference'));
+                if (lastRefDoc.exists()) {
+                  lastReference = lastRefDoc.data().value;
+                }
+              } catch (error) {
+                console.error('Error getting last reference:', error);
+              }
+
+              finalReceipt = generateFallbackReference(lastReference);
+              console.warn(`[${transactionId}] Generated fallback receipt: ${finalReceipt}`);
+            }
+
             if (finalReceipt) {
               console.log(`[${transactionId}] Found receipt number: ${finalReceipt}`);
               proceedWithSuccess(finalReceipt);
             } else {
-              console.warn(`[${transactionId}] Payment succeeded but no receipt number found in:`, result);
-              // As a last resort, generate our own transaction reference
-              const fallbackReceipt = `MPESA_${Date.now()}`;
-              console.warn(`[${transactionId}] Using fallback receipt: ${fallbackReceipt}`);
-              proceedWithSuccess(fallbackReceipt);
+              console.error(`[${transactionId}] Could not generate receipt number`);
+              setPaymentStatus('failed');
+              cleanup();
+              toast.error('Payment verification failed. Please contact support.');
             }
           } else if (result.status === 'Failed') {
             setPaymentStatus('failed');
@@ -355,6 +445,9 @@ const HomeUI = () => {
           }
         } catch (error) {
           console.error(`[${transactionId}] Poll error:`, error);
+          setPaymentStatus('failed');
+          cleanup();
+          toast.error('Error verifying payment status. Please check your connection.');
         }
       };
 
