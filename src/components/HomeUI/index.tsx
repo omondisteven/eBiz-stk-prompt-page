@@ -505,7 +505,7 @@ const HomeUI = () => {
       {/* Container with width constraints */}
       <div className="w-full max-w-md flex flex-col flex-grow">
         {/* Header Section */}
-        <div className="p-4 border-b border-gray-200 bg-white shadow-sm rounded-t-lg mx-2 sm:mx-0 mt-2 sm:mt-0">
+        <div className="p-4 border-b border-gray-200 bg-[#0a0a23] shadow-sm rounded-t-lg mx-2 sm:mx-0 mt-2 sm:mt-0">
           <h2 className="text-xl font-bold text-center"
               style={{color: "#3CB371"}}>
             {transactionType === 'Contact' ? (
@@ -517,7 +517,7 @@ const HomeUI = () => {
         </div>
         {/* Main Content */}
         <div className="flex-1 p-4 overflow-auto mx-2 sm:mx-0">
-          <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.15)] p-4 mb-4 border border-gray-200">
+          <div className="bg-[#0a0a23] rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.15)] p-4 mb-4 border border-gray-200">
             {hasQrData ? (
               <>
                 <div className="text-center">
@@ -723,7 +723,7 @@ const HomeUI = () => {
         </div>
 
           {/* Updated Action Buttons section */}
-        <div className="p-4 border-t border-gray-200 bg-white shadow-sm rounded-b-lg mx-2 sm:mx-0 mb-2 sm:mb-0">
+        <div className="p-4 border-t border-gray-200 bg-[#0a0a23] shadow-sm rounded-b-lg mx-2 sm:mx-0 mb-2 sm:mb-0">
           {hasQrData && ( // Only show buttons if QR data is available
             <div className="flex flex-col space-y-2">
               {(transactionType === "PayBill" ||
