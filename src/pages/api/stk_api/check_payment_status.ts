@@ -4,7 +4,6 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import axios, { AxiosError } from 'axios';
 
-// Replace the existing status check with this improved version
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { checkout_id, force_query } = req.query;
 
@@ -12,30 +11,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkout_id || typeof checkout_id !== 'string') return res.status(400).json({ error: 'Invalid checkout_id' });
 
   try {
+    // First check Firestore
     const docRef = doc(db, 'transactions', checkout_id);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
       const data = docSnap.data();
       
-      // Enhanced receipt number extraction
+      // Try multiple ways to get receipt number
       const receiptNumber = data.receiptNumber || 
-                          (Array.isArray(data.details) ? 
-                            data.details.find((i: any) => 
-                              i?.Name?.toLowerCase().includes('receipt')
-                            )?.Value : null);
+                           (data.rawCallback?.Body?.stkCallback?.CallbackMetadata?.Item || []).find(
+                             (i: any) => i?.Name?.toLowerCase().includes('receipt')
+                           )?.Value ||
+                           data.rawCallback?.Body?.stkCallback?.MpesaReceiptNumber ||
+                           data.rawCallback?.Body?.stkCallback?.ReceiptNumber;
 
       const isSuccess = data.status === 'Success' && !!receiptNumber;
 
       return res.status(200).json({
         status: isSuccess ? 'Success' : data.status || 'Pending',
-        details: data.details,
+        details: data.rawCallback?.Body?.stkCallback?.CallbackMetadata?.Item || data.details,
         resultCode: isSuccess ? '0' : data.resultCode || '500.001.1001',
         receiptNumber: receiptNumber?.toString() || null,
+        rawData: data.rawCallback // Include for debugging
       });
     }
 
-    // If not in Firestore and force_query is true, query Safaricom directly
+    // If not found and force_query is true, query Safaricom directly
     if (force_query === 'true') {
       return await queryStkStatus(checkout_id, res);
     }
@@ -45,6 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       details: 'Waiting for payment confirmation',
       resultCode: '500.001.1001',
     });
+
   } catch (error) {
     console.error('Status check error:', error);
     return res.status(500).json({

@@ -301,45 +301,62 @@ const HomeUI = () => {
       let receiptRetryCount = 0;
 
       // Replace the pollPaymentStatus function with this improved version
-  const pollPaymentStatus = async () => {
-    try {
-      console.log(`[${transactionId}] Checking payment status...`);
-      const statusCheckUrl = `/api/stk_api/check_payment_status?checkout_id=${checkoutId}&t=${Date.now()}&force_query=${countdown < 45}`;
-      const checkRes = await fetch(statusCheckUrl);
+      const pollPaymentStatus = async () => {
+        try {
+          console.log(`[${transactionId}] Checking payment status...`);
+          const statusCheckUrl = `/api/stk_api/check_payment_status?checkout_id=${checkoutId}&t=${Date.now()}&force_query=${countdown < 45}`;
+          const checkRes = await fetch(statusCheckUrl);
 
-      if (!checkRes.ok) {
-        const errorText = await checkRes.text();
-        throw new Error(errorText);
-      }
-
-      const result = await checkRes.json();
-      console.log(`[${transactionId}] Status: ${result.status}, ResultCode: ${result.resultCode}, Receipt: ${result.receiptNumber}`);
-
-      if (result.status === 'Success') {
-        // Check if we have a receipt number in the response
-        if (result.receiptNumber) {
-          proceedWithSuccess(result.receiptNumber);
-        } else {
-          // If no receipt number, check the details array
-          const receiptFromDetails = getReceiptFromDetails(result.details);
-          if (receiptFromDetails) {
-            proceedWithSuccess(receiptFromDetails);
-          } else {
-            console.warn(`[${transactionId}] Payment succeeded but no receipt number found`);
-            // Proceed with null receipt but mark as success
-            proceedWithSuccess(null);
+          if (!checkRes.ok) {
+            const errorText = await checkRes.text();
+            throw new Error(errorText);
           }
+
+          const result = await checkRes.json();
+          console.log(`[${transactionId}] Full status response:`, result);
+
+          if (result.status === 'Success') {
+            // Try multiple ways to get receipt number
+            let finalReceipt = result.receiptNumber;
+            
+            if (!finalReceipt && Array.isArray(result.details)) {
+              const receiptItem = result.details.find((i: any) => 
+                i?.Name?.toLowerCase().includes('receipt')
+              );
+              finalReceipt = receiptItem?.Value;
+            }
+
+            if (!finalReceipt && result.rawData) {
+              // Deep inspect raw callback data
+              const callback = result.rawData.Body?.stkCallback;
+              if (callback?.CallbackMetadata?.Item) {
+                const receiptItem = callback.CallbackMetadata.Item.find((i: any) => 
+                  i?.Name?.toLowerCase().includes('receipt')
+                );
+                finalReceipt = receiptItem?.Value;
+              }
+            }
+
+            if (finalReceipt) {
+              console.log(`[${transactionId}] Found receipt number: ${finalReceipt}`);
+              proceedWithSuccess(finalReceipt);
+            } else {
+              console.warn(`[${transactionId}] Payment succeeded but no receipt number found in:`, result);
+              // As a last resort, generate our own transaction reference
+              const fallbackReceipt = `MPESA_${Date.now()}`;
+              console.warn(`[${transactionId}] Using fallback receipt: ${fallbackReceipt}`);
+              proceedWithSuccess(fallbackReceipt);
+            }
+          } else if (result.status === 'Failed') {
+            setPaymentStatus('failed');
+            cleanup();
+            console.error(`[${transactionId}] Payment failed: ${result.resultDesc}`);
+            toast.error(result.resultDesc || 'Payment failed. Please try again.');
+          }
+        } catch (error) {
+          console.error(`[${transactionId}] Poll error:`, error);
         }
-      } else if (result.status === 'Failed') {
-        setPaymentStatus('failed');
-        cleanup();
-        console.error(`[${transactionId}] Payment failed: ${result.resultDesc}`);
-        toast.error(result.resultDesc || 'Payment failed. Please try again.');
-      }
-    } catch (error) {
-      console.error(`[${transactionId}] Poll error:`, error);
-    }
-  };
+      };
 
       const proceedWithSuccess = (receipt: string | null) => {
         setPaymentStatus('success');
