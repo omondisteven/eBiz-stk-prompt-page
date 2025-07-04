@@ -56,16 +56,6 @@ const ThankYouPage = () => {
 
         setReceiptData(parsedData);
 
-        // ✅ Enhanced fallback for receipt number
-        // const getReceiptFromDetails = (details: any[]) => {
-        //   if (!Array.isArray(details)) return null;
-        //   const receipt = details.find((item) =>
-        //     item?.Name?.toLowerCase() === "mpesareceiptnumber" ||
-        //     item?.Name?.toLowerCase() === "receiptnumber"
-        //   );
-        //   return receipt?.Value?.toString() || null;
-        // };
-
         const localReceipt = parsedData.receiptNumber || getReceiptFromDetails(parsedData.details);
 
         if (localReceipt) {
