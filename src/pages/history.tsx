@@ -54,17 +54,17 @@ export default function TransactionHistoryPage() {
 
         const snapshot = await getDocs(q);
         const txData = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return { 
-            id: doc.id,
-            receiptNumber: data.receiptNumber || data.MpesaReceiptNumber,
-            amount: data.Amount,
-            phoneNumber: data.phoneNumber,
-            status: data.status,
-            timestamp: data.timestamp?.toDate?.()?.toISOString() || data.timestamp || data.processedAt?.toDate?.()?.toISOString(),
-            details: data.details
-          };
-        });
+        const data = doc.data();
+        return { 
+          id: doc.id,
+          receiptNumber: data.receiptNumber || data.MpesaReceiptNumber,
+          amount: Number(data.amount ?? data.Amount) || 0, // handle both and default to 0
+          phoneNumber: data.phoneNumber ?? data.PhoneNumber,
+          status: data.status,
+          timestamp: data.timestamp?.toDate?.()?.toISOString() || data.timestamp || data.processedAt?.toDate?.()?.toISOString(),
+          details: data.details
+        };
+      });
 
         console.log("Fetched transactions:", txData); // Debug log
         setTransactions(txData);
@@ -129,7 +129,7 @@ export default function TransactionHistoryPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Amount:</span>
-                <span>KES {selectedTx.Amount?.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</span>
+                <span>KES {selectedTx.amount?.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Receipt:</span>
