@@ -57,15 +57,17 @@ export default function TransactionHistoryPage() {
         const data = doc.data();
         return { 
           id: doc.id,
-          receiptNumber: data.receiptNumber || data.MpesaReceiptNumber,
-          amount: Number(data.amount ?? data.Amount) || 0, // handle both and default to 0
-          phoneNumber: data.phoneNumber ?? data.PhoneNumber,
-          status: data.status,
-          timestamp: data.timestamp?.toDate?.()?.toISOString() || data.timestamp || data.processedAt?.toDate?.()?.toISOString(),
-          details: data.details
+          receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || data.ReceiptNumber || "N/A",
+          amount: Number(data.amount ?? data.Amount ?? 0),
+          phoneNumber: data.phoneNumber ?? data.PhoneNumber ?? "N/A",
+          status: data.status ?? "Unknown",
+          timestamp: data.timestamp?.toDate?.()?.toISOString()
+            || data.Timestamp
+            || data.processedAt?.toDate?.()?.toISOString()
+            || "N/A",
+          details: data.details ?? null
         };
       });
-
         console.log("Fetched transactions:", txData); // Debug log
         setTransactions(txData);
       } catch (error) {
