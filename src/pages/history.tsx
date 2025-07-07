@@ -58,7 +58,7 @@ export default function TransactionHistoryPage() {
           return { 
             id: doc.id,
             receiptNumber: data.receiptNumber || data.MpesaReceiptNumber,
-            amount: data.amount,
+            amount: data.amount ?? data.Amount,
             phoneNumber: data.phoneNumber,
             status: data.status,
             timestamp: data.timestamp?.toDate?.()?.toISOString() || data.timestamp || data.processedAt?.toDate?.()?.toISOString(),
