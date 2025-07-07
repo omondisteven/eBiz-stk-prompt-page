@@ -1,7 +1,7 @@
 // src/pages/history.tsx
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, getDoc, doc } from "firebase/firestore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/button";
 import TransactionTable from "@/components/ui/TransactionTable";
@@ -101,12 +101,18 @@ export default function TransactionHistoryPage() {
     }
   }, [phoneNumber]);
 
-  // You might want to add a helper function for consistent date formatting
-    const formatDate = (dateString: string) => {
+  // Add this function to history.tsx
+    const fetchTransactionDetails = async (id: string) => {
       try {
-        return new Date(dateString).toLocaleString();
-      } catch (e) {
-        return "N/A";
+        const docRef = doc(db, "transactions", id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          return docSnap.data();
+        }
+        return null;
+      } catch (error) {
+        console.error("Error fetching transaction details:", error);
+        return null;
       }
     };
 
@@ -124,9 +130,12 @@ export default function TransactionHistoryPage() {
           <p className="text-sm mt-2">Transactions will appear here after you make payments</p>
         </div>
       ) : (
-        <TransactionTable 
+       <TransactionTable 
           transactions={transactions} 
-          onView={setSelectedTx} 
+          onView={async (tx) => {
+            const details = await fetchTransactionDetails(tx.id);
+            setSelectedTx({ ...tx, ...details });
+          }} 
         />
       )}
 
