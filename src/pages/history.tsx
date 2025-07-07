@@ -55,20 +55,21 @@ export default function TransactionHistoryPage() {
         const snapshot = await getDocs(q);
         const txData = snapshot.docs.map(doc => {
         const data = doc.data();
-        return { 
+        return {
           id: doc.id,
-          ...data,
-          receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || data.ReceiptNumber || "N/A",
-          amount: Number(data.amount ?? data.Amount ?? 0),
+          receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || "N/A",
+          amount: Number(data.amount ?? data.Amount ?? "0"),
           phoneNumber: data.phoneNumber ?? data.PhoneNumber ?? "N/A",
           status: data.status ?? "Unknown",
-          timestamp: data.timestamp?.toDate?.()?.toISOString()
-            || data.Timestamp
-            || data.processedAt?.toDate?.()?.toISOString()
-            || "N/A",
-          details: data.details ?? null
+          timestamp: (() => {
+            if (data.timestamp?.toDate) return data.timestamp.toDate().toISOString();
+            if (data.processedAt?.toDate) return data.processedAt.toDate().toISOString();
+            return data.timestamp ?? data.processedAt ?? null;
+          })(),
+          details: data.details ?? {},
         };
       });
+        console.log("Selected transaction:", selectedTx);
         console.log("Fetched transactions:", txData); // Debug log
         setTransactions(txData);
       } catch (error) {
