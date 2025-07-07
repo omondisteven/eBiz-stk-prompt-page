@@ -39,50 +39,35 @@ export default function TransactionHistoryPage() {
         if (!phoneNumber) return;
 
         setLoading(true);
-        const formattedPhone = String(phoneNumber).startsWith('254') 
-          ? String(phoneNumber) 
+        const formattedPhone = String(phoneNumber).startsWith("254")
+          ? String(phoneNumber)
           : `254${String(phoneNumber).slice(-9)}`;
 
         console.log("Fetching transactions for:", formattedPhone);
 
-        const q = query(
-          collection(db, "transactions"),
-          where("PhoneNumber", "==", formattedPhone),
-          orderBy("processedAt", "desc")
-        );
+        // Fetch all transactions first
+        const snapshot = await getDocs(collection(db, "transactions"));
 
-        const snapshot = await getDocs(q);
-        const txData = snapshot.docs.map(doc => {
-          const data = doc.data();
-          
-          // Handle both possible timestamp fields and formats
-          let timestampValue;
-          if (data.processedAt?.toDate) {
-            timestampValue = data.processedAt.toDate().toISOString();
-          } else if (data.timestamp) {
-            timestampValue = typeof data.timestamp === 'string' 
-              ? data.timestamp 
-              : data.timestamp.toDate?.()?.toISOString();
-          } else {
-            timestampValue = new Date().toISOString(); // fallback
-          }
-
-          return {
-            id: doc.id,
-            receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || "N/A",
-            amount: Number(data.amount ?? data.Amount ?? 0),
-            phoneNumber: data.phoneNumber ?? data.PhoneNumber ?? formattedPhone,
-            status: data.status || "Unknown",
-            timestamp: timestampValue,
-            accountNumber: data.AccountNumber || data.accountNumber || "N/A",
-            paybillNumber: data.PaybillNumber || data.paybillNumber || "N/A",
-            tillNumber: data.TillNumber || data.tillNumber || "N/A",
-            transactionType: data.TransactionType || data.transactionType || "N/A",
-            businessName: data.businessName || "N/A",
-            businessComment: data.businessComment || "N/A",
-            rawData: data // Include all raw data for debugging
-          };
-        });
+        // Normalize and filter by phone number
+        const txData = snapshot.docs
+          .map((doc) => {
+            const data = doc.data();
+            const phone = data.PhoneNumber ?? data.phoneNumber ?? "";
+            return {
+              id: doc.id,
+              receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || "N/A",
+              amount: Number(data.amount ?? data.Amount ?? "0"),
+              phoneNumber: phone,
+              status: data.status ?? "Unknown",
+              timestamp:
+                data.timestamp?.toDate?.()?.toISOString() ||
+                data.processedAt?.toDate?.()?.toISOString() ||
+                data.timestamp ||
+                data.processedAt,
+              details: data.details ?? {},
+            };
+          })
+          .filter((tx) => tx.phoneNumber === formattedPhone);
 
         console.log("Fetched transactions:", txData);
         setTransactions(txData);
