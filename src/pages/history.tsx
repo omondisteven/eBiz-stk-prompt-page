@@ -15,6 +15,19 @@ export default function TransactionHistoryPage() {
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const router = useRouter();
 
+  interface Transaction {
+  id: string;
+  receiptNumber: string;
+  amount: number;
+  phoneNumber: string;
+  status: string;
+  timestamp: string;
+  details: any;
+  AccountNumber?: string;
+  PaybillNumber?: string;
+  TransactionType?: string;
+}
+
   useEffect(() => {
     // Get phone number from localStorage
     const getPhoneNumber = () => {
@@ -49,28 +62,28 @@ export default function TransactionHistoryPage() {
         const snapshot = await getDocs(collection(db, "transactions"));
 
         // Normalize and filter by phone number
+        // Update the txData mapping in fetchTransactions
         const txData = snapshot.docs
           .map((doc) => {
             const data = doc.data();
-
-            const phone = data.PhoneNumber ?? data.phoneNumber ?? ""; // Add support for capital P
-            const receipt = data.receiptNumber ?? data.ReceiptNumber ?? "N/A"; // Handle ReceiptNumber too
-            const rawTimestamp = data.timestamp ?? data.Timestamp ?? data.processedAt;
-
-            const timestamp = typeof rawTimestamp?.toDate === "function"
-              ? rawTimestamp.toDate().toISOString()
-              : typeof rawTimestamp === "string"
-              ? rawTimestamp
-              : null;
-
+            const phone = data.PhoneNumber ?? data.phoneNumber ?? "";
             return {
               id: doc.id,
-              receiptNumber: receipt,
+              receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || "N/A",
               amount: Number(data.amount ?? data.Amount ?? "0"),
               phoneNumber: phone,
               status: data.status ?? "Unknown",
-              timestamp,
+              timestamp: 
+                data.timestamp?.toDate?.()?.toISOString() ||
+                data.processedAt?.toDate?.()?.toISOString() ||
+                data.Timestamp || // Add this line
+                data.timestamp ||
+                data.processedAt,
               details: data.details ?? {},
+              // Add these fields to ensure they're available in the modal
+              AccountNumber: data.AccountNumber,
+              PaybillNumber: data.PaybillNumber,
+              TransactionType: data.TransactionType,
             };
           })
           .filter((tx) => tx.phoneNumber === formattedPhone);
@@ -87,6 +100,15 @@ export default function TransactionHistoryPage() {
       fetchTransactions();
     }
   }, [phoneNumber]);
+
+  // You might want to add a helper function for consistent date formatting
+    const formatDate = (dateString: string) => {
+      try {
+        return new Date(dateString).toLocaleString();
+      } catch (e) {
+        return "N/A";
+      }
+    };
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
@@ -124,6 +146,7 @@ export default function TransactionHistoryPage() {
               </button>
             </div>
             
+            // In the Transaction Details Modal section
             <div className="space-y-3 mb-4">
               <div className="flex justify-between">
                 <span className="text-gray-600">Status:</span>
@@ -153,6 +176,13 @@ export default function TransactionHistoryPage() {
                 <span className="text-gray-600">Phone:</span>
                 <span>{selectedTx.phoneNumber}</span>
               </div>
+              {/* Add additional fields if needed */}
+              {selectedTx.TransactionType && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Type:</span>
+                  <span>{selectedTx.TransactionType}</span>
+                </div>
+              )}
             </div>
             <Button 
               onClick={() => setSelectedTx(null)}
