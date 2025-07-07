@@ -45,33 +45,43 @@ export default function TransactionHistoryPage() {
 
         console.log("Fetching transactions for:", formattedPhone);
 
-        // Fetch all transactions first
         const snapshot = await getDocs(collection(db, "transactions"));
 
-        // Normalize and filter by phone number
-        const txData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          receiptNumber: data.receiptNumber || data.MpesaReceiptNumber,
-          amount: Number(data.amount ?? data.Amount) || 0,
-          phoneNumber: data.phoneNumber ?? data.PhoneNumber,
-          status: data.status,
-          timestamp: data.timestamp?.toDate?.()?.toISOString() || data.timestamp || data.processedAt?.toDate?.()?.toISOString(),
-          details: data.details,
-          // ✅ Include all optional extra fields used elsewhere
-          accountNumber: data.AccountNumber,
-          paybillNumber: data.PaybillNumber,
-          businessName: data.businessName,
-          transactionType: data.TransactionType,
-          email: data.businessEmail,
-          address: data.businessAddress,
-          comment: data.businessComment,
-          whatsapp: data.businessWhatsapp,
-          website: data.businessWebsite,
-          promos: [data.businessPromo1, data.businessPromo2].filter(Boolean),
-        };
-      });
+        const txData = snapshot.docs
+          .map((doc) => {
+            const data = doc.data();
+
+            const phone =
+              data.PhoneNumber || data.phoneNumber || data.phonenumber || "N/A";
+
+            const receipt =
+              data.receiptNumber ||
+              data.MpesaReceiptNumber ||
+              (Array.isArray(data.details)
+                ? data.details.find((item: any) =>
+                    item?.Name?.toLowerCase?.().includes("receipt")
+                  )?.Value
+                : null) ||
+              "N/A";
+
+            const rawTimestamp =
+              data.timestamp?.toDate?.()?.toISOString?.() ||
+              data.Timestamp ||
+              data.processedAt?.toDate?.()?.toISOString?.() ||
+              data.processedAt ||
+              null;
+
+            return {
+              id: doc.id,
+              receiptNumber: receipt,
+              amount: Number(data.amount ?? data.Amount ?? "0"),
+              phoneNumber: phone,
+              status: data.status ?? "Unknown",
+              timestamp: rawTimestamp,
+              details: data.details ?? [],
+            };
+          })
+          .filter((tx) => tx.phoneNumber === formattedPhone);
 
         console.log("Fetched transactions:", txData);
         setTransactions(txData);
@@ -81,10 +91,12 @@ export default function TransactionHistoryPage() {
         setLoading(false);
       }
     };
+
     if (phoneNumber && phoneNumber.length >= 12) {
       fetchTransactions();
     }
   }, [phoneNumber]);
+
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
