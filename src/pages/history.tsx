@@ -144,9 +144,7 @@ export default function TransactionHistoryPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            </div>
-            
-            // In the Transaction Details Modal section
+            </div>            
             <div className="space-y-3 mb-4">
               <div className="flex justify-between">
                 <span className="text-gray-600">Status:</span>
