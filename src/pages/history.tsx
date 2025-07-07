@@ -49,22 +49,25 @@ export default function TransactionHistoryPage() {
         const snapshot = await getDocs(collection(db, "transactions"));
 
         // Normalize and filter by phone number
-        const txData = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || data.ReceiptNumber || "N/A",
-            amount: Number(data.amount ?? data.Amount) || 0,
-            phoneNumber: data.phoneNumber || data.PhoneNumber || "N/A",
-            status: data.status || "Unknown",
-            timestamp:
-              data.timestamp?.toDate?.()?.toISOString() ||
-              data.Timestamp ||
-              data.processedAt?.toDate?.()?.toISOString() ||
-              "N/A",
-            details: data.details || [],
-          };
-        });
+        const txData = snapshot.docs
+          .map((doc) => {
+            const data = doc.data();
+            const phone = data.PhoneNumber ?? data.phoneNumber ?? "";
+            return {
+              id: doc.id,
+              receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || "N/A",
+              amount: Number(data.amount ?? data.Amount ?? "0"),
+              phoneNumber: phone,
+              status: data.status ?? "Unknown",
+              timestamp:
+                data.timestamp?.toDate?.()?.toISOString() ||
+                data.processedAt?.toDate?.()?.toISOString() ||
+                data.timestamp ||
+                data.processedAt,
+              details: data.details ?? {},
+            };
+        })
+          .filter((tx) => tx.phoneNumber === formattedPhone);
 
         console.log("Fetched transactions:", txData);
         setTransactions(txData);
