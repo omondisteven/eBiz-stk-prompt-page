@@ -52,21 +52,27 @@ export default function TransactionHistoryPage() {
         const txData = snapshot.docs
           .map((doc) => {
             const data = doc.data();
-            const phone = data.PhoneNumber ?? data.phoneNumber ?? "";
+
+            const phone = data.PhoneNumber ?? data.phoneNumber ?? ""; // Add support for capital P
+            const receipt = data.receiptNumber ?? data.ReceiptNumber ?? "N/A"; // Handle ReceiptNumber too
+            const rawTimestamp = data.timestamp ?? data.Timestamp ?? data.processedAt;
+
+            const timestamp = typeof rawTimestamp?.toDate === "function"
+              ? rawTimestamp.toDate().toISOString()
+              : typeof rawTimestamp === "string"
+              ? rawTimestamp
+              : null;
+
             return {
               id: doc.id,
-              receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || "N/A",
+              receiptNumber: receipt,
               amount: Number(data.amount ?? data.Amount ?? "0"),
               phoneNumber: phone,
               status: data.status ?? "Unknown",
-              timestamp:
-                data.timestamp?.toDate?.()?.toISOString() ||
-                data.processedAt?.toDate?.()?.toISOString() ||
-                data.timestamp ||
-                data.processedAt,
+              timestamp,
               details: data.details ?? {},
             };
-        })
+          })
           .filter((tx) => tx.phoneNumber === formattedPhone);
 
         console.log("Fetched transactions:", txData);
