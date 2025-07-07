@@ -58,7 +58,7 @@ export default function TransactionHistoryPage() {
           return { 
             id: doc.id,
             receiptNumber: data.receiptNumber || data.MpesaReceiptNumber,
-            amount: data.amount,
+            amount: data.Amount,
             phoneNumber: data.phoneNumber,
             status: data.status,
             timestamp: data.timestamp?.toDate?.()?.toISOString() || data.timestamp || data.processedAt?.toDate?.()?.toISOString(),
@@ -129,7 +129,7 @@ export default function TransactionHistoryPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Amount:</span>
-                <span>KES {selectedTx.amount?.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</span>
+                <span>KES {selectedTx.Amount?.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Receipt:</span>
