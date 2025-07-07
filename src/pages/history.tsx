@@ -39,38 +39,37 @@ export default function TransactionHistoryPage() {
         if (!phoneNumber) return;
 
         setLoading(true);
-        const formattedPhone = String(phoneNumber).startsWith('254') 
-          ? String(phoneNumber) 
+        const formattedPhone = String(phoneNumber).startsWith("254")
+          ? String(phoneNumber)
           : `254${String(phoneNumber).slice(-9)}`;
 
-        console.log("Fetching transactions for:", formattedPhone); // Debug log
+        console.log("Fetching transactions for:", formattedPhone);
 
-        const q = query(
-          collection(db, "transactions"),
-          where("PhoneNumber", "==", formattedPhone),
-          // orderBy("processedAt", "desc")
-        );
+        // Fetch all transactions first
+        const snapshot = await getDocs(collection(db, "transactions"));
 
+        // Normalize and filter by phone number
+        const txData = snapshot.docs
+          .map((doc) => {
+            const data = doc.data();
+            const phone = data.PhoneNumber ?? data.phoneNumber ?? "";
+            return {
+              id: doc.id,
+              receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || "N/A",
+              amount: Number(data.amount ?? data.Amount ?? "0"),
+              phoneNumber: phone,
+              status: data.status ?? "Unknown",
+              timestamp:
+                data.timestamp?.toDate?.()?.toISOString() ||
+                data.processedAt?.toDate?.()?.toISOString() ||
+                data.timestamp ||
+                data.processedAt,
+              details: data.details ?? {},
+            };
+          })
+          .filter((tx) => tx.phoneNumber === formattedPhone);
 
-        const snapshot = await getDocs(q);
-        const txData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || "N/A",
-          amount: Number(data.amount ?? data.Amount ?? "0"),
-          phoneNumber: data.phoneNumber ?? data.PhoneNumber ?? "N/A",
-          status: data.status ?? "Unknown",
-          timestamp: (() => {
-            if (data.timestamp?.toDate) return data.timestamp.toDate().toISOString();
-            if (data.processedAt?.toDate) return data.processedAt.toDate().toISOString();
-            return data.timestamp ?? data.processedAt ?? null;
-          })(),
-          details: data.details ?? {},
-        };
-      });
-        console.log("Selected transaction:", selectedTx);
-        console.log("Fetched transactions:", txData); // Debug log
+        console.log("Fetched transactions:", txData);
         setTransactions(txData);
       } catch (error) {
         console.error("Error fetching transactions:", error);
@@ -78,7 +77,6 @@ export default function TransactionHistoryPage() {
         setLoading(false);
       }
     };
-
     if (phoneNumber && phoneNumber.length >= 12) {
       fetchTransactions();
     }
