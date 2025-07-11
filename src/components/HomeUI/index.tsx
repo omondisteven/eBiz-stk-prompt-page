@@ -67,8 +67,7 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
     '7', '8', '9', '/',
     '4', '5', '6', '*',
     '1', '2', '3', '-',
-    '0', '.', '⌫', '+',
-    'C', 'OK'
+    '0', '.', '⌫', '+'
   ];
   return (
     <div className="mt-2 bg-white rounded-lg shadow-md p-2 border border-gray-200 relative">
@@ -95,16 +94,27 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
             key={btn}
             onClick={() => handleButtonClick(btn)}
             className={`p-2 rounded-md text-center font-medium
-              ${btn === 'OK' ? 'bg-green-500 text-white hover:bg-green-600' :
-                btn === 'C' ?
-                'bg-red-500 text-white hover:bg-red-600' :
+              ${['+', '-', '*', '/'].includes(btn) ? 
+                'bg-navy-600 text-white hover:bg-navy-700' :
                 btn === '⌫' ?
                 'bg-gray-500 text-white hover:bg-gray-600' :
-                'bg-gray-200 hover:bg-gray-300'}`}
+                'text-navy-600 bg-gray-200 hover:bg-gray-300'}`}
           >
             {btn}
           </button>
         ))}
+        <button
+          onClick={() => handleButtonClick('C')}
+          className="col-span-2 p-2 rounded-md bg-red-500 text-white hover:bg-red-600 font-medium"
+        >
+          C
+        </button>
+        <button
+          onClick={() => handleButtonClick('OK')}
+          className="col-span-2 p-2 rounded-md bg-green-500 text-white hover:bg-green-600 font-medium"
+        >
+          OK
+        </button>
       </div>
     </div>
   );
