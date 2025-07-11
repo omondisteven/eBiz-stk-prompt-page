@@ -14,14 +14,17 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getReceiptFromDetails, CallbackMetadataItem, generateRandomReference } from '@/utils/getReceiptFromDetails';
 
-const Calculator = ({ onCalculate, onClose, onClear }: {
-  onCalculate: (result: string) => void,
-  onClose: () => void,
-  onClear: () => void
+const Calculator = ({
+  onCalculate,
+  onClose,
+  onClear,
+}: {
+  onCalculate: (result: string) => void;
+  onClose: () => void;
+  onClear: () => void;
 }) => {
   const [input, setInput] = useState('');
   const [liveResult, setLiveResult] = useState('0');
-  
 
   useEffect(() => {
     try {
@@ -37,10 +40,11 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
       } else {
         setLiveResult('0');
       }
-    } catch (error) {
+    } catch {
       setLiveResult('Error');
     }
   }, [input]);
+
   const handleButtonClick = (value: string) => {
     if (value === 'OK') {
       if (liveResult !== 'Error') {
@@ -51,24 +55,32 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
       setInput('');
       setLiveResult('0');
       onClear();
-      // Clear the amount input box
     } else if (value === '⌫') {
       setInput(input.slice(0, -1));
     } else {
       const lastChar = input.slice(-1);
-      if (['+', '-', '*', '/'].includes(value) && ['+', '-', '*', '/'].includes(lastChar)) {
+      if (
+        ['+', '-', '*', '/'].includes(value) &&
+        ['+', '-', '*', '/'].includes(lastChar)
+      ) {
         setInput(input.slice(0, -1) + value);
       } else {
         setInput(input + value);
       }
     }
   };
+
   const buttons = [
     '7', '8', '9', '/',
     '4', '5', '6', '*',
     '1', '2', '3', '-',
-    '0', '.', '⌫', '+'
+    '0', '.', '⌫', '+',
+    'C', 'OK',
   ];
+
+  const isNumber = (btn: string) => /^[0-9.]$/.test(btn);
+  const isOperator = (btn: string) => ['+', '-', '*', '/'].includes(btn);
+
   return (
     <div className="mt-2 bg-white rounded-lg shadow-md p-2 border border-gray-200 relative">
       <button
@@ -78,48 +90,43 @@ const Calculator = ({ onCalculate, onClose, onClear }: {
         <HiX className="h-4 w-4" />
       </button>
 
-      {/* Display current input and live result */}
+      {/* Display */}
       <div className="mb-2 p-2 bg-gray-100 rounded">
         <div className="text-gray-600 text-sm h-5 text-right">{input || '0'}</div>
-        <div className={`text-lg font-semibold text-right ${
-          liveResult === 'Error' ? 'text-red-500' : 'text-gray-800'
-        }`}>
+        <div
+          className={`text-lg font-semibold text-right ${
+            liveResult === 'Error' ? 'text-red-500' : 'text-gray-800'
+          }`}
+        >
           {liveResult}
         </div>
       </div>
 
+      {/* Grid */}
       <div className="grid grid-cols-4 gap-2">
         {buttons.map((btn) => (
           <button
             key={btn}
             onClick={() => handleButtonClick(btn)}
-            className={`p-2 rounded-md text-center font-medium
-              ${['+', '-', '*', '/'].includes(btn) ? 
-                'bg-navy-600 text-white hover:bg-navy-700' :
-                btn === '⌫' ?
-                'bg-gray-500 text-white hover:bg-gray-600' :
-                'text-navy-600 bg-gray-200 hover:bg-gray-300'}`}
+            className={`
+              p-2 rounded-md text-center font-medium
+              ${btn === 'OK' ? 'col-span-2 bg-green-500 text-white hover:bg-green-600' :
+                btn === 'C' ? 'col-span-2 bg-red-500 text-white hover:bg-red-600' :
+                btn === '⌫' ? 'bg-gray-500 text-white hover:bg-gray-600' :
+                isOperator(btn) ? 'bg-[#001f3f] text-white hover:opacity-90' :
+                isNumber(btn) ? 'bg-gray-200 text-[#001f3f] hover:bg-gray-300' :
+                'bg-gray-200 hover:bg-gray-300'
+              }
+            `}
           >
             {btn}
           </button>
         ))}
-        <button
-          onClick={() => handleButtonClick('C')}
-          className="col-span-2 p-2 rounded-md bg-red-500 text-white hover:bg-red-600 font-medium"
-        >
-          C
-        </button>
-        <button
-          onClick={() => handleButtonClick('OK')}
-          className="col-span-2 p-2 rounded-md bg-green-500 text-white hover:bg-green-600 font-medium"
-        >
-          OK
-        </button>
       </div>
     </div>
   );
 };
- 
+
 const HomeUI = () => {
   useEffect(() => {
     console.log("Phone number initialized:", phoneNumber);
