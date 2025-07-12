@@ -1,14 +1,18 @@
 // src/components/ui/TransactionTable.tsx
 import { Badge } from "./Badge";
+import { BadgeProps } from "./Badge";
+import { Transaction } from "@/types/transaction";
+
+interface TransactionTableProps {
+  transactions: Transaction[];
+  onView: (transaction: Transaction) => void;
+}
 
 export default function TransactionTable({
   transactions,
   onView,
-}: {
-  transactions: any[];
-  onView: (transaction: any) => void;
-}) {
-  const getStatusVariant = (status: string) => {
+}: TransactionTableProps) {
+  const getStatusVariant = (status?: string): BadgeProps["variant"] => {
     switch (status) {
       case "Success":
         return "success";
@@ -18,6 +22,16 @@ export default function TransactionTable({
         return "warning";
       default:
         return "default";
+    }
+  };
+
+  const formatDate = (date?: string | Date) => {
+    if (!date) return "N/A";
+    try {
+      const dateObj = date instanceof Date ? date : new Date(date);
+      return isNaN(dateObj.getTime()) ? "N/A" : dateObj.toLocaleString();
+    } catch {
+      return "N/A";
     }
   };
 
@@ -39,16 +53,19 @@ export default function TransactionTable({
               key={tx.id}
               className={`border-b ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`}
             >
-              <td className="px-4 py-2">{tx.receiptNumber || "N/A"}</td>
-              <td className="px-4 py-2">{new Date(tx.timestamp).toLocaleString()}</td>
-              <td className="px-4 py-2 text-right">KES {tx.amount?.toFixed(2)}</td>
+              <td className="px-4 py-2">{tx.receiptNumber || tx.MpesaReceiptNumber || "N/A"}</td>
+              <td className="px-4 py-2">{formatDate(tx.timestamp)}</td>
+              <td className="px-4 py-2 text-right">KES {(tx.amount ?? tx.Amount ?? 0).toFixed(2)}</td>
               <td className="px-4 py-2">
-                <Badge variant={getStatusVariant(tx.status)}>{tx.status}</Badge>
+                <Badge variant={getStatusVariant(tx.status)}>
+                  {tx.status || "Unknown"}
+                </Badge>
               </td>
               <td className="px-4 py-2 text-center">
                 <button
                   className="text-blue-600 hover:underline font-medium"
                   onClick={() => onView(tx)}
+                  aria-label={`View transaction ${tx.id}`}
                 >
                   View
                 </button>

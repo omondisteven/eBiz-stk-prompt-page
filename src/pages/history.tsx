@@ -7,27 +7,16 @@ import { Button } from "@/components/ui/button";
 import TransactionTable from "@/components/ui/TransactionTable";
 import { useRouter } from "next/router";
 import Layout from "@/components/Layout";
+import { Transaction } from "@/types/transaction";
 
 export default function TransactionHistoryPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [selectedTx, setSelectedTx] = useState<any | null>(null);
+  // const [selectedTx, setSelectedTx] = useState<any | null>(null);
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const router = useRouter();
-
-  interface Transaction {
-  id: string;
-  receiptNumber: string;
-  amount: number;
-  phoneNumber: string;
-  status: string;
-  timestamp: string;
-  details: any;
-  AccountNumber?: string;
-  PaybillNumber?: string;
-  TransactionType?: string;
-}
-
+  
   useEffect(() => {
     // Get phone number from localStorage
     const getPhoneNumber = () => {
@@ -102,17 +91,37 @@ export default function TransactionHistoryPage() {
   }, [phoneNumber]);
 
   // Add this function to history.tsx
-    const fetchTransactionDetails = async (id: string) => {
+    const fetchTransactionDetails = async (id: string): Promise<Transaction> => {
       try {
         const docRef = doc(db, "transactions", id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          return docSnap.data();
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || "N/A",
+            MpesaReceiptNumber: data.MpesaReceiptNumber,
+            amount: Number(data.amount ?? data.Amount ?? 0),
+            phoneNumber: data.phoneNumber || data.PhoneNumber || "",
+            PhoneNumber: data.PhoneNumber,
+            status: data.status ?? "Unknown",
+            timestamp: data.timestamp?.toDate?.()?.toISOString() || 
+                      data.processedAt?.toDate?.()?.toISOString() || 
+                      data.Timestamp || 
+                      data.timestamp ||
+                      data.processedAt,
+            processedAt: data.processedAt,
+            Timestamp: data.Timestamp,
+            details: data.details ?? {},
+            AccountNumber: data.AccountNumber,
+            PaybillNumber: data.PaybillNumber,
+            TransactionType: data.TransactionType,
+          };
         }
-        return null;
+        return {} as Transaction;
       } catch (error) {
         console.error("Error fetching transaction details:", error);
-        return null;
+        return {} as Transaction;
       }
     };
 
@@ -131,12 +140,18 @@ export default function TransactionHistoryPage() {
         </div>
       ) : (
        <TransactionTable 
-          transactions={transactions} 
-          onView={async (tx) => {
-            const details = await fetchTransactionDetails(tx.id);
-            setSelectedTx({ ...tx, ...details });
-          }} 
-        />
+        transactions={transactions} 
+        onView={async (tx: Transaction) => {
+          // First show the existing data immediately
+          setSelectedTx(tx);
+          // Then fetch and merge any additional details
+          const details = await fetchTransactionDetails(tx.id);
+          setSelectedTx((prev: Transaction | null) => ({ 
+            ...prev, 
+            ...details 
+          }));
+        }} 
+      />
       )}
 
       {/* Transaction Details Modal */}
@@ -162,32 +177,44 @@ export default function TransactionHistoryPage() {
                   selectedTx.status === "Failed" ? "destructive" :
                   selectedTx.status === "Cancelled" ? "warning" : "default"
                 }>
-                  {selectedTx.status}
+                  {selectedTx.status || "Unknown"}
                 </Badge>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Amount:</span>
-                <span>KES {selectedTx.amount?.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</span>
+                <span>KES {selectedTx.amount?.toLocaleString('en-KE', { minimumFractionDigits: 2 }) || "N/A"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Receipt:</span>
-                <span>{selectedTx.receiptNumber || "N/A"}</span>
+                <span>{selectedTx.receiptNumber || selectedTx.MpesaReceiptNumber || "N/A"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Date:</span>
                 <span>
-                  {selectedTx.timestamp ? new Date(selectedTx.timestamp).toLocaleString() : "N/A"}
+                  {selectedTx.timestamp ? new Date(selectedTx.timestamp).toLocaleString() : 
+                  selectedTx.processedAt ? new Date(selectedTx.processedAt).toLocaleString() : "N/A"}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Phone:</span>
-                <span>{selectedTx.phoneNumber}</span>
+                <span>{selectedTx.phoneNumber || selectedTx.PhoneNumber || "N/A"}</span>
               </div>
-              {/* Add additional fields if needed */}
               {selectedTx.TransactionType && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Type:</span>
                   <span>{selectedTx.TransactionType}</span>
+                </div>
+              )}
+              {selectedTx.PaybillNumber && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Paybill:</span>
+                  <span>{selectedTx.PaybillNumber}</span>
+                </div>
+              )}
+              {selectedTx.AccountNumber && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Account:</span>
+                  <span>{selectedTx.AccountNumber}</span>
                 </div>
               )}
             </div>

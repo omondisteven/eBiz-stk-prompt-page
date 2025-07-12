@@ -534,7 +534,7 @@ const HomeUI = () => {
         </div>
         {/* Main Content */}
         <div className="flex-1 p-4 overflow-auto mx-2 sm:mx-0">
-          <div className="bg-[#0a0a23] rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.15)] p-4 mb-4 border border-gray-200">
+          <div className="bg-[#0a0a23] rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.15)] p-4 mb-4 border-green-500">
             {hasQrData ? (
               <>
                 <div className="text-center">

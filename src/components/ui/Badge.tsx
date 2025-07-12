@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
 
-interface BadgeProps {
+export interface BadgeProps {
   variant?: "default" | "destructive" | "outline" | "success" | "warning";
   children: ReactNode;
   className?: string;
