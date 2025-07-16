@@ -56,33 +56,22 @@ export default function TransactionHistoryPage() {
           .map((doc) => {
             const data = doc.data();
             const phone = data.phoneNumber || data.PhoneNumber || "";
-            const details = data.details || [];
-            const metadataItems = Array.isArray(details) ? details : [];
             
-            const getMetadataValue = (name: string) => {
-              const item = metadataItems.find((i: any) => 
-                i.Name && i.Name.toLowerCase().includes(name.toLowerCase())
-              );
-              return item ? item.Value : undefined;
-            };
-
             return {
               id: doc.id,
               receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || "N/A",
-              amount: Number(data.amount ?? data.Amount ?? "0"),
+              amount: Number(data.amount ?? data.Amount ?? 0),
               phoneNumber: phone,
               status: data.status ?? "Unknown",
               timestamp: 
                 data.timestamp?.toDate?.()?.toISOString() ||
                 data.processedAt?.toDate?.()?.toISOString() ||
                 data.Timestamp || 
-                data.timestamp ||
-                data.processedAt,
-              details: data.details ?? {},
-              // Extract from metadata if available
-              AccountNumber: getMetadataValue('account') || data.AccountNumber,
-              PaybillNumber: getMetadataValue('paybill') || data.PaybillNumber,
-              TransactionType: data.TransactionType,
+                new Date().toISOString(),
+              details: data.details || [],
+              AccountNumber: data.AccountNumber || "N/A",
+              PaybillNumber: data.PaybillNumber || "N/A",
+              TransactionType: data.TransactionType || "N/A",
             };
           })
           .filter((tx) => tx.phoneNumber === formattedPhone);
@@ -108,34 +97,21 @@ export default function TransactionHistoryPage() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           
-          // Handle details whether they come as array or object
-          let details = data.details || [];
-          if (!Array.isArray(details)) {
-            // Convert object to array if needed
-            details = Object.entries(details).map(([Name, Value]) => ({ Name, Value }));
-          }
-
-          const getMetadataValue = (name: string) => {
-            const item = details.find((i: any) => 
-              i.Name && i.Name.toLowerCase().includes(name.toLowerCase())
-            );
-            return item ? item.Value : undefined;
-          };
-
+          // Return the complete transaction data with fallbacks
           return {
-            ...fallbackTx,
             id: docSnap.id,
-            receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || fallbackTx.receiptNumber,
-            amount: Number(data.amount ?? data.Amount ?? fallbackTx.amount),
-            phoneNumber: data.phoneNumber || data.PhoneNumber || fallbackTx.phoneNumber,
+            receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || fallbackTx.receiptNumber || "N/A",
+            amount: Number(data.amount ?? data.Amount ?? fallbackTx.amount ?? 0),
+            phoneNumber: data.phoneNumber || data.PhoneNumber || fallbackTx.phoneNumber || "N/A",
             status: data.status ?? fallbackTx.status ?? "Unknown",
             timestamp: data.timestamp?.toDate?.()?.toISOString() || 
                       data.processedAt?.toDate?.()?.toISOString() || 
+                      data.Timestamp ||
                       fallbackTx.timestamp,
-            details: details,
-            AccountNumber: getMetadataValue('account') || data.AccountNumber || fallbackTx.AccountNumber,
-            PaybillNumber: getMetadataValue('paybill') || data.PaybillNumber || fallbackTx.PaybillNumber,
-            TransactionType: data.TransactionType || fallbackTx.TransactionType,
+            details: data.details || fallbackTx.details || [],
+            AccountNumber: data.AccountNumber || fallbackTx.AccountNumber || "N/A",
+            PaybillNumber: data.PaybillNumber || fallbackTx.PaybillNumber || "N/A",
+            TransactionType: data.TransactionType || fallbackTx.TransactionType || "N/A",
           };
         }
         return fallbackTx;
@@ -243,8 +219,8 @@ export default function TransactionHistoryPage() {
                 <span>{selectedTx.AccountNumber || "N/A"}</span>
               </div>
 
-              {/* Additional Details */}
-              {selectedTx.details && (
+              {/* Additional Details - Only show if there are actual details */}
+              {selectedTx.details && selectedTx.details.length > 0 && (
                 <div className="mt-4 pt-4 border-t">
                   <h4 className="font-medium text-gray-600 mb-2">Additional Details:</h4>
                   {Array.isArray(selectedTx.details) ? (
