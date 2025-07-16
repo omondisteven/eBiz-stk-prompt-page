@@ -173,7 +173,7 @@ export default function TransactionHistoryPage() {
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Transaction Details</h3>
-              <button 
+              <button
                 className="text-gray-600 hover:text-black"
                 onClick={() => setSelectedTx(null)}
               >
@@ -181,62 +181,77 @@ export default function TransactionHistoryPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            </div>            
-            <div className="space-y-3 mb-4">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Status:</span>
-                <Badge variant={
-                  selectedTx.status === "Success" ? "success" :
-                  selectedTx.status === "Failed" ? "destructive" :
-                  selectedTx.status === "Cancelled" ? "warning" : "default"
-                }>
-                  {selectedTx.status || "Unknown"}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Amount:</span>
-                <span>KES {selectedTx.amount?.toLocaleString('en-KE', { minimumFractionDigits: 2 }) || "N/A"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Receipt:</span>
-                <span>{selectedTx.receiptNumber || selectedTx.MpesaReceiptNumber || "N/A"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Date:</span>
-                <span>
-                  {selectedTx.timestamp ? new Date(selectedTx.timestamp).toLocaleString() : 
-                  selectedTx.processedAt ? new Date(selectedTx.processedAt).toLocaleString() : "N/A"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Phone:</span>
-                <span>{selectedTx.phoneNumber || selectedTx.PhoneNumber || "N/A"}</span>
-              </div>
-              {selectedTx.TransactionType && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Type:</span>
-                  <span>{selectedTx.TransactionType}</span>
-                </div>
-              )}
-              {(selectedTx.PaybillNumber || selectedTx.details?.PaybillNumber) && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Paybill:</span>
-                  <span>{selectedTx.PaybillNumber || 
-                        selectedTx.details?.find((d: any) => d.Name === 'PaybillNumber')?.Value}</span>
-                </div>
-              )}
-              {(selectedTx.AccountNumber || selectedTx.details?.AccountNumber) && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Account:</span>
-                  <span>{selectedTx.AccountNumber || 
-                        selectedTx.details?.find((d: any) => d.Name === 'AccountNumber')?.Value}</span>
-                </div>
-              )}
             </div>
-            <Button 
-              onClick={() => setSelectedTx(null)}
-              className="mt-4"
-            >
+
+            {/** Helper function to fetch metadata from details */}
+            {(() => {
+              const getDetailValue = (name: string) =>
+                selectedTx.details?.find((d: any) => d.Name?.toLowerCase() === name.toLowerCase())?.Value;
+
+              return (
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Status:</span>
+                    <Badge variant={
+                      selectedTx.status === "Success" ? "success" :
+                        selectedTx.status === "Failed" ? "destructive" :
+                          selectedTx.status === "Cancelled" ? "warning" : "default"
+                    }>
+                      {selectedTx.status || "Unknown"}
+                    </Badge>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Amount:</span>
+                    <span>KES {selectedTx.amount?.toLocaleString('en-KE', { minimumFractionDigits: 2 }) || "N/A"}</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Receipt:</span>
+                    <span>{selectedTx.receiptNumber || selectedTx.MpesaReceiptNumber || "N/A"}</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Date:</span>
+                    <span>
+                      {selectedTx.timestamp
+                        ? new Date(selectedTx.timestamp).toLocaleString()
+                        : selectedTx.processedAt
+                          ? new Date(selectedTx.processedAt).toLocaleString()
+                          : "N/A"}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Phone:</span>
+                    <span>{selectedTx.phoneNumber || selectedTx.PhoneNumber || "N/A"}</span>
+                  </div>
+
+                  {selectedTx.TransactionType && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Type:</span>
+                      <span>{selectedTx.TransactionType}</span>
+                    </div>
+                  )}
+
+                  {(selectedTx.PaybillNumber || getDetailValue('PaybillNumber')) && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Paybill:</span>
+                      <span>{selectedTx.PaybillNumber || getDetailValue('PaybillNumber')}</span>
+                    </div>
+                  )}
+
+                  {(selectedTx.AccountNumber || getDetailValue('AccountNumber')) && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Account:</span>
+                      <span>{selectedTx.AccountNumber || getDetailValue('AccountNumber')}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            <Button onClick={() => setSelectedTx(null)} className="mt-4">
               Close
             </Button>
           </div>
