@@ -184,8 +184,10 @@ export default function TransactionHistoryPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            </div>            
+            </div>
+            
             <div className="space-y-3 mb-4">
+              {/* Status */}
               <div className="flex justify-between">
                 <span className="text-gray-600">Status:</span>
                 <Badge variant={
@@ -196,66 +198,78 @@ export default function TransactionHistoryPage() {
                   {selectedTx.status || "Unknown"}
                 </Badge>
               </div>
+
+              {/* Amount */}
               <div className="flex justify-between">
                 <span className="text-gray-600">Amount:</span>
-                <span>KES {selectedTx.amount?.toLocaleString('en-KE', { minimumFractionDigits: 2 }) || "N/A"}</span>
+                <span>{selectedTx.amount ? `KES ${selectedTx.amount.toLocaleString('en-KE')}` : "N/A"}</span>
               </div>
+
+              {/* Receipt Number */}
               <div className="flex justify-between">
-                <span className="text-gray-600">Receipt:</span>
+                <span className="text-gray-600">Receipt Number:</span>
                 <span>{selectedTx.receiptNumber || "N/A"}</span>
               </div>
+
+              {/* Date */}
               <div className="flex justify-between">
                 <span className="text-gray-600">Date:</span>
                 <span>
                   {selectedTx.timestamp ? new Date(selectedTx.timestamp).toLocaleString() : "N/A"}
                 </span>
               </div>
+
+              {/* Phone Number */}
               <div className="flex justify-between">
-                <span className="text-gray-600">Phone:</span>
+                <span className="text-gray-600">Phone Number:</span>
                 <span>{selectedTx.phoneNumber || "N/A"}</span>
               </div>
-              {selectedTx.TransactionType && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Type:</span>
-                  <span>{selectedTx.TransactionType}</span>
-                </div>
-              )}
-              {selectedTx.PaybillNumber && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Paybill:</span>
-                  <span>{selectedTx.PaybillNumber}</span>
-                </div>
-              )}
-              {selectedTx.AccountNumber && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Account:</span>
-                  <span>{selectedTx.AccountNumber}</span>
-                </div>
-              )}
-              {/* Improved details rendering */}
+
+              {/* Transaction Type */}
+              <div className="flex justify-between">
+                <span className="text-gray-600">Transaction Type:</span>
+                <span>{selectedTx.TransactionType || "N/A"}</span>
+              </div>
+
+              {/* Paybill Number */}
+              <div className="flex justify-between">
+                <span className="text-gray-600">Paybill Number:</span>
+                <span>{selectedTx.PaybillNumber || "N/A"}</span>
+              </div>
+
+              {/* Account Number */}
+              <div className="flex justify-between">
+                <span className="text-gray-600">Account Number:</span>
+                <span>{selectedTx.AccountNumber || "N/A"}</span>
+              </div>
+
+              {/* Additional Details */}
               {selectedTx.details && (
                 <div className="mt-4 pt-4 border-t">
                   <h4 className="font-medium text-gray-600 mb-2">Additional Details:</h4>
                   {Array.isArray(selectedTx.details) ? (
-                    selectedTx.details.map((detail: any, index: number) => (
-                      detail.Name && (
+                    selectedTx.details
+                      .filter(detail => detail.Name && detail.Value)
+                      .map((detail, index) => (
                         <div key={index} className="flex justify-between">
                           <span className="text-gray-600">{detail.Name}:</span>
-                          <span>{detail.Value}</span>
+                          <span>{String(detail.Value)}</span>
                         </div>
-                      )
-                    ))
+                      ))
                   ) : (
-                    Object.entries(selectedTx.details).map(([key, value], index) => (
-                      <div key={index} className="flex justify-between">
-                        <span className="text-gray-600">{key}:</span>
-                        <span>{String(value)}</span>
-                      </div>
-                    ))
+                    Object.entries(selectedTx.details)
+                      .filter(([key, value]) => key && value)
+                      .map(([key, value], index) => (
+                        <div key={index} className="flex justify-between">
+                          <span className="text-gray-600">{key}:</span>
+                          <span>{String(value)}</span>
+                        </div>
+                      ))
                   )}
                 </div>
               )}
             </div>
+
             <Button 
               onClick={() => setSelectedTx(null)}
               className="mt-4"
