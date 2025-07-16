@@ -85,7 +85,7 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
           {renderDetailRow("Paybill Number", transaction.PaybillNumber)}
           {renderDetailRow("Account Number", transaction.AccountNumber)}
 
-          {transaction.details && transaction.details.length > 0 && (
+          {/* {transaction.details && transaction.details.length > 0 && (
             <div className="mt-4 pt-4 border-t">
               <h4 className="font-medium text-gray-600 mb-2">Additional Details:</h4>
               {Array.isArray(transaction.details) ? (
@@ -108,7 +108,7 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
                   ))
               )}
             </div>
-          )}
+          )} */}
         </div>
 
         <Button onClick={onClose} className="mt-4">
