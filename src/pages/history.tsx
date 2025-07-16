@@ -143,6 +143,7 @@ export default function TransactionHistoryPage() {
         onView={async (tx: Transaction) => {
           setLoading(true);
           const details = await fetchTransactionDetails(tx.id, tx);
+          console.log("Modal Transaction Details:", details);
           setSelectedTx(details);
           setLoading(false);
         }}
