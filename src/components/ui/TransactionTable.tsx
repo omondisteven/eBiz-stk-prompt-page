@@ -24,6 +24,8 @@ export default function TransactionTable({
     max?: number;
   }>({});
 
+  const [showMobileFilter, setShowMobileFilter] = useState(false);
+
   const getStatusVariant = (status?: string): BadgeProps["variant"] => {
     switch (status) {
       case "Success":
@@ -71,6 +73,11 @@ export default function TransactionTable({
 
   const clearAmountFilter = () => {
     setAmountFilter({});
+    setShowMobileFilter(false);
+  };
+
+  const toggleMobileFilter = () => {
+    setShowMobileFilter(!showMobileFilter);
   };
 
   const getSortedAndFilteredTransactions = () => {
@@ -205,6 +212,50 @@ export default function TransactionTable({
 
       {/* Mobile View */}
       <div className="md:hidden">
+        {/* Mobile Filter Input */}
+        {showMobileFilter && (
+          <div className="bg-blue-800 p-3 border-b border-blue-700">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-white text-sm">Filter Amount</span>
+              <button 
+                onClick={toggleMobileFilter}
+                className="text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex space-x-2">
+              <input
+                type="number"
+                placeholder="Min amount"
+                className="flex-1 p-2 rounded text-sm"
+                value={amountFilter.min || ''}
+                onChange={(e) => applyAmountFilter(
+                  e.target.value ? Number(e.target.value) : undefined,
+                  amountFilter.max
+                )}
+              />
+              <input
+                type="number"
+                placeholder="Max amount"
+                className="flex-1 p-2 rounded text-sm"
+                value={amountFilter.max || ''}
+                onChange={(e) => applyAmountFilter(
+                  amountFilter.min,
+                  e.target.value ? Number(e.target.value) : undefined
+                )}
+              />
+            </div>
+            <button
+              onClick={clearAmountFilter}
+              className="mt-2 text-white text-sm flex items-center justify-center w-full py-1 bg-red-500 rounded"
+            >
+              <FilterX className="h-3 w-3 mr-1" />
+              Clear Filter
+            </button>
+          </div>
+        )}
+
         <div className="bg-blue-1200 text-white rounded-t-lg p-2">
           <div className="grid grid-cols-3 text-xs uppercase font-medium">
             <div className="px-2 py-1">
@@ -216,13 +267,19 @@ export default function TransactionTable({
                 <ArrowUpDown className="ml-1 h-3 w-3" />
               </button>
             </div>
-            <div className="px-2 py-1 text-right">
+            <div className="px-2 py-1 text-right flex items-center justify-end">
               <button
                 onClick={() => requestSort('amount')}
-                className="flex items-center justify-end hover:text-blue-300"
+                className="flex items-center hover:text-blue-300 mr-1"
               >
                 Amount
                 <ArrowUpDown className="ml-1 h-3 w-3" />
+              </button>
+              <button 
+                onClick={toggleMobileFilter}
+                className="text-white ml-1"
+              >
+                <Filter className="h-3 w-3" />
               </button>
             </div>
             <div className="px-2 py-1 text-center">View</div>
