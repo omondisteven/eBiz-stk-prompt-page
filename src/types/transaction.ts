@@ -2,18 +2,18 @@
 export interface Transaction {
   id: string;
   receiptNumber?: string;
-  // MpesaReceiptNumber?: string;
   amount?: number;
-  // Amount?: number;
   phoneNumber?: string;
-  // PhoneNumber?: string;
   status?: string;
   timestamp?: string | Date;
-  // processedAt?: string | Date;
-  // Timestamp?: string;
-  details?: any;
+  details?: any[] | Record<string, any>;
+  // Direct fields that might exist in the document
   AccountNumber?: string;
   PaybillNumber?: string;
   TransactionType?: string;
-  [key: string]: any; // Add index signature for dynamic access
+  // Raw fields from different naming conventions
+  MpesaReceiptNumber?: string;
+  Amount?: number;
+  PhoneNumber?: string;
+  processedAt?: string | Date;
 }
