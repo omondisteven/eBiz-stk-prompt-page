@@ -119,13 +119,13 @@ export default function TransactionTable({
       {/* Desktop View */}
       <div className="hidden md:block">
         <table className="w-full text-sm text-left text-gray-800">
-          <thead className="bg-gray-100 text-xs uppercase text-gray-600 border-b md:bg-gray-100 md:text-gray-600">
-            <tr className="bg-gray-100 text-navy-800 md:bg-transparent">
+          <thead className="bg-gray-200 text-xs uppercase text-blue-800 border-b sm:bg-gray-100 sm:text-gray-600">
+            <tr>
               <th className="px-4 py-3">Receipt</th>
               <th className="px-4 py-3">
                 <button
                   onClick={() => requestSort('date')}
-                  className="flex items-center hover:text-blue-600 text-navy-800 md:text-gray-600"
+                  className="flex items-center hover:text-blue-600"
                 >
                   Date
                   <ArrowUpDown className="ml-1 h-3 w-3" />
@@ -135,13 +135,13 @@ export default function TransactionTable({
                 <div className="flex justify-end items-center">
                   <button
                     onClick={() => requestSort('amount')}
-                    className="flex items-center hover:text-blue-600 mr-2 text-navy-800 md:text-gray-600"
+                    className="flex items-center hover:text-blue-600 mr-2"
                   >
                     Amount
                     <ArrowUpDown className="ml-1 h-3 w-3" />
                   </button>
                   <div className="relative group">
-                    <Filter className="h-4 w-4 text-navy-800 hover:text-blue-600 cursor-pointer md:text-gray-500" />
+                    <Filter className="h-4 w-4 text-gray-500 hover:text-blue-600 cursor-pointer" />
                     <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-10 hidden group-hover:block p-2">
                       <div className="text-xs text-gray-500 mb-1">Filter Amount</div>
                       <div className="flex space-x-2 mb-2">
@@ -177,8 +177,8 @@ export default function TransactionTable({
                   </div>
                 </div>
               </th>
-              <th className="px-4 py-3 text-navy-800 md:text-gray-600">Status</th>
-              <th className="px-4 py-3 text-center text-navy-800 md:text-gray-600">Action</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3 text-center">Action</th>
             </tr>
           </thead>
           <tbody>
