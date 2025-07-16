@@ -107,12 +107,16 @@ export default function TransactionHistoryPage() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          // Extract details from metadata items if they exist
-          const details = data.details || [];
-          const metadataItems = Array.isArray(details) ? details : [];
           
+          // Handle details whether they come as array or object
+          let details = data.details || [];
+          if (!Array.isArray(details)) {
+            // Convert object to array if needed
+            details = Object.entries(details).map(([Name, Value]) => ({ Name, Value }));
+          }
+
           const getMetadataValue = (name: string) => {
-            const item = metadataItems.find((i: any) => 
+            const item = details.find((i: any) => 
               i.Name && i.Name.toLowerCase().includes(name.toLowerCase())
             );
             return item ? item.Value : undefined;
@@ -128,8 +132,7 @@ export default function TransactionHistoryPage() {
             timestamp: data.timestamp?.toDate?.()?.toISOString() || 
                       data.processedAt?.toDate?.()?.toISOString() || 
                       fallbackTx.timestamp,
-            details: data.details ?? fallbackTx.details ?? {},
-            // Extract from metadata if available
+            details: details,
             AccountNumber: getMetadataValue('account') || data.AccountNumber || fallbackTx.AccountNumber,
             PaybillNumber: getMetadataValue('paybill') || data.PaybillNumber || fallbackTx.PaybillNumber,
             TransactionType: data.TransactionType || fallbackTx.TransactionType,
@@ -229,16 +232,27 @@ export default function TransactionHistoryPage() {
                   <span>{selectedTx.AccountNumber}</span>
                 </div>
               )}
-              {/* Display additional details if they exist in the details array */}
-              {selectedTx.details && selectedTx.details.length > 0 && (
+              {/* Improved details rendering */}
+              {selectedTx.details && (
                 <div className="mt-4 pt-4 border-t">
                   <h4 className="font-medium text-gray-600 mb-2">Additional Details:</h4>
-                  {selectedTx.details.map((detail: any, index: number) => (
-                    <div key={index} className="flex justify-between">
-                      <span className="text-gray-600">{detail.Name}:</span>
-                      <span>{detail.Value}</span>
-                    </div>
-                  ))}
+                  {Array.isArray(selectedTx.details) ? (
+                    selectedTx.details.map((detail: any, index: number) => (
+                      detail.Name && (
+                        <div key={index} className="flex justify-between">
+                          <span className="text-gray-600">{detail.Name}:</span>
+                          <span>{detail.Value}</span>
+                        </div>
+                      )
+                    ))
+                  ) : (
+                    Object.entries(selectedTx.details).map(([key, value], index) => (
+                      <div key={index} className="flex justify-between">
+                        <span className="text-gray-600">{key}:</span>
+                        <span>{String(value)}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>
