@@ -1,8 +1,10 @@
+// /src/components/TransactionDetails.tsx
 "use client";
 
 import { useRef } from "react";
 import { Badge } from "./ui/Badge";
 import { Button } from "./ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Transaction } from "@/types/transaction";
 import { Share2, Download } from "lucide-react";
 import jsPDF from "jspdf";
@@ -44,8 +46,8 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
 
   const downloadAs = async (format: "pdf" | "png") => {
     if (!contentRef.current) return;
+    const canvas = await html2canvas(contentRef.current);
     if (format === "pdf") {
-      const canvas = await html2canvas(contentRef.current);
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF();
       const imgProps = pdf.getImageProperties(imgData);
@@ -54,7 +56,6 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Transaction_${transaction.receiptNumber || "details"}.pdf`);
     } else {
-      const canvas = await html2canvas(contentRef.current);
       const img = canvas.toDataURL("image/png");
       const link = document.createElement("a");
       link.href = img;
@@ -68,17 +69,14 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
       alert("Sharing not supported on this device/browser.");
       return;
     }
-
     if (!contentRef.current) return;
     const canvas = await html2canvas(contentRef.current);
     const blob = await new Promise<Blob | null>(resolve => {
       canvas.toBlob(blob => resolve(blob), "image/png");
     });
     if (!blob) return;
-
     const fileName = `Transaction_${transaction.receiptNumber || "details"}.${format}`;
     const file = new File([blob], fileName, { type: "image/png" });
-
     try {
       await navigator.share({
         files: [file],
@@ -154,21 +152,31 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons with Dropdown Menus */}
         <div className="flex justify-around mt-4 pt-4 border-t">
-          <Button variant="outline" onClick={() => {
-            const choice = confirm("Share as PDF? (Cancel for PNG)");
-            shareAs(choice ? "pdf" : "png");
-          }}>
-            <Share2 className="mr-2 h-4 w-4" /> Share
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="text-blue-600 hover:text-blue-800">
+                <Share2 className="mr-2 h-4 w-4 text-blue-600" /> Share
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => shareAs("pdf")}>Share as PDF</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => shareAs("png")}>Share as PNG</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-          <Button variant="outline" onClick={() => {
-            const choice = confirm("Download as PDF? (Cancel for PNG)");
-            downloadAs(choice ? "pdf" : "png");
-          }}>
-            <Download className="mr-2 h-4 w-4" /> Download
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="text-green-600 hover:text-green-800">
+                <Download className="mr-2 h-4 w-4 text-green-600" /> Download
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => downloadAs("pdf")}>Download as PDF</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => downloadAs("png")}>Download as PNG</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>
