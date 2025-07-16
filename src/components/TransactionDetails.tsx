@@ -31,7 +31,7 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
   const renderDetailRow = (label: string, value: any) => (
     <div className="flex justify-between">
       <span className="text-gray-600">{label}:</span>
-      <span>{value || "N/A"}</span>
+      <span className="text-blue-900">{value || "N/A"}</span>
     </div>
   );
 
