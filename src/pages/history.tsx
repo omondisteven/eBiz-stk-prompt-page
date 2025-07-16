@@ -91,40 +91,39 @@ export default function TransactionHistoryPage() {
   }, [phoneNumber]);
 
   // Add this function to history.tsx
-    const fetchTransactionDetails = async (id: string): Promise<Transaction> => {
+    const fetchTransactionDetails = async (id: string, fallbackTx: Transaction): Promise<Transaction> => {
       try {
         const docRef = doc(db, "transactions", id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
           return {
+            ...fallbackTx,  // Preserve what we already have
             id: docSnap.id,
-            receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || "N/A",
-            MpesaReceiptNumber: data.MpesaReceiptNumber,
-            amount: Number(data.amount ?? data.Amount ?? 0),
-            phoneNumber: data.phoneNumber || data.PhoneNumber || "",
-            PhoneNumber: data.PhoneNumber,
-            status: data.status ?? "Unknown",
+            receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || fallbackTx.receiptNumber,
+            MpesaReceiptNumber: data.MpesaReceiptNumber || fallbackTx.MpesaReceiptNumber,
+            amount: Number(data.amount ?? data.Amount ?? fallbackTx.amount),
+            phoneNumber: data.phoneNumber || data.PhoneNumber || fallbackTx.phoneNumber,
+            PhoneNumber: data.PhoneNumber || fallbackTx.PhoneNumber,
+            status: data.status ?? fallbackTx.status ?? "Unknown",
             timestamp: data.timestamp?.toDate?.()?.toISOString() || 
                       data.processedAt?.toDate?.()?.toISOString() || 
                       data.Timestamp || 
-                      data.timestamp ||
-                      data.processedAt,
-            processedAt: data.processedAt,
-            Timestamp: data.Timestamp,
-            details: data.details ?? {},
-            AccountNumber: data.AccountNumber,
-            PaybillNumber: data.PaybillNumber,
-            TransactionType: data.TransactionType,
+                      fallbackTx.timestamp,
+            processedAt: data.processedAt || fallbackTx.processedAt,
+            Timestamp: data.Timestamp || fallbackTx.Timestamp,
+            details: data.details ?? fallbackTx.details ?? {},
+            AccountNumber: data.AccountNumber ?? fallbackTx.AccountNumber,
+            PaybillNumber: data.PaybillNumber ?? fallbackTx.PaybillNumber,
+            TransactionType: data.TransactionType ?? fallbackTx.TransactionType,
           };
         }
-        return {} as Transaction;
+        return fallbackTx;
       } catch (error) {
         console.error("Error fetching transaction details:", error);
-        return {} as Transaction;
+        return fallbackTx;
       }
     };
-
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl text-white font-bold mb-6">Transaction History</h1>
@@ -142,15 +141,11 @@ export default function TransactionHistoryPage() {
        <TransactionTable 
         transactions={transactions} 
         onView={async (tx: Transaction) => {
-          // First show the existing data immediately
-          setSelectedTx(tx);
-          // Then fetch and merge any additional details
-          const details = await fetchTransactionDetails(tx.id);
-          setSelectedTx((prev: Transaction | null) => ({ 
-            ...prev, 
-            ...details 
-          }));
-        }} 
+          setLoading(true);
+          const details = await fetchTransactionDetails(tx.id, tx);
+          setSelectedTx(details);
+          setLoading(false);
+        }}
       />
       )}
 
