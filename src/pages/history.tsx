@@ -55,7 +55,17 @@ export default function TransactionHistoryPage() {
         const txData = snapshot.docs
           .map((doc) => {
             const data = doc.data();
-            const phone = data.PhoneNumber ?? data.phoneNumber ?? "";
+            const phone = data.phoneNumber || data.PhoneNumber || "";
+            const details = data.details || [];
+            const metadataItems = Array.isArray(details) ? details : [];
+            
+            const getMetadataValue = (name: string) => {
+              const item = metadataItems.find((i: any) => 
+                i.Name && i.Name.toLowerCase().includes(name.toLowerCase())
+              );
+              return item ? item.Value : undefined;
+            };
+
             return {
               id: doc.id,
               receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || "N/A",
@@ -65,13 +75,13 @@ export default function TransactionHistoryPage() {
               timestamp: 
                 data.timestamp?.toDate?.()?.toISOString() ||
                 data.processedAt?.toDate?.()?.toISOString() ||
-                data.Timestamp || // Add this line
+                data.Timestamp || 
                 data.timestamp ||
                 data.processedAt,
               details: data.details ?? {},
-              // Add these fields to ensure they're available in the modal
-              AccountNumber: data.AccountNumber,
-              PaybillNumber: data.PaybillNumber,
+              // Extract from metadata if available
+              AccountNumber: getMetadataValue('account') || data.AccountNumber,
+              PaybillNumber: getMetadataValue('paybill') || data.PaybillNumber,
               TransactionType: data.TransactionType,
             };
           })
@@ -97,25 +107,32 @@ export default function TransactionHistoryPage() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
+          // Extract details from metadata items if they exist
+          const details = data.details || [];
+          const metadataItems = Array.isArray(details) ? details : [];
+          
+          const getMetadataValue = (name: string) => {
+            const item = metadataItems.find((i: any) => 
+              i.Name && i.Name.toLowerCase().includes(name.toLowerCase())
+            );
+            return item ? item.Value : undefined;
+          };
+
           return {
-            ...fallbackTx,  // Preserve what we already have
+            ...fallbackTx,
             id: docSnap.id,
             receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || fallbackTx.receiptNumber,
-            MpesaReceiptNumber: data.MpesaReceiptNumber || fallbackTx.MpesaReceiptNumber,
             amount: Number(data.amount ?? data.Amount ?? fallbackTx.amount),
             phoneNumber: data.phoneNumber || data.PhoneNumber || fallbackTx.phoneNumber,
-            PhoneNumber: data.PhoneNumber || fallbackTx.PhoneNumber,
             status: data.status ?? fallbackTx.status ?? "Unknown",
             timestamp: data.timestamp?.toDate?.()?.toISOString() || 
                       data.processedAt?.toDate?.()?.toISOString() || 
-                      data.Timestamp || 
                       fallbackTx.timestamp,
-            processedAt: data.processedAt || fallbackTx.processedAt,
-            Timestamp: data.Timestamp || fallbackTx.Timestamp,
             details: data.details ?? fallbackTx.details ?? {},
-            AccountNumber: data.AccountNumber ?? fallbackTx.AccountNumber,
-            PaybillNumber: data.PaybillNumber ?? fallbackTx.PaybillNumber,
-            TransactionType: data.TransactionType ?? fallbackTx.TransactionType,
+            // Extract from metadata if available
+            AccountNumber: getMetadataValue('account') || data.AccountNumber || fallbackTx.AccountNumber,
+            PaybillNumber: getMetadataValue('paybill') || data.PaybillNumber || fallbackTx.PaybillNumber,
+            TransactionType: data.TransactionType || fallbackTx.TransactionType,
           };
         }
         return fallbackTx;
@@ -201,16 +218,18 @@ export default function TransactionHistoryPage() {
                   <span>{selectedTx.TransactionType}</span>
                 </div>
               )}
-              {selectedTx.PaybillNumber && (
+              {(selectedTx.PaybillNumber || selectedTx.details?.PaybillNumber) && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Paybill:</span>
-                  <span>{selectedTx.PaybillNumber}</span>
+                  <span>{selectedTx.PaybillNumber || 
+                        selectedTx.details?.find((d: any) => d.Name === 'PaybillNumber')?.Value}</span>
                 </div>
               )}
-              {selectedTx.AccountNumber && (
+              {(selectedTx.AccountNumber || selectedTx.details?.AccountNumber) && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Account:</span>
-                  <span>{selectedTx.AccountNumber}</span>
+                  <span>{selectedTx.AccountNumber || 
+                        selectedTx.details?.find((d: any) => d.Name === 'AccountNumber')?.Value}</span>
                 </div>
               )}
             </div>

@@ -15,4 +15,5 @@ export interface Transaction {
   AccountNumber?: string;
   PaybillNumber?: string;
   TransactionType?: string;
+  [key: string]: any; // Add index signature for dynamic access
 }
