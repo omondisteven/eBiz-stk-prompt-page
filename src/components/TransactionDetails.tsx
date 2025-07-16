@@ -28,29 +28,10 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
     }
   };
 
-  const renderTransactionTypeRow = (label: string, value: any) => (
-    <div className="flex justify-between">
-      <h4 className="text-blue-900">{value || "N/A"}</h4>
-    </div>
-  );
-
-  const renderAmountRow = (label: string, value: any) => (
-    <div className="flex justify-between">
-      <h3 className="text-green-900">{value || "N/A"}</h3>
-    </div>
-  );
-
-  const renderMpesaRefRow = (label: string, value: any) => (
-    <div className="flex justify-between">
-      <h4 className="text-gray-600">{label}:</h4>
-      <h4 className="text-blue-900">{value || "N/A"}</h4>
-    </div>
-  );
-
   const renderDetailRow = (label: string, value: any) => (
     <div className="flex justify-between">
       <span className="text-gray-600">{label}:</span>
-      <span className="text-blue-900">{value || "N/A"}</span>
+      <span>{value || "N/A"}</span>
     </div>
   );
 
@@ -62,30 +43,35 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
             ✕
           </button>
         </div>
-        <div>
-            <h3 className="text-xl font-bold text-center"
-              style={{color: "#0c0246ff"}}>BLTA Solutions Limited</h3>              
-            <h2 className="text-xl font-bold text-center"
-              style={{color: "#09c95fff"}}>M-POSTER TRANSACTION DETAILS</h2>
+        
+        {/* Header Section */}
+        <div className="text-center mb-6">
+          <h3 className="text-xl font-bold" style={{ color: "#0c0246ff" }}>BLTA Solutions Limited</h3>              
+          <h2 className="text-xl font-bold mb-2" style={{ color: "#09c95fff" }}>M-POSTER TRANSACTION DETAILS</h2>
+          <h4 className="text-lg mb-4" style={{ color: "#0c0246ff" }}>{transaction.TransactionType || "N/A"}</h4>
+          <h3 className="text-2xl font-bold mb-2" style={{ color: "#09c95fff" }}>
+            KES {transaction.amount?.toFixed(2) || "0.00"}
+          </h3>
+          <div className="flex justify-center items-center gap-2 mb-6">
+            <strong>MPESA REF#</strong>
+            <span>{transaction.receiptNumber || "N/A"}</span>
+          </div>
+          <div className="border-b border-gray-200 mb-6"></div>
         </div>
-        <br />        
+
+        {/* Details Section */}
         <div className="space-y-3 mb-4 overflow-y-auto">
           {renderDetailRow("Status", 
             <Badge variant={getStatusVariant(transaction.status)}>
               {transaction.status}
             </Badge>
           )}
-          {renderTransactionTypeRow("Transaction Type", transaction.TransactionType)}
-          {renderAmountRow("Amount", `KES ${transaction.amount?.toLocaleString('en-KE')}`)}
-          {renderMpesaRefRow("MPESA REF#", transaction.receiptNumber)}
           {renderDetailRow("Date", formatDate(transaction.timestamp))}
-          <br />
           {renderDetailRow("Phone Number", transaction.phoneNumber)}
-          
           {renderDetailRow("Paybill Number", transaction.PaybillNumber)}
           {renderDetailRow("Account Number", transaction.AccountNumber)}
 
-          {/* {transaction.details && transaction.details.length > 0 && (
+          {transaction.details && transaction.details.length > 0 && (
             <div className="mt-4 pt-4 border-t">
               <h4 className="font-medium text-gray-600 mb-2">Additional Details:</h4>
               {Array.isArray(transaction.details) ? (
@@ -108,7 +94,7 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
                   ))
               )}
             </div>
-          )} */}
+          )}
         </div>
 
         <Button onClick={onClose} className="mt-4">
