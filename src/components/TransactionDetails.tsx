@@ -46,45 +46,92 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
 
   const downloadAs = async (format: "pdf" | "png") => {
     if (!contentRef.current) return;
-    const canvas = await html2canvas(contentRef.current);
+    
+    // Add padding to the captured content
+    const element = contentRef.current;
+    const originalPadding = element.style.padding;
+    element.style.padding = '16px'; // Add some padding
+    
+    const canvas = await html2canvas(element, {
+      scale: 2, // Higher quality
+      logging: false,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff'
+    });
+
+    // Restore original padding
+    element.style.padding = originalPadding;
+
     if (format === "pdf") {
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF();
+      const imgData = canvas.toDataURL("image/png", 1.0);
+      const pdf = new jsPDF('p', 'mm', 'a4');
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      
+      // Center the image on the page
+      const x = 0;
+      const y = 0;
+      pdf.addImage(imgData, "PNG", x, y, pdfWidth, pdfHeight);
       pdf.save(`Transaction_${transaction.receiptNumber || "details"}.pdf`);
     } else {
-      const img = canvas.toDataURL("image/png");
       const link = document.createElement("a");
-      link.href = img;
       link.download = `Transaction_${transaction.receiptNumber || "details"}.png`;
+      link.href = canvas.toDataURL("image/png");
       link.click();
     }
   };
 
   const shareAs = async (format: "pdf" | "png") => {
-    if (!navigator.canShare) {
-      alert("Sharing not supported on this device/browser.");
-      return;
-    }
     if (!contentRef.current) return;
-    const canvas = await html2canvas(contentRef.current);
-    const blob = await new Promise<Blob | null>(resolve => {
-      canvas.toBlob(blob => resolve(blob), "image/png");
-    });
-    if (!blob) return;
-    const fileName = `Transaction_${transaction.receiptNumber || "details"}.${format}`;
-    const file = new File([blob], fileName, { type: "image/png" });
+    
     try {
-      await navigator.share({
-        files: [file],
-        title: "Transaction Details",
-        text: "See the attached transaction details.",
-      });
+      if (format === "pdf") {
+        // For PDF sharing, we'll create a blob and share it
+        const canvas = await html2canvas(contentRef.current, {
+          scale: 2,
+          backgroundColor: '#ffffff'
+        });
+        
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        const pdfBlob = pdf.output('blob');
+        
+        await navigator.share({
+          files: [new File([pdfBlob], `Transaction_${transaction.receiptNumber || "details"}.pdf`, { 
+            type: 'application/pdf' 
+          })],
+          title: 'Transaction Details',
+          text: 'Here is the transaction details PDF',
+        });
+      } else {
+        // For PNG sharing
+        const canvas = await html2canvas(contentRef.current, {
+          scale: 2,
+          backgroundColor: '#ffffff'
+        });
+        
+        canvas.toBlob(async (blob) => {
+          if (!blob) return;
+          
+          await navigator.share({
+            files: [new File([blob], `Transaction_${transaction.receiptNumber || "details"}.png`, {
+              type: 'image/png'
+            })],
+            title: 'Transaction Details',
+            text: 'Here is the transaction details image',
+          });
+        }, 'image/png');
+      }
     } catch (err) {
-      console.error("Sharing failed:", err);
+      console.error('Error sharing:', err);
+      alert('Sharing failed. Please try again or use download instead.');
     }
   };
 
@@ -97,7 +144,11 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
           </button>
         </div>
 
-        <div ref={contentRef} className="overflow-y-auto space-y-4">
+        <div 
+          ref={contentRef} 
+          className="overflow-y-auto space-y-4 p-4" 
+          style={{ backgroundColor: 'white' }}
+            >
           {/* Header Section */}
           <div className="text-center">
             <h3 className="text-xl font-bold" style={{ color: "#0c0246ff" }}>BLTA Solutions Limited</h3>
