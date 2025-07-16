@@ -31,7 +31,7 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
   const renderDetailRow = (label: string, value: any) => (
     <div className="flex justify-between">
       <span className="text-gray-600">{label}:</span>
-      <span>{value || "N/A"}</span>
+      <span className="text-blue-800">{value || "N/A"}</span>
     </div>
   );
 
@@ -53,8 +53,8 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
             KES {transaction.amount?.toFixed(2) || "0.00"}
           </h3>
           <div className="flex justify-center items-center gap-2 mb-6">
-            <strong>MPESA REF#</strong>
-            <span>{transaction.receiptNumber || "N/A"}</span>
+            <strong className="text-black">MPESA REF#</strong>
+            <span className="text-black">{transaction.receiptNumber || "N/A"}</span>
           </div>
           <div className="border-b border-gray-200 mb-6"></div>
         </div>
