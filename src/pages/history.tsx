@@ -131,38 +131,6 @@ export default function TransactionHistoryPage() {
         return null;
       }
     };
-
-  // // Add this function to history.tsx
-  //   const fetchTransactionDetails = async (id: string, fallbackTx: Transaction): Promise<Transaction> => {
-  //     try {
-  //       const docRef = doc(db, "transactions", id);
-  //       const docSnap = await getDoc(docRef);
-  //       if (docSnap.exists()) {
-  //         const data = docSnap.data();
-          
-  //         // Return the complete transaction data with fallbacks
-  //         return {
-  //           id: docSnap.id,
-  //           receiptNumber: data.receiptNumber || data.MpesaReceiptNumber || fallbackTx.receiptNumber || "N/A",
-  //           amount: Number(data.amount ?? data.Amount ?? fallbackTx.amount ?? 0),
-  //           phoneNumber: data.phoneNumber || data.PhoneNumber || fallbackTx.phoneNumber || "N/A",
-  //           status: data.status ?? fallbackTx.status ?? "Unknown",
-  //           timestamp: data.timestamp?.toDate?.()?.toISOString() || 
-  //                     data.processedAt?.toDate?.()?.toISOString() || 
-  //                     data.Timestamp ||
-  //                     fallbackTx.timestamp,
-  //           details: data.details || fallbackTx.details || [],
-  //           AccountNumber: data.AccountNumber || fallbackTx.AccountNumber || "N/A",
-  //           PaybillNumber: data.PaybillNumber || fallbackTx.PaybillNumber || "N/A",
-  //           TransactionType: data.TransactionType || fallbackTx.TransactionType || "N/A",
-  //         };
-  //       }
-  //       return fallbackTx;
-  //     } catch (error) {
-  //       console.error("Error fetching transaction details:", error);
-  //       return fallbackTx;
-  //     }
-  //   };
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl text-white font-bold mb-6">Transaction History</h1>
