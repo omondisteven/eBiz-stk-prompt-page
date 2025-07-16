@@ -98,7 +98,7 @@ export default function TransactionTable({
             <div className="px-2 py-1 text-center">View</div>
           </div>
         </div>
-        <div className="bg-blue-900 divide-y divide-blue-700">
+        <div className="bg-[#0a0a23] divide-y divide-blue-700">
           {transactions.map((tx) => (
             <div key={tx.id} className="grid grid-cols-3 p-2 hover:bg-blue-700">
               <div className="px-2 py-1 text-gray-200">
