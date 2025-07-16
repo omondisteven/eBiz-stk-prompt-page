@@ -91,14 +91,14 @@ export default function TransactionTable({
 
       {/* Mobile View */}
       <div className="md:hidden">
-        <div className="bg-blue-900 text-white rounded-t-lg p-2">
+        <div className="bg-blue-1200 text-white rounded-t-lg p-2">
           <div className="grid grid-cols-3 text-xs uppercase font-medium">
             <div className="px-2 py-1">Date</div>
             <div className="px-2 py-1 text-right">Amount</div>
             <div className="px-2 py-1 text-center">Action</div>
           </div>
         </div>
-        <div className="bg-blue-800 divide-y divide-blue-700">
+        <div className="bg-blue-900 divide-y divide-blue-700">
           {transactions.map((tx) => (
             <div key={tx.id} className="grid grid-cols-3 p-2 hover:bg-blue-700">
               <div className="px-2 py-1 text-gray-200">
