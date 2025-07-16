@@ -2,16 +2,14 @@
 import { Badge } from "./Badge";
 import { BadgeProps } from "./Badge";
 import { Transaction } from "@/types/transaction";
+import { Eye } from "lucide-react";
 
 interface TransactionTableProps {
   transactions: Transaction[];
   onView: (transaction: Transaction) => void;
 }
 
-export default function TransactionTable({
-  transactions,
-  onView,
-}: TransactionTableProps) {
+export default function TransactionTable({ transactions, onView }: TransactionTableProps) {
   const getStatusVariant = (status?: string): BadgeProps["variant"] => {
     switch (status) {
       case "Success":
@@ -36,38 +34,39 @@ export default function TransactionTable({
   };
 
   return (
-    <div className="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
-      <table className="w-full text-sm text-left text-gray-800">
-        <thead className="bg-gray-100 text-xs uppercase text-gray-600 border-b">
-          <tr>
-            <th className="px-4 py-3">Receipt</th>
+    <div className="overflow-x-auto rounded-lg shadow border border-green-500">
+      <table className="w-full text-sm text-left">
+        <thead className="bg-gray-100 dark:bg-[#001f3f] text-xs uppercase border-b border-green-500">
+          <tr className="text-gray-600 dark:text-gray-200">
+            <th className="px-4 py-3 hidden md:table-cell">Receipt</th>
             <th className="px-4 py-3">Date</th>
             <th className="px-4 py-3 text-right">Amount</th>
-            <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3 hidden md:table-cell">Status</th>
             <th className="px-4 py-3 text-center">Action</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="text-gray-800 dark:text-gray-100">
           {transactions.map((tx, idx) => (
             <tr
               key={tx.id}
-              className={`border-b ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`}
+              className={`border-b border-green-500 ${idx % 2 === 0 ? "bg-white dark:bg-[#002855]" : "bg-gray-50 dark:bg-[#003366]"} hover:bg-gray-100 dark:hover:bg-[#003366]`}
             >
-              <td className="px-4 py-2">{tx.receiptNumber || tx.MpesaReceiptNumber || "N/A"}</td>
+              <td className="px-4 py-2 hidden md:table-cell">{tx.receiptNumber || "N/A"}</td>
               <td className="px-4 py-2">{formatDate(tx.timestamp)}</td>
               <td className="px-4 py-2 text-right">KES {(tx.amount ?? tx.Amount ?? 0).toFixed(2)}</td>
-              <td className="px-4 py-2">
+              <td className="px-4 py-2 hidden md:table-cell">
                 <Badge variant={getStatusVariant(tx.status)}>
                   {tx.status || "Unknown"}
                 </Badge>
               </td>
               <td className="px-4 py-2 text-center">
                 <button
-                  className="text-blue-600 hover:underline font-medium"
                   onClick={() => onView(tx)}
                   aria-label={`View transaction ${tx.id}`}
+                  className="text-blue-500 hover:text-blue-700"
                 >
-                  View
+                  <Eye className="h-5 w-5 inline" />
+                  <span className="hidden md:inline ml-1">View</span>
                 </button>
               </td>
             </tr>
