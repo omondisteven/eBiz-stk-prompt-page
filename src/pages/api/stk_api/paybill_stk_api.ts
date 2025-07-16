@@ -43,9 +43,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       console.log("Payment details:", { phone, amount, accountnumber });
 
-      const consumerKey = 'JOugZC2lkqSZhy8eLeQMx8S0UbOXZ5A8Yzz26fCx9cyU1vqH';
-      const consumerSecret = 'fqyZyrdW3QE3pDozsAcWNkVjwDADAL1dFMF3T9v65gJq8XZeyEeaTqBRXbC5RIvC';
-      const BusinessShortCode = '174379';
+      // const consumerKey = 'JOugZC2lkqSZhy8eLeQMx8S0UbOXZ5A8Yzz26fCx9cyU1vqH';
+      const consumerKey = 'iRpyDGA7AQPhjj4BUK9kAnrlwD8evL3L';
+      // const consumerSecret = 'fqyZyrdW3QE3pDozsAcWNkVjwDADAL1dFMF3T9v65gJq8XZeyEeaTqBRXbC5RIvC';
+      const consumerSecret = 'dKHW9wVDWKlXbaiS';
+      // const BusinessShortCode = '174379';
+      const BusinessShortCode = 'N/A';
       const Passkey = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
       const Timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3);
       const Password = Buffer.from(`${BusinessShortCode}${Passkey}${Timestamp}`).toString('base64');
