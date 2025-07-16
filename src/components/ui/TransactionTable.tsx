@@ -95,7 +95,7 @@ export default function TransactionTable({
           <div className="grid grid-cols-3 text-xs uppercase font-medium">
             <div className="px-2 py-1">Date</div>
             <div className="px-2 py-1 text-right">Amount</div>
-            <div className="px-2 py-1 text-center">Action</div>
+            <div className="px-2 py-1 text-center">View</div>
           </div>
         </div>
         <div className="bg-blue-900 divide-y divide-blue-700">
