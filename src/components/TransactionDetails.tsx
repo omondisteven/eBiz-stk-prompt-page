@@ -28,6 +28,25 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
     }
   };
 
+  const renderTransactionTypeRow = (label: string, value: any) => (
+    <div className="flex justify-between">
+      <h4 className="text-blue-900">{value || "N/A"}</h4>
+    </div>
+  );
+
+  const renderAmountRow = (label: string, value: any) => (
+    <div className="flex justify-between">
+      <h3 className="text-green-900">{value || "N/A"}</h3>
+    </div>
+  );
+
+  const renderMpesaRefRow = (label: string, value: any) => (
+    <div className="flex justify-between">
+      <h4 className="text-gray-600">{label}:</h4>
+      <h4 className="text-blue-900">{value || "N/A"}</h4>
+    </div>
+  );
+
   const renderDetailRow = (label: string, value: any) => (
     <div className="flex justify-between">
       <span className="text-gray-600">{label}:</span>
@@ -56,11 +75,13 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
               {transaction.status}
             </Badge>
           )}
-          {renderDetailRow("Amount", `KES ${transaction.amount?.toLocaleString('en-KE')}`)}
-          {renderDetailRow("Receipt Number", transaction.receiptNumber)}
+          {renderTransactionTypeRow("Transaction Type", transaction.TransactionType)}
+          {renderAmountRow("Amount", `KES ${transaction.amount?.toLocaleString('en-KE')}`)}
+          {renderMpesaRefRow("MPESA REF#", transaction.receiptNumber)}
           {renderDetailRow("Date", formatDate(transaction.timestamp))}
+          <br />
           {renderDetailRow("Phone Number", transaction.phoneNumber)}
-          {renderDetailRow("Transaction Type", transaction.TransactionType)}
+          
           {renderDetailRow("Paybill Number", transaction.PaybillNumber)}
           {renderDetailRow("Account Number", transaction.AccountNumber)}
 
