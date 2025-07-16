@@ -40,13 +40,15 @@ export default function TransactionDetails({ transaction, onClose }: Transaction
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full max-h-[90vh] flex flex-col">
         <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-center"
-              style={{color: "#0c0246ff"}}>BLTA SOLUTIONS LIMITED</h3>
-              <br />
-           <h2 className="text-xl font-bold text-center"
-              style={{color: "#09c95fff"}}>M-POSTER TRANSACTION DETAILS</h2>
+              style={{color: "#0c0246ff"}}>BLTA Solutions Limited</h3>
+              <br />           
           <button onClick={onClose} className="text-gray-600 hover:text-black">
             ✕
           </button>
+        </div>
+        <div>
+            <h2 className="text-xl font-bold text-center"
+              style={{color: "#09c95fff"}}>M-POSTER TRANSACTION DETAILS</h2>
         </div>
         
         <div className="space-y-3 mb-4 overflow-y-auto">
