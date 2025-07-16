@@ -123,8 +123,8 @@ export default function TransactionHistoryPage() {
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <div className="text-center">
-        <h3 className="text-xl font-bold" style={{ color: "#a294eeff" }}>BLTA Solutions Limited</h3>
-        <h1 className="text-2xl text-green-600 font-bold mb-6">Transaction History</h1>
+        <h3 className="text-xl font-bold" style={{ color: "#4729f0ff" }}>BLTA Solutions Limited</h3>
+        <h4 className="text-green-600 mb-6">Transaction History</h4>
       </div>    
       
       {loading ? (
