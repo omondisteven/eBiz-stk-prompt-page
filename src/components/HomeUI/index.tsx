@@ -29,14 +29,9 @@ const Calculator = ({
     useEffect(() => {
       try {
         if (input) {
-          const sanitizedInput = input.replace(/[+\-*/]+$/, '');
-          if (sanitizedInput) {
-            // eslint-disable-next-line no-eval
-            const result = eval(sanitizedInput);
-            setLiveResult(result.toString());
-          } else {
-            setLiveResult('0');
-          }
+          const sanitizedInput = input.replace(/[+\-*/.]+$/, '');
+          const result = eval(sanitizedInput);
+          setLiveResult(result.toString());
         } else {
           setLiveResult('0');
         }
@@ -46,12 +41,12 @@ const Calculator = ({
     }, [input]);
 
     const handleButtonClick = (value: string) => {
-      if (value === 'Done') {
+      if (value === 'OK') {
         if (liveResult !== 'Error') {
           onCalculate(liveResult);
           onClose();
         }
-      } else if (value === 'AC') {
+      } else if (value === 'C') {
         setInput('');
         setLiveResult('0');
         onClear();
@@ -71,24 +66,41 @@ const Calculator = ({
     };
 
     const buttons = [
-      '7', '8', '9', 'AC',
-      '4', '5', '6', 
-      '1', '2', '3', 
-      '0', '.', '⌫', '+',
-      'Done'
+      '7', '8', '9', 'C',
+      '4', '5', '6', '/',
+      '1', '2', '3', '*',
+      '0', '.', '⌫', '-',
+      '+', 'OK',
     ];
 
     const isNumber = (btn: string) => /^[0-9.]$/.test(btn);
     const isOperator = (btn: string) => ['+', '-', '*', '/'].includes(btn);
 
+    const getButtonClasses = (btn: string) => {
+      const base =
+        'p-4 text-lg font-medium rounded-lg border transition-all duration-200';
+      if (btn === 'C') return `${base} bg-[#001f8f] text-white`;
+      if (btn === '⌫') return `${base} bg-[#001f8f] text-white`;
+      if (btn === 'OK') return `col-span-2 ${base} bg-[#005eff] text-white`;
+      if (isOperator(btn)) return `${base} bg-[#001f8f] text-white`;
+      return `${base} bg-white text-black border-gray-200`;
+    };
+
     return (
-      <div className="mt-2 bg-white rounded-lg shadow-md p-2 border border-gray-200">
+      <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-200 w-full max-w-xs mx-auto">
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+        >
+          <HiX className="h-5 w-5" />
+        </button>
+
         {/* Display */}
-        <div className="mb-2 p-2 bg-gray-100 rounded">
-          <div className="text-gray-600 text-sm h-5 text-right">{input || '0'}</div>
+        <div className="mb-4 px-2 py-3 bg-gray-50 rounded text-right">
+          <div className="text-gray-500 text-sm">{input || '0'}</div>
           <div
-            className={`text-lg font-semibold text-right ${
-              liveResult === 'Error' ? 'text-red-500' : 'text-gray-800'
+            className={`text-2xl font-semibold ${
+              liveResult === 'Error' ? 'text-red-500' : 'text-gray-900'
             }`}
           >
             {liveResult}
@@ -96,23 +108,14 @@ const Calculator = ({
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-3">
           {buttons.map((btn) => (
             <button
               key={btn}
               onClick={() => handleButtonClick(btn)}
-              className={`
-                p-2 rounded-md text-center font-medium
-                ${btn === 'Done' ? 'col-span-4 bg-blue-500 text-white hover:bg-blue-600' :
-                  btn === 'AC' ? 'bg-red-500 text-white hover:bg-red-600' :
-                  btn === '⌫' ? 'bg-gray-500 text-white hover:bg-gray-600' :
-                  btn === '+' ? 'bg-blue-500 text-white hover:bg-blue-600 row-span-2 h-full' :
-                  isNumber(btn) ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' :
-                  'bg-gray-200 hover:bg-gray-300'
-                }
-              `}
+              className={getButtonClasses(btn)}
             >
-              {btn}
+              {btn === 'C' ? 'AC' : btn === '/' ? '÷' : btn === '*' ? '×' : btn}
             </button>
           ))}
         </div>
