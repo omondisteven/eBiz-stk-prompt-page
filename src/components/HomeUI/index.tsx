@@ -15,117 +15,110 @@ import { db } from "@/lib/firebase";
 import { getReceiptFromDetails, CallbackMetadataItem, generateRandomReference } from '@/utils/getReceiptFromDetails';
 
 const Calculator = ({
-  onCalculate,
-  onClose,
-  onClear,
-}: {
-  onCalculate: (result: string) => void;
-  onClose: () => void;
-  onClear: () => void;
-}) => {
-  const [input, setInput] = useState('');
-  const [liveResult, setLiveResult] = useState('0');
+    onCalculate,
+    onClose,
+    onClear,
+  }: {
+    onCalculate: (result: string) => void;
+    onClose: () => void;
+    onClear: () => void;
+  }) => {
+    const [input, setInput] = useState('');
+    const [liveResult, setLiveResult] = useState('0');
 
-  useEffect(() => {
-    try {
-      if (input) {
-        const sanitizedInput = input.replace(/[+\-*/]+$/, '');
-        if (sanitizedInput) {
-          // eslint-disable-next-line no-eval
-          const result = eval(sanitizedInput);
-          setLiveResult(result.toString());
+    useEffect(() => {
+      try {
+        if (input) {
+          const sanitizedInput = input.replace(/[+\-*/]+$/, '');
+          if (sanitizedInput) {
+            // eslint-disable-next-line no-eval
+            const result = eval(sanitizedInput);
+            setLiveResult(result.toString());
+          } else {
+            setLiveResult('0');
+          }
         } else {
           setLiveResult('0');
         }
-      } else {
+      } catch {
+        setLiveResult('Error');
+      }
+    }, [input]);
+
+    const handleButtonClick = (value: string) => {
+      if (value === 'Done') {
+        if (liveResult !== 'Error') {
+          onCalculate(liveResult);
+          onClose();
+        }
+      } else if (value === 'AC') {
+        setInput('');
         setLiveResult('0');
-      }
-    } catch {
-      setLiveResult('Error');
-    }
-  }, [input]);
-
-  const handleButtonClick = (value: string) => {
-    if (value === 'OK') {
-      if (liveResult !== 'Error') {
-        onCalculate(liveResult);
-        onClose();
-      }
-    } else if (value === 'C') {
-      setInput('');
-      setLiveResult('0');
-      onClear();
-    } else if (value === '⌫') {
-      setInput(input.slice(0, -1));
-    } else {
-      const lastChar = input.slice(-1);
-      if (
-        ['+', '-', '*', '/'].includes(value) &&
-        ['+', '-', '*', '/'].includes(lastChar)
-      ) {
-        setInput(input.slice(0, -1) + value);
+        onClear();
+      } else if (value === '⌫') {
+        setInput(input.slice(0, -1));
       } else {
-        setInput(input + value);
+        const lastChar = input.slice(-1);
+        if (
+          ['+', '-', '*', '/'].includes(value) &&
+          ['+', '-', '*', '/'].includes(lastChar)
+        ) {
+          setInput(input.slice(0, -1) + value);
+        } else {
+          setInput(input + value);
+        }
       }
-    }
-  };
+    };
 
-  const buttons = [
-    '7', '8', '9', '/',
-    '4', '5', '6', '*',
-    '1', '2', '3', '-',
-    '0', '.', '⌫', '+',
-    'C', 'OK',
-  ];
+    const buttons = [
+      '7', '8', '9', 'AC',
+      '4', '5', '6', 
+      '1', '2', '3', 
+      '0', '.', '⌫', '+',
+      'Done'
+    ];
 
-  const isNumber = (btn: string) => /^[0-9.]$/.test(btn);
-  const isOperator = (btn: string) => ['+', '-', '*', '/'].includes(btn);
+    const isNumber = (btn: string) => /^[0-9.]$/.test(btn);
+    const isOperator = (btn: string) => ['+', '-', '*', '/'].includes(btn);
 
-  return (
-    <div className="mt-2 bg-white rounded-lg shadow-md p-2 border border-gray-200 relative">
-      <button
-        onClick={onClose}
-        className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
-      >
-        <HiX className="h-4 w-4" />
-      </button>
+    return (
+      <div className="mt-2 bg-white rounded-lg shadow-md p-2 border border-gray-200">
+        {/* Display */}
+        <div className="mb-2 p-2 bg-gray-100 rounded">
+          <div className="text-gray-600 text-sm h-5 text-right">{input || '0'}</div>
+          <div
+            className={`text-lg font-semibold text-right ${
+              liveResult === 'Error' ? 'text-red-500' : 'text-gray-800'
+            }`}
+          >
+            {liveResult}
+          </div>
+        </div>
 
-      {/* Display */}
-      <div className="mb-2 p-2 bg-gray-100 rounded">
-        <div className="text-gray-600 text-sm h-5 text-right">{input || '0'}</div>
-        <div
-          className={`text-lg font-semibold text-right ${
-            liveResult === 'Error' ? 'text-red-500' : 'text-gray-800'
-          }`}
-        >
-          {liveResult}
+        {/* Grid */}
+        <div className="grid grid-cols-4 gap-2">
+          {buttons.map((btn) => (
+            <button
+              key={btn}
+              onClick={() => handleButtonClick(btn)}
+              className={`
+                p-2 rounded-md text-center font-medium
+                ${btn === 'Done' ? 'col-span-4 bg-blue-500 text-white hover:bg-blue-600' :
+                  btn === 'AC' ? 'bg-red-500 text-white hover:bg-red-600' :
+                  btn === '⌫' ? 'bg-gray-500 text-white hover:bg-gray-600' :
+                  btn === '+' ? 'bg-blue-500 text-white hover:bg-blue-600 row-span-2 h-full' :
+                  isNumber(btn) ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' :
+                  'bg-gray-200 hover:bg-gray-300'
+                }
+              `}
+            >
+              {btn}
+            </button>
+          ))}
         </div>
       </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-4 gap-2">
-        {buttons.map((btn) => (
-          <button
-            key={btn}
-            onClick={() => handleButtonClick(btn)}
-            className={`
-              p-2 rounded-md text-center font-medium
-              ${btn === 'OK' ? 'col-span-2 bg-green-500 text-white hover:bg-green-600' :
-                btn === 'C' ? 'col-span-2 bg-red-500 text-white hover:bg-red-600' :
-                btn === '⌫' ? 'bg-gray-500 text-white hover:bg-gray-600' :
-                isOperator(btn) ? 'bg-[#001f3f] text-white hover:opacity-90' :
-                isNumber(btn) ? 'bg-gray-200 text-[#001f3f] hover:bg-gray-300' :
-                'bg-gray-200 hover:bg-gray-300'
-              }
-            `}
-          >
-            {btn}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
+    );
+  };
 
 const HomeUI = () => {
   useEffect(() => {
