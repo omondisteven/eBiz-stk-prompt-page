@@ -15,113 +15,111 @@ import { db } from "@/lib/firebase";
 import { getReceiptFromDetails, CallbackMetadataItem, generateRandomReference } from '@/utils/getReceiptFromDetails';
 
 const Calculator = ({
-    onCalculate,
-    onClose,
-    onClear,
-  }: {
-    onCalculate: (result: string) => void;
-    onClose: () => void;
-    onClear: () => void;
-  }) => {
-    const [input, setInput] = useState('');
-    const [liveResult, setLiveResult] = useState('0');
+  onCalculate,
+  onClose,
+  onClear,
+}: {
+  onCalculate: (result: string) => void;
+  onClose: () => void;
+  onClear: () => void;
+}) => {
+  const [input, setInput] = useState('');
+  const [liveResult, setLiveResult] = useState('0');
 
-    useEffect(() => {
-      try {
-        if (input) {
-          const sanitizedInput = input.replace(/[+\-*/.]+$/, '');
-          const result = eval(sanitizedInput);
-          setLiveResult(result.toString());
-        } else {
-          setLiveResult('0');
-        }
-      } catch {
-        setLiveResult('Error');
-      }
-    }, [input]);
-
-    const handleButtonClick = (value: string) => {
-      if (value === 'OK') {
-        if (liveResult !== 'Error') {
-          onCalculate(liveResult);
-          onClose();
-        }
-      } else if (value === 'C') {
-        setInput('');
-        setLiveResult('0');
-        onClear();
-      } else if (value === '⌫') {
-        setInput(input.slice(0, -1));
+  useEffect(() => {
+    try {
+      if (input) {
+        const sanitizedInput = input.replace(/[+\-*/.]+$/, '');
+        const result = eval(sanitizedInput);
+        setLiveResult(result.toString());
       } else {
-        const lastChar = input.slice(-1);
-        if (
-          ['+', '-', '*', '/'].includes(value) &&
-          ['+', '-', '*', '/'].includes(lastChar)
-        ) {
-          setInput(input.slice(0, -1) + value);
-        } else {
-          setInput(input + value);
-        }
+        setLiveResult('0');
       }
-    };
+    } catch {
+      setLiveResult('Error');
+    }
+  }, [input]);
 
-    const buttons = [
-      '7', '8', '9', 'C',
-      '4', '5', '6', '/',
-      '1', '2', '3', '*',
-      '0', '.', '⌫', '-',
-      '+', 'OK',
-    ];
+  const handleButtonClick = (value: string) => {
+    if (value === 'OK') {
+      if (liveResult !== 'Error') {
+        onCalculate(liveResult);
+        onClose();
+      }
+    } else if (value === 'C') {
+      setInput('');
+      setLiveResult('0');
+      onClear();
+    } else if (value === '⌫') {
+      setInput(input.slice(0, -1));
+    } else {
+      const lastChar = input.slice(-1);
+      if (
+        ['+', '-', '*', '/'].includes(value) &&
+        ['+', '-', '*', '/'].includes(lastChar)
+      ) {
+        setInput(input.slice(0, -1) + value);
+      } else {
+        setInput(input + value);
+      }
+    }
+  };
 
-    const isNumber = (btn: string) => /^[0-9.]$/.test(btn);
-    const isOperator = (btn: string) => ['+', '-', '*', '/'].includes(btn);
+  const buttons = [
+    '7', '8', '9', 'C', '⌫',
+    '4', '5', '6', '/', '*',
+    '1', '2', '3', '-', '+',
+    '0', '.', 'OK'
+  ];
 
-    const getButtonClasses = (btn: string) => {
-      const base =
-        'p-4 text-lg font-medium rounded-lg border transition-all duration-200';
-      if (btn === 'C') return `${base} bg-[#001f8f] text-white`;
-      if (btn === '⌫') return `${base} bg-[#001f8f] text-white`;
-      if (btn === 'OK') return `col-span-2 ${base} bg-[#005eff] text-white`;
-      if (isOperator(btn)) return `${base} bg-[#001f8f] text-white`;
-      return `${base} bg-white text-black border-gray-200`;
-    };
+  const isNumber = (btn: string) => /^[0-9.]$/.test(btn);
+  const isOperator = (btn: string) => ['+', '-', '*', '/'].includes(btn);
 
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-200 w-full max-w-xs mx-auto">
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+  const getButtonClasses = (btn: string) => {
+    const base =
+      'p-4 text-lg font-medium rounded-xl border text-center transition-all duration-200';
+    if (btn === 'C' || btn === '⌫') return `${base} bg-[#001f8f] text-white`;
+    if (btn === 'OK') return `col-span-3 ${base} bg-[#005eff] text-white`;
+    if (isOperator(btn)) return `${base} bg-[#001f8f] text-white`;
+    return `${base} bg-white text-black border-gray-200`;
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-200 w-full max-w-sm mx-auto relative">
+      <button
+        onClick={onClose}
+        className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+      >
+        <HiX className="h-5 w-5" />
+      </button>
+
+      {/* Display */}
+      <div className="mb-4 px-2 py-3 bg-gray-50 rounded text-right">
+        <div className="text-gray-500 text-sm">{input || '0'}</div>
+        <div
+          className={`text-2xl font-semibold ${
+            liveResult === 'Error' ? 'text-red-500' : 'text-gray-900'
+          }`}
         >
-          <HiX className="h-5 w-5" />
-        </button>
-
-        {/* Display */}
-        <div className="mb-4 px-2 py-3 bg-gray-50 rounded text-right">
-          <div className="text-gray-500 text-sm">{input || '0'}</div>
-          <div
-            className={`text-2xl font-semibold ${
-              liveResult === 'Error' ? 'text-red-500' : 'text-gray-900'
-            }`}
-          >
-            {liveResult}
-          </div>
-        </div>
-
-        {/* Grid */}
-        <div className="grid grid-cols-4 gap-3">
-          {buttons.map((btn) => (
-            <button
-              key={btn}
-              onClick={() => handleButtonClick(btn)}
-              className={getButtonClasses(btn)}
-            >
-              {btn === 'C' ? 'AC' : btn === '/' ? '÷' : btn === '*' ? '×' : btn}
-            </button>
-          ))}
+          {liveResult}
         </div>
       </div>
-    );
-  };
+
+      {/* Grid */}
+      <div className="grid grid-cols-5 gap-3">
+        {buttons.map((btn) => (
+          <button
+            key={btn}
+            onClick={() => handleButtonClick(btn)}
+            className={getButtonClasses(btn)}
+          >
+            {btn === 'C' ? 'AC' : btn === '/' ? '÷' : btn === '*' ? '×' : btn}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const HomeUI = () => {
   useEffect(() => {
